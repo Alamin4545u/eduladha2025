@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ঈদ মোবারক শুভেচ্ছা</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-align: center;
+            flex-direction: column;
+        }
+        .eid-image {
+            max-width: 100%;
+            height: auto;
+            width: 300px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .input-box {
+            margin: 20px 0;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            width: 250px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #e94560;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #d32f4b;
+        }
+        #generatedLink {
+            margin-top: 20px;
+            word-wrap: break-word;
+            color: #00ff88;
+            font-size: 1.1em;
+        }
+        #copyButton {
+            margin-left: 10px;
+            padding: 8px 15px;
+            font-size: 1em;
+            background-color: #28a745;
+        }
+        #copyButton:hover {
+            background-color: #218838;
+        }
+        .ad-container {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .ad-container div {
+            display: inline-block;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        @media (max-width: 600px) {
+            .eid-image, input[type="text"] {
+                width: 80%;
+            }
+            .ad-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .ad-container iframe, .ad-container script {
+                width: 100%;
+                max-width: 300px;
+            }
+            #generatedLink {
+                font-size: 1em;
+                padding: 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworksCanvas"></canvas>
+    <img src="eidmobarok_gh.png" alt="ঈদ মোবারক শুভেচ্ছা ছবি" class="eid-image" onerror="this.src='https://via.placeholder.com/300x100?text=Eid+Mubarak'">
+    <h1>ঈদ মোবারক</h1>
+    <h2 id="friendName">বন্ধুর নাম</h2>
+    <div class="input-box">
+        <input type="text" id="nameInput" placeholder="বন্ধুর নাম লিখুন">
+        <button onclick="generateLink()">লিঙ্ক তৈরি করুন</button>
+    </div>
+    <div id="generatedLink"></div>
+    <div class="ad-container">
+        <!-- Ad 1 -->
+        <div>
+            <script type='text/javascript' src='//pl26817478.profitableratecpm.com/7b/6c/ff/7b6cffe7d463f6ab838ff7ec8c940198.js'></script>
+        </div>
+        <!-- Ad 2 -->
+        <div>
+            <script type="text/javascript">
+                atOptions = {
+                    'key': '9eb732930aa96f81e1a79105778e6f6e',
+                    'format': 'iframe',
+                    'height': 600,
+                    'width': 160,
+                    'params': {}
+                };
+            </script>
+            <script type="text/javascript" src="//www.highperformanceformat.com/9eb732930aa96f81e1a79105778e6f6e/invoke.js"></script>
+        </div>
+        <!-- Ad 3 -->
+        <div>
+            <script type="text/javascript">
+                atOptions = {
+                    'key': '7adfae83ec1bd01827289449a1372004',
+                    'format': 'iframe',
+                    'height': 300,
+                    'width': 160,
+                    'params': {}
+                };
+            </script>
+            <script type="text/javascript" src="//www.highperformanceformat.com/7adfae83ec1bd01827289449a1372004/invoke.js"></script>
+        </div>
+    </div>
+
+    <script>
+        // Fireworks Animation
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = Math.random() * 3 + 2;
+                this.velocity = {
+                    x: Math.random() * 8 - 4,
+                    y: Math.random() * 8 - 4
+                };
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.015;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= this.decay;
+            }
+        }
+
+        let particles = [];
+        function createFirework() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff9900', '#ff0099'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((particle, index) => {
+                if (particle.alpha <= 0) {
+                    particles.splice(index, 1);
+                } else {
+                    particle.update();
+                    particle.draw();
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        setInterval(createFirework, 500);
+        animate();
+
+        // URL Parameter Handling
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name');
+        if (name) {
+            document.getElementById('friendName').textContent = decodeURIComponent(name);
+        }
+
+        // Generate Link and Copy Button
+        function generateLink() {
+            const nameInput = document.getElementById('nameInput').value;
+            if (nameInput.trim() === '') {
+                alert('দয়া করে বন্ধুর নাম লিখুন!');
+                return;
+            }
+            const baseUrl = window.location.href.split('?')[0];
+            const link = `${baseUrl}?name=${encodeURIComponent(nameInput)}`;
+            document.getElementById('generatedLink').innerHTML = `
+                আপনার লিঙ্ক: <a href="${link}" target="_blank">${link}</a>
+                <button id="copyButton" onclick="copyLink('${link}')">কপি</button>
+            `;
+        }
+
+        // Copy Link to Clipboard
+        function copyLink(link) {
+            navigator.clipboard.writeText(link).then(() => {
+                alert('লিঙ্ক কপি করা হয়েছে!');
+            }).catch(err => {
+                alert('কপি করতে সমস্যা হয়েছে। দয়া করে ম্যানুয়ালি কপি করুন।');
+                console.error('কপি ত্রুটি:', err);
+            });
+        }
+    </script>
+</body>
+</html>
