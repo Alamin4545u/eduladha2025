@@ -1,257 +1,230 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ঈদ মোবারক শুভেচ্ছা</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Earning App</title>
     <style>
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #2c2f33; /* Dark background for a modern look */
+            color: #ffffff;
             margin: 0;
-            font-family: 'Noto Sans Bengali', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: #fff;
+            padding: 20px;
+            text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
-            text-align: center;
-            flex-direction: column;
         }
-        .eid-image {
-            max-width: 100%;
-            height: auto;
-            width: 300px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+        .container {
+            background-color: #23272a; /* Slightly lighter container background */
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 380px;
+            box-sizing: border-box;
         }
-        h1 {
-            font-size: 3em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 10px;
-        }
-        h2 {
-            font-size: 2em;
+        .header {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #7289da; /* Discord-like accent color */
             margin-bottom: 20px;
         }
-        .input-box {
-            margin: 20px 0;
+        .balance-card {
+            background: linear-gradient(45deg, #7289da, #424549);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: left;
         }
-        input[type="text"] {
-            padding: 10px;
-            font-size: 1.2em;
-            border: none;
-            border-radius: 5px;
-            width: 250px;
-            margin-right: 10px;
+        .balance-card h2 {
+            margin: 0;
+            font-size: 1em;
+            opacity: 0.8;
+        }
+        .balance-card p {
+            margin: 5px 0 0;
+            font-size: 2.2em;
+            font-weight: bold;
         }
         button {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            background-color: #e94560;
-            color: #fff;
+            background-color: #5865f2; /* A vibrant button color */
             border: none;
-            border-radius: 5px;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 12px;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+        }
+        button:active {
+            transform: scale(0.98);
         }
         button:hover {
-            background-color: #d32f4b;
+            background-color: #4f5bda;
         }
-        #generatedLink {
-            margin-top: 20px;
-            word-wrap: break-word;
-            color: #00ff88;
-            font-size: 1.1em;
+        button#withdrawBtn {
+            background-color: #ed4245; /* A distinct color for withdrawal */
         }
-        #copyButton {
-            margin-left: 10px;
-            padding: 8px 15px;
-            font-size: 1em;
-            background-color: #28a745;
+        button#withdrawBtn:hover {
+            background-color: #d83b3e;
         }
-        #copyButton:hover {
-            background-color: #218838;
-        }
-        .ad-container {
-            margin-top: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        .ad-container div {
-            display: inline-block;
-        }
-        canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-        @media (max-width: 600px) {
-            .eid-image, input[type="text"] {
-                width: 80%;
-            }
-            .ad-container {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .ad-container iframe, .ad-container script {
-                width: 100%;
-                max-width: 300px;
-            }
-            #generatedLink {
-                font-size: 1em;
-                padding: 0 10px;
-            }
+        p#status {
+            margin-top: 15px;
+            font-weight: 500;
+            color: #99aab5; /* A softer color for status text */
+            min-height: 20px;
         }
     </style>
+
+    <!-- Giga.pub বিজ্ঞাপন স্ক্রিপ্ট (আপনার দেওয়া অ্যাপ আইডি ব্যবহার করা হয়েছে) -->
+    <script src="https://ad.gigapub.tech/script?id=4196"></script>
+
 </head>
 <body>
-    <canvas id="fireworksCanvas"></canvas>
-    <img src="eidmobarok_gh.png" alt="ঈদ মোবারক শুভেচ্ছা ছবি" class="eid-image" onerror="this.src='https://via.placeholder.com/300x100?text=Eid+Mubarak'">
-    <h1>ঈদ মোবারক</h1>
-    <h2 id="friendName">বন্ধুর নাম</h2>
-    <div class="input-box">
-        <input type="text" id="nameInput" placeholder="বন্ধুর নাম লিখুন">
-        <button onclick="generateLink()">লিঙ্ক তৈরি করুন</button>
+
+    <div class="container">
+        <div class="header">My Wallet</div>
+        <div class="balance-card">
+            <h2>Current Balance</h2>
+            <p id="balance">Loading...</p>
+        </div>
+        
+        <button onclick="performTask()">Watch Ad & Earn 10 Points</button>
+        <button id="withdrawBtn" onclick="requestWithdrawal()">Request Withdrawal</button>
+
+        <p id="status"></p>
     </div>
-    <div id="generatedLink"></div>
-    <div class="ad-container">
-        <!-- Ad 1 -->
-        <div>
-            <script type='text/javascript' src='//pl26817478.profitableratecpm.com/7b/6c/ff/7b6cffe7d463f6ab838ff7ec8c940198.js'></script>
-        </div>
-        <!-- Ad 2 -->
-        <div>
-            <script type="text/javascript">
-                atOptions = {
-                    'key': '9eb732930aa96f81e1a79105778e6f6e',
-                    'format': 'iframe',
-                    'height': 600,
-                    'width': 160,
-                    'params': {}
-                };
-            </script>
-            <script type="text/javascript" src="//www.highperformanceformat.com/9eb732930aa96f81e1a79105778e6f6e/invoke.js"></script>
-        </div>
-        <!-- Ad 3 -->
-        <div>
-            <script type="text/javascript">
-                atOptions = {
-                    'key': '7adfae83ec1bd01827289449a1372004',
-                    'format': 'iframe',
-                    'height': 300,
-                    'width': 160,
-                    'params': {}
-                };
-            </script>
-            <script type="text/javascript" src="//www.highperformanceformat.com/7adfae83ec1bd01827289449a1372004/invoke.js"></script>
-        </div>
-    </div>
+
+    <!-- Firebase SDK স্ক্রিপ্ট -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- টেলিগ্রাম ওয়েব অ্যাপ SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <script>
-        // Fireworks Animation
-        const canvas = document.getElementById('fireworksCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // আপনার দেওয়া Firebase প্রজেক্টের কনফিগারেশন কোড
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBgI1ZSeZhgTz86oZ_DIkfXiV6U_u4ZRw",
+            authDomain: "money-6c875.firebaseapp.com",
+            databaseURL: "https://money-6c875-default-rtdb.firebaseio.com",
+            projectId: "money-6c875",
+            storageBucket: "money-6c875.appspot.com",
+            messagingSenderId: "1054595620545",
+            appId: "1:1054595620545:web:89eca4c239c9bc2d167e40"
+        };
 
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
-                this.color = color;
-                this.radius = Math.random() * 3 + 2;
-                this.velocity = {
-                    x: Math.random() * 8 - 4,
-                    y: Math.random() * 8 - 4
-                };
-                this.alpha = 1;
-                this.decay = Math.random() * 0.015 + 0.015;
-            }
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = this.color;
-                ctx.fill();
-                ctx.restore();
-            }
-            update() {
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.alpha -= this.decay;
-            }
-        }
+        // Firebase শুরু করুন
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        let particles = [];
-        function createFirework() {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff9900', '#ff0099'];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            for (let i = 0; i < 100; i++) {
-                particles.push(new Particle(x, y, color));
-            }
-        }
+        let currentUser = null;
+        let userBalance = 0;
+        const taskReward = 10; // প্রতিটি কাজের জন্য পুরস্কার
 
-        function animate() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((particle, index) => {
-                if (particle.alpha <= 0) {
-                    particles.splice(index, 1);
+        // টেলিগ্রাম অ্যাপ চালু হলে ব্যবহারকারীর ডেটা লোড করুন
+        window.addEventListener('load', () => {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand(); // অ্যাপটি পূর্ণ স্ক্রিনে দেখানোর জন্য
+
+            // টেলিগ্রাম থেকে ব্যবহারকারীর তথ্য নেওয়া হচ্ছে
+            currentUser = Telegram.WebApp.initDataUnsafe?.user;
+
+            if (currentUser) {
+                // ব্যবহারকারীর আইডি দিয়ে ব্যালেন্স লোড করা হচ্ছে
+                loadUserData(currentUser.id.toString());
+            } else {
+                document.getElementById('balance').innerText = 'Error';
+                document.getElementById('status').innerText = 'Could not get user data. Please open this inside Telegram.';
+                // বাটনগুলো নিষ্ক্রিয় করে দেওয়া হচ্ছে
+                document.querySelector('button').disabled = true;
+                document.getElementById('withdrawBtn').disabled = true;
+            }
+        });
+
+        // Firestore থেকে ব্যবহারকারীর ডেটা লোড করার ফাংশন
+        async function loadUserData(userId) {
+            const userRef = db.collection('users').doc(userId);
+            try {
+                const doc = await userRef.get();
+                if (doc.exists) {
+                    userBalance = doc.data().balance || 0;
                 } else {
-                    particle.update();
-                    particle.draw();
+                    // নতুন ব্যবহারকারী হলে তার জন্য ডাটাবেসে এন্ট্রি তৈরি করা হচ্ছে
+                    userBalance = 0;
+                    await userRef.set({ 
+                        balance: 0, 
+                        username: currentUser.username || 'N/A',
+                        firstName: currentUser.first_name || '',
+                        joinedAt: new Date() 
+                    });
                 }
-            });
-            requestAnimationFrame(animate);
+                document.getElementById('balance').innerText = `${userBalance} Points`;
+            } catch (error) {
+                console.error("Error loading user data: ", error);
+                document.getElementById('status').innerText = 'Failed to load data.';
+            }
         }
 
-        setInterval(createFirework, 500);
-        animate();
+        // কাজ করার এবং আয় করার ফাংশন
+        function performTask() {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = 'Please wait, loading ad...';
 
-        // URL Parameter Handling
-        const urlParams = new URLSearchParams(window.location.search);
-        const name = urlParams.get('name');
-        if (name) {
-            document.getElementById('friendName').textContent = decodeURIComponent(name);
+            if (window.showGiga) {
+                window.showGiga().then(async () => {
+                    // বিজ্ঞাপন সফলভাবে দেখলে ব্যালেন্স আপডেট করা হচ্ছে
+                    userBalance += taskReward;
+                    const userRef = db.collection('users').doc(currentUser.id.toString());
+                    await userRef.update({ balance: userBalance });
+                    
+                    document.getElementById('balance').innerText = `${userBalance} Points`;
+                    statusEl.innerText = `Congratulations! You earned ${taskReward} points.`;
+                }).catch(e => {
+                    console.error("Ad error: ", e);
+                    statusEl.innerText = 'Ad not available. Please try again later.';
+                });
+            } else {
+                 statusEl.innerText = 'Ad service is not ready. Please refresh.';
+            }
         }
 
-        // Generate Link and Copy Button
-        function generateLink() {
-            const nameInput = document.getElementById('nameInput').value;
-            if (nameInput.trim() === '') {
-                alert('দয়া করে বন্ধুর নাম লিখুন!');
+        // উইথড্র রিকোয়েস্ট পাঠানোর ফাংশন
+        async function requestWithdrawal() {
+            const withdrawalAmount = parseInt(prompt("Enter the number of points you want to withdraw:", userBalance));
+            
+            if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+                alert("Please enter a valid amount.");
                 return;
             }
-            const baseUrl = window.location.href.split('?')[0];
-            const link = `${baseUrl}?name=${encodeURIComponent(nameInput)}`;
-            document.getElementById('generatedLink').innerHTML = `
-                আপনার লিঙ্ক: <a href="${link}" target="_blank">${link}</a>
-                <button id="copyButton" onclick="copyLink('${link}')">কপি</button>
-            `;
-        }
 
-        // Copy Link to Clipboard
-        function copyLink(link) {
-            navigator.clipboard.writeText(link).then(() => {
-                alert('লিঙ্ক কপি করা হয়েছে!');
-            }).catch(err => {
-                alert('কপি করতে সমস্যা হয়েছে। দয়া করে ম্যানুয়ালি কপি করুন।');
-                console.error('কপি ত্রুটি:', err);
+            if (withdrawalAmount > userBalance) {
+                alert("You do not have enough points to withdraw this amount.");
+                return;
+            }
+            
+            // উইথড্র রিকোয়েস্ট ডাটাবেসে সেভ করা হচ্ছে
+            await db.collection('withdrawals').add({
+                userId: currentUser.id,
+                username: currentUser.username || 'N/A',
+                amount: withdrawalAmount,
+                status: 'pending', // আপনি পরে এটিকে 'completed' করতে পারবেন
+                requestedAt: new Date()
             });
+
+            // ব্যবহারকারীর ব্যালেন্স থেকে পয়েন্ট কেটে নেওয়া হচ্ছে
+            userBalance -= withdrawalAmount;
+            const userRef = db.collection('users').doc(currentUser.id.toString());
+            await userRef.update({ balance: userBalance });
+
+            document.getElementById('balance').innerText = `${userBalance} Points`;
+            alert('Your withdrawal request has been sent successfully! We will process it soon.');
         }
     </script>
 </body>
