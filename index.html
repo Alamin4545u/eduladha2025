@@ -3,102 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Earning App</title>
+    <title>Reward Center</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --background-color: #1e1e2f;
+            --card-color: #27293d;
+            --primary-accent: #8a2be2; /* A rich purple */
+            --secondary-accent: #4158D0;
+            --text-color: #ffffff;
+            --text-muted: #a9a9c4;
+            --success-color: #00b894;
+            --error-color: #d63031;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #2c2f33; /* Dark background for a modern look */
-            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
             margin: 0;
             padding: 20px;
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: #23272a; /* Slightly lighter container background */
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 380px;
+            min-height: 100vh;
             box-sizing: border-box;
         }
-        .header {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #7289da; /* Discord-like accent color */
-            margin-bottom: 20px;
+
+        .container {
+            background-color: var(--card-color);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
         }
-        .balance-card {
-            background: linear-gradient(45deg, #7289da, #424549);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
+
+        .profile-header {
+            display: flex;
+            align-items: center;
             margin-bottom: 25px;
+        }
+        .profile-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-color: var(--background-color);
+        }
+        .profile-header .welcome-text {
             text-align: left;
         }
-        .balance-card h2 {
+        .profile-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        .profile-header p {
+            margin: 0;
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .balance-card h3 {
             margin: 0;
             font-size: 1em;
+            font-weight: 400;
             opacity: 0.8;
         }
-        .balance-card p {
+        .balance-card .balance-amount {
+            font-size: 2.8em;
+            font-weight: 700;
             margin: 5px 0 0;
-            font-size: 2.2em;
-            font-weight: bold;
         }
+
+        .task-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .task-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+        .task-card p {
+            color: var(--text-muted);
+            margin: 0 0 15px 0;
+            font-size: 0.9em;
+        }
+        
         button {
-            background-color: #5865f2; /* A vibrant button color */
             border: none;
             color: white;
-            padding: 15px 25px;
+            padding: 16px;
             font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
+            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 12px;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
         }
-        button:active {
-            transform: scale(0.98);
+        
+        .task-button {
+            background: linear-gradient(90deg, #00b894, #00cec9);
         }
-        button:hover {
-            background-color: #4f5bda;
+        .task-button:hover {
+            box-shadow: 0 0 15px rgba(0, 184, 148, 0.6);
         }
-        button#withdrawBtn {
-            background-color: #ed4245; /* A distinct color for withdrawal */
+        .task-button:disabled {
+            background: #576574;
+            cursor: not-allowed;
+            box-shadow: none;
         }
-        button#withdrawBtn:hover {
-            background-color: #d83b3e;
+
+        .withdraw-button {
+            background: linear-gradient(90deg, #ff7675, #d63031);
         }
-        p#status {
+
+        #status {
             margin-top: 15px;
             font-weight: 500;
-            color: #99aab5; /* A softer color for status text */
+            color: var(--text-muted);
             min-height: 20px;
         }
     </style>
 
-    <!-- Giga.pub বিজ্ঞাপন স্ক্রিপ্ট (আপনার দেওয়া অ্যাপ আইডি ব্যবহার করা হয়েছে) -->
+    <!-- Giga.pub বিজ্ঞাপন স্ক্রিপ্ট (আপনার নতুন অ্যাপ আইডি ব্যবহার করা হয়েছে) -->
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
 
 </head>
 <body>
 
     <div class="container">
-        <div class="header">My Wallet</div>
-        <div class="balance-card">
-            <h2>Current Balance</h2>
-            <p id="balance">Loading...</p>
-        </div>
-        
-        <button onclick="performTask()">Watch Ad & Earn 10 Points</button>
-        <button id="withdrawBtn" onclick="requestWithdrawal()">Request Withdrawal</button>
+        <header class="profile-header">
+            <img src="https://telegram.org/img/t_logo.png" alt="Avatar">
+            <div class="welcome-text">
+                <h2 id="welcome-name">Welcome!</h2>
+                <p>Let's earn some rewards.</p>
+            </div>
+        </header>
 
+        <section class="balance-card">
+            <h3>Current Balance</h3>
+            <p class="balance-amount" id="balance">Loading...</p>
+        </section>
+
+        <section class="task-card">
+            <h4>Daily Task</h4>
+            <p>Watch a short ad to earn 15 points. You can do this once every day!</p>
+            <button class="task-button" id="taskBtn" onclick="performTask()">Claim Reward</button>
+        </section>
+
+        <button class="withdraw-button" onclick="requestWithdrawal()">Request Withdrawal</button>
+        
         <p id="status"></p>
     </div>
 
@@ -109,7 +179,9 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <script>
-        // আপনার দেওয়া Firebase প্রজেক্টের কনফিগারেশন কোড
+        // ============== গুরুত্বপূর্ণ ==============
+        // আপনার আসল Firebase প্রজেক্টের কনফিগারেশন কোড এখানে পেস্ট করুন।
+        // নিচের কোডটি শুধুমাত্র একটি উদাহরণ।
         const firebaseConfig = {
   apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
   authDomain: "comexaple.firebaseapp.com",
@@ -126,106 +198,114 @@
 
         let currentUser = null;
         let userBalance = 0;
-        const taskReward = 10; // প্রতিটি কাজের জন্য পুরস্কার
+        const taskReward = 15;
+        const taskBtn = document.getElementById('taskBtn');
+        const statusEl = document.getElementById('status');
+        const balanceEl = document.getElementById('balance');
 
-        // টেলিগ্রাম অ্যাপ চালু হলে ব্যবহারকারীর ডেটা লোড করুন
         window.addEventListener('load', () => {
             Telegram.WebApp.ready();
-            Telegram.WebApp.expand(); // অ্যাপটি পূর্ণ স্ক্রিনে দেখানোর জন্য
-
-            // টেলিগ্রাম থেকে ব্যবহারকারীর তথ্য নেওয়া হচ্ছে
+            Telegram.WebApp.expand();
             currentUser = Telegram.WebApp.initDataUnsafe?.user;
 
             if (currentUser) {
-                // ব্যবহারকারীর আইডি দিয়ে ব্যালেন্স লোড করা হচ্ছে
+                document.getElementById('welcome-name').innerText = `Welcome, ${currentUser.first_name}!`;
                 loadUserData(currentUser.id.toString());
             } else {
-                document.getElementById('balance').innerText = 'Error';
-                document.getElementById('status').innerText = 'Could not get user data. Please open this inside Telegram.';
-                // বাটনগুলো নিষ্ক্রিয় করে দেওয়া হচ্ছে
-                document.querySelector('button').disabled = true;
-                document.getElementById('withdrawBtn').disabled = true;
+                balanceEl.innerText = 'Error';
+                statusEl.innerText = 'Please open this inside Telegram.';
+                taskBtn.disabled = true;
             }
         });
 
-        // Firestore থেকে ব্যবহারকারীর ডেটা লোড করার ফাংশন
         async function loadUserData(userId) {
             const userRef = db.collection('users').doc(userId);
             try {
                 const doc = await userRef.get();
                 if (doc.exists) {
-                    userBalance = doc.data().balance || 0;
+                    const data = doc.data();
+                    userBalance = data.balance || 0;
+                    checkTaskStatus(data.lastTaskCompleted);
                 } else {
-                    // নতুন ব্যবহারকারী হলে তার জন্য ডাটাবেসে এন্ট্রি তৈরি করা হচ্ছে
                     userBalance = 0;
-                    await userRef.set({ 
-                        balance: 0, 
+                    await userRef.set({
+                        balance: 0,
                         username: currentUser.username || 'N/A',
-                        firstName: currentUser.first_name || '',
-                        joinedAt: new Date() 
+                        joinedAt: new Date(),
+                        lastTaskCompleted: null
                     });
+                    taskBtn.disabled = false;
                 }
-                document.getElementById('balance').innerText = `${userBalance} Points`;
+                balanceEl.innerText = `${userBalance} Points`;
             } catch (error) {
-                console.error("Error loading user data: ", error);
-                document.getElementById('status').innerText = 'Failed to load data.';
+                console.error("Error loading data:", error);
+                statusEl.innerText = 'Failed to load data. Check Firebase rules.';
             }
         }
 
-        // কাজ করার এবং আয় করার ফাংশন
+        function checkTaskStatus(lastCompletedTimestamp) {
+            if (!lastCompletedTimestamp) {
+                taskBtn.disabled = false;
+                return;
+            }
+            const lastDate = lastCompletedTimestamp.toDate();
+            const today = new Date();
+            if (lastDate.getFullYear() < today.getFullYear() || lastDate.getMonth() < today.getMonth() || lastDate.getDate() < today.getDate()) {
+                taskBtn.disabled = false;
+                taskBtn.innerText = 'Claim Reward';
+            } else {
+                taskBtn.disabled = true;
+                taskBtn.innerText = 'Task Completed Today';
+            }
+        }
+
         function performTask() {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = 'Please wait, loading ad...';
+            statusEl.innerText = 'Loading ad, please wait...';
+            taskBtn.disabled = true;
 
             if (window.showGiga) {
                 window.showGiga().then(async () => {
-                    // বিজ্ঞাপন সফলভাবে দেখলে ব্যালেন্স আপডেট করা হচ্ছে
                     userBalance += taskReward;
+                    const lastTaskCompleted = new Date();
                     const userRef = db.collection('users').doc(currentUser.id.toString());
-                    await userRef.update({ balance: userBalance });
+                    await userRef.update({ balance: userBalance, lastTaskCompleted: lastTaskCompleted });
                     
-                    document.getElementById('balance').innerText = `${userBalance} Points`;
+                    balanceEl.innerText = `${userBalance} Points`;
                     statusEl.innerText = `Congratulations! You earned ${taskReward} points.`;
+                    taskBtn.innerText = 'Task Completed Today';
                 }).catch(e => {
-                    console.error("Ad error: ", e);
-                    statusEl.innerText = 'Ad not available. Please try again later.';
+                    statusEl.innerText = 'Ad not available now. Try again later.';
+                    taskBtn.disabled = false; // বিজ্ঞাপন না আসলে বাটন আবার চালু হবে
                 });
             } else {
                  statusEl.innerText = 'Ad service is not ready. Please refresh.';
             }
         }
 
-        // উইথড্র রিকোয়েস্ট পাঠানোর ফাংশন
         async function requestWithdrawal() {
-            const withdrawalAmount = parseInt(prompt("Enter the number of points you want to withdraw:", userBalance));
+            const amount = parseInt(prompt("Enter points to withdraw:", userBalance));
+            if (isNaN(amount) || amount <= 0) return alert("Invalid amount.");
+            if (amount > userBalance) return alert("Insufficient balance.");
             
-            if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
-                alert("Please enter a valid amount.");
-                return;
+            try {
+                await db.collection('withdrawals').add({
+                    userId: currentUser.id,
+                    username: currentUser.username || 'N/A',
+                    amount: amount,
+                    status: 'pending',
+                    requestedAt: new Date()
+                });
+
+                userBalance -= amount;
+                await db.collection('users').doc(currentUser.id.toString()).update({ balance: userBalance });
+                
+                balanceEl.innerText = `${userBalance} Points`;
+                alert('Withdrawal request sent successfully!');
+            } catch (error) {
+                console.error("Withdrawal error:", error);
+                alert("Failed to send request. Please try again.");
             }
-
-            if (withdrawalAmount > userBalance) {
-                alert("You do not have enough points to withdraw this amount.");
-                return;
-            }
-            
-            // উইথড্র রিকোয়েস্ট ডাটাবেসে সেভ করা হচ্ছে
-            await db.collection('withdrawals').add({
-                userId: currentUser.id,
-                username: currentUser.username || 'N/A',
-                amount: withdrawalAmount,
-                status: 'pending', // আপনি পরে এটিকে 'completed' করতে পারবেন
-                requestedAt: new Date()
-            });
-
-            // ব্যবহারকারীর ব্যালেন্স থেকে পয়েন্ট কেটে নেওয়া হচ্ছে
-            userBalance -= withdrawalAmount;
-            const userRef = db.collection('users').doc(currentUser.id.toString());
-            await userRef.update({ balance: userBalance });
-
-            document.getElementById('balance').innerText = `${userBalance} Points`;
-            alert('Your withdrawal request has been sent successfully! We will process it soon.');
         }
     </script>
 </body>
-</html>
+</html> 
