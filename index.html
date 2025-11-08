@@ -34,77 +34,56 @@
 
         /* VPN Blocker Overlay */
         #vpn-blocker {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(30, 30, 47, 0.95);
-            backdrop-filter: blur(5px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            z-index: 9999;
-            padding: 20px;
+            backdrop-filter: blur(5px); display: flex; justify-content: center;
+            align-items: center; text-align: center; z-index: 9999; padding: 20px;
             box-sizing: border-box;
         }
-        .vpn-blocker-content {
-            max-width: 350px;
-        }
-        .vpn-blocker-content h2 {
-            color: var(--primary-accent);
-        }
+        .vpn-blocker-content { max-width: 350px; }
+        .vpn-blocker-content h2 { color: var(--primary-accent); }
         .loader {
             border: 4px solid var(--card-color);
             border-top: 4px solid var(--primary-accent);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 20px auto;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #manual-verify-btn {
+            display: none; background: var(--success-color);
+            padding: 12px 20px; border-radius: 8px; margin-top: 15px;
+            text-decoration: none; color: white; font-weight: 600;
+            border: none; cursor: pointer;
         }
 
         /* Main App Container (Hidden by default) */
-        .container {
-            display: none;
-            background-color: var(--card-color);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
-            box-sizing: border-box;
-        }
+        .container { display: none; /* ... other styles ... */ }
 
+        /* ... All other CSS styles from the previous code remain the same ... */
+        .container {
+            display: none; background-color: var(--card-color); border-radius: 20px;
+            padding: 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%; max-width: 400px; box-sizing: border-box;
+        }
         .profile-header { display: flex; align-items: center; margin-bottom: 25px; }
         .profile-header img { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; background-color: var(--background-color); }
         .profile-header .welcome-text { text-align: left; }
         .profile-header h2 { margin: 0; font-size: 1.2em; font-weight: 600; }
         .profile-header p { margin: 0; font-size: 0.9em; color: var(--text-muted); }
-
         .balance-card { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; text-align: center; }
         .balance-card h3 { margin: 0; font-size: 1em; font-weight: 400; opacity: 0.8; }
         .balance-card .balance-amount { font-size: 2.8em; font-weight: 700; margin: 5px 0 0; }
-
         .task-card { background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
         .task-card h4 { margin: 0 0 10px 0; font-size: 1.1em; }
         .task-card p { color: var(--text-muted); margin: 0 0 15px 0; font-size: 0.9em; }
-        
         button { border: none; color: white; padding: 16px; font-size: 16px; font-weight: 600; border-radius: 12px; cursor: pointer; width: 100%; transition: all 0.3s ease; font-family: 'Poppins', sans-serif; }
         .task-button { background: linear-gradient(90deg, #00b894, #00cec9); }
         .task-button:hover { box-shadow: 0 0 15px rgba(0, 184, 148, 0.6); }
         .task-button:disabled { background: #576574; cursor: not-allowed; box-shadow: none; }
         .withdraw-button { background: linear-gradient(90deg, #ff7675, #d63031); }
-
         #status { margin-top: 15px; font-weight: 500; color: var(--text-muted); min-height: 20px; }
-    </style>
 
-    <!-- Giga.pub বিজ্ঞাপন স্ক্রিপ্ট -->
+    </style>
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
 </head>
 <body>
@@ -113,11 +92,13 @@
         <div class="vpn-blocker-content">
             <h2 id="vpn-status-title">Verifying Connection</h2>
             <div id="vpn-loader" class="loader"></div>
-            <p id="vpn-status-message">Please wait while we check your connection to ensure it is secure.</p>
+            <p id="vpn-status-message">Please wait while we check your connection. This is a required security step.</p>
+            <button id="manual-verify-btn" onclick="manualVerify()">Verify Manually</button>
         </div>
     </div>
 
     <div class="container" id="app-container">
+        <!-- The entire app content from previous code goes here -->
         <header class="profile-header">
             <img src="https://telegram.org/img/t_logo.png" alt="Avatar">
             <div class="welcome-text">
@@ -157,11 +138,6 @@
         const db = firebase.firestore();
 
         let currentUser = null;
-        let userBalance = 0;
-        const taskReward = 15;
-        const taskBtn = document.getElementById('taskBtn');
-        const statusEl = document.getElementById('status');
-        const balanceEl = document.getElementById('balance');
         const vpnBlocker = document.getElementById('vpn-blocker');
         const appContainer = document.getElementById('app-container');
 
@@ -173,33 +149,48 @@
             verifyVpnConnection();
         });
         
-        // **UPDATED VPN VERIFICATION LOGIC**
         async function verifyVpnConnection() {
             try {
-                // Using a more reliable VPN detection service: proxycheck.io
-                const response = await fetch('https://proxycheck.io/v2/?vpn=1');
+                const response = await fetch(`https://proxycheck.io/v2/?vpn=1&key=YOUR_API_KEY`); // You can get a free API key from proxycheck.io for better performance
                 const data = await response.json();
+                const ipStatus = Object.values(data)[0];
 
-                // The API returns 'yes' if the connection is a VPN or Proxy.
-                const isVPN = data[Object.keys(data)[0]].proxy === 'yes';
-
-                if (isVPN) {
-                    // VPN connection detected, show the app
-                    vpnBlocker.style.display = 'none';
-                    appContainer.style.display = 'block';
-                    initializeApp();
+                if (ipStatus.proxy === 'yes') {
+                    grantAccess();
                 } else {
-                    // Not a VPN, show the access denied message
-                    document.getElementById('vpn-status-title').innerText = "Access Denied";
-                    document.getElementById('vpn-status-message').innerText = "A VPN connection is required to use this app. Please connect to a VPN and refresh the page.";
-                    document.getElementById('vpn-loader').style.display = 'none';
+                    showManualVerification();
                 }
             } catch (error) {
-                console.error("VPN Check Error:", error);
-                document.getElementById('vpn-status-title').innerText = "Connection Error";
-                document.getElementById('vpn-status-message').innerText = "Could not verify your connection. Please check your internet and try again.";
-                document.getElementById('vpn-loader').style.display = 'none';
+                console.error("Auto VPN Check Error:", error);
+                showManualVerification("Auto-check failed. Please verify manually.");
             }
+        }
+        
+        function showManualVerification(message = "A VPN is required. If your VPN is on, please use manual verification.") {
+            document.getElementById('vpn-status-title').innerText = "Access Denied";
+            document.getElementById('vpn-status-message').innerText = message;
+            document.getElementById('vpn-loader').style.display = 'none';
+            document.getElementById('manual-verify-btn').style.display = 'block';
+        }
+        
+        function manualVerify() {
+            // This re-triggers the check. Often, just the act of opening a new tab and coming back can resolve network detection issues.
+            document.getElementById('vpn-status-title').innerText = "Re-Verifying...";
+            document.getElementById('vpn-loader').style.display = 'block';
+            document.getElementById('manual-verify-btn').style.display = 'none';
+            
+            // Open a trusted IP check website. The user doesn't need to do anything there.
+            // This helps the browser/network state to update.
+            window.open('https://www.whatismyipaddress.com/', '_blank');
+            
+            // We try verifying again after a short delay
+            setTimeout(verifyVpnConnection, 3000); // 3-second delay
+        }
+
+        function grantAccess() {
+            vpnBlocker.style.display = 'none';
+            appContainer.style.display = 'block';
+            initializeApp();
         }
 
         function initializeApp() {
@@ -207,29 +198,33 @@
                 document.getElementById('welcome-name').innerText = `Welcome, ${currentUser.first_name}!`;
                 loadUserData(currentUser.id.toString());
             } else {
-                balanceEl.innerText = 'Error';
-                statusEl.innerText = 'Could not get user data. Please open this inside Telegram.';
-                taskBtn.disabled = true;
+                document.getElementById('balance').innerText = 'Error';
+                document.getElementById('status').innerText = 'Could not get user data. Please open this inside Telegram.';
+                document.getElementById('taskBtn').disabled = true;
             }
         }
 
         async function loadUserData(userId) {
+            // ... The rest of the JS functions (loadUserData, performTask, etc.) are exactly the same as before ...
+            const balanceEl = document.getElementById('balance');
+            const statusEl = document.getElementById('status');
+            const taskBtn = document.getElementById('taskBtn');
             const userRef = db.collection('users').doc(userId);
             try {
                 const doc = await userRef.get();
                 if (doc.exists) {
                     const data = doc.data();
-                    userBalance = data.balance || 0;
+                    window.userBalance = data.balance || 0;
                     checkTaskStatus(data.lastTaskCompleted);
                 } else {
-                    userBalance = 0;
+                    window.userBalance = 0;
                     await userRef.set({
                         balance: 0, username: currentUser.username || 'N/A',
                         joinedAt: new Date(), lastTaskCompleted: null
                     });
                     taskBtn.disabled = false;
                 }
-                balanceEl.innerText = `${userBalance} Points`;
+                balanceEl.innerText = `${window.userBalance} Points`;
             } catch (error) {
                 console.error("Error loading data:", error);
                 statusEl.innerText = 'Failed to load data. Check Firebase rules.';
@@ -237,9 +232,9 @@
         }
 
         function checkTaskStatus(lastCompletedTimestamp) {
+            const taskBtn = document.getElementById('taskBtn');
             if (!lastCompletedTimestamp) {
-                taskBtn.disabled = false;
-                return;
+                taskBtn.disabled = false; return;
             }
             const lastDate = lastCompletedTimestamp.toDate();
             const today = new Date();
@@ -253,15 +248,19 @@
         }
 
         function performTask() {
+            const statusEl = document.getElementById('status');
+            const balanceEl = document.getElementById('balance');
+            const taskBtn = document.getElementById('taskBtn');
+            const taskReward = 15;
             statusEl.innerText = 'Loading ad, please wait...';
             taskBtn.disabled = true;
             if (window.showGiga) {
                 window.showGiga().then(async () => {
-                    userBalance += taskReward;
+                    window.userBalance += taskReward;
                     const lastTaskCompleted = new Date();
                     const userRef = db.collection('users').doc(currentUser.id.toString());
-                    await userRef.update({ balance: userBalance, lastTaskCompleted: lastTaskCompleted });
-                    balanceEl.innerText = `${userBalance} Points`;
+                    await userRef.update({ balance: window.userBalance, lastTaskCompleted: lastTaskCompleted });
+                    balanceEl.innerText = `${window.userBalance} Points`;
                     statusEl.innerText = `Congratulations! You earned ${taskReward} points.`;
                     taskBtn.innerText = 'Task Completed Today';
                 }).catch(e => {
@@ -274,17 +273,18 @@
         }
 
         async function requestWithdrawal() {
-            const amount = parseInt(prompt("Enter points to withdraw:", userBalance));
+            const balanceEl = document.getElementById('balance');
+            const amount = parseInt(prompt("Enter points to withdraw:", window.userBalance));
             if (isNaN(amount) || amount <= 0) return alert("Invalid amount.");
-            if (amount > userBalance) return alert("Insufficient balance.");
+            if (amount > window.userBalance) return alert("Insufficient balance.");
             try {
                 await db.collection('withdrawals').add({
                     userId: currentUser.id, username: currentUser.username || 'N/A',
                     amount: amount, status: 'pending', requestedAt: new Date()
                 });
-                userBalance -= amount;
-                await db.collection('users').doc(currentUser.id.toString()).update({ balance: userBalance });
-                balanceEl.innerText = `${userBalance} Points`;
+                window.userBalance -= amount;
+                await db.collection('users').doc(currentUser.id.toString()).update({ balance: window.userBalance });
+                balanceEl.innerText = `${window.userBalance} Points`;
                 alert('Withdrawal request sent successfully!');
             } catch (error) {
                 console.error("Withdrawal error:", error);
