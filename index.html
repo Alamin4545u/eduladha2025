@@ -27,7 +27,7 @@
         .progress-bar-inner { height: 100%; background-color: var(--primary-color); border-radius: 8px; transition: width 0.3s ease; }
         .card h3, .card h2, .card h4 { margin-top: 0; }
         .referral-item { display: flex; align-items: center; background-color: #f0f8ff; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .referral-link { background-color: #e9ecef; padding: 12px; border-radius: 8px; word-wrap: break-word; font-family: monospace; margin-bottom: 15px; text-align: center; }
+        .referral-link { background-color: #e9ecef; padding: 12px; border-radius: 8px; word-wrap: break-word; font-family: monospace; margin-bottom: 15px; text-align: center; min-height: 20px; }
         .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 8px; background-color: var(--primary-color); color: white; font-size: 16px; font-weight: bold; text-align: center; cursor: pointer; text-decoration: none; }
         .btn-secondary { background-color: var(--btn-secondary-bg); }
         .task-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -61,13 +61,13 @@
 <body>
 
     <!-- Pages -->
-    <div id="home-page" class="page active"><div class="container"><div class="header"><div class="user-info"><div class="avatar" id="user-avatar">?</div><div class="user-details"><h4 id="user-name">লোড হচ্ছে...</h4><p id="user-username">@লোড হচ্ছে...</p></div></div><div class="balance"><p>উপলব্ধ ব্যালেন্স</p><h3 id="available-balance">৳০.০০</h3></div></div><div class="welcome-banner"><h2>👋 আবার স্বাগতম!</h2><p>পুরস্কার জিততে কাজগুলো সম্পূর্ণ করুন।</p></div><div class="card" style="margin-bottom: 15px;"><button class="btn" id="home-tasks-btn">টাস্ক পেজে যান</button></div><div class="stats-grid"><div class="stat-card"><p>মোট আয়</p><h3 id="total-earnings">৳০.০০</h3></div><div class="stat-card"><p>রেফারেল</p><h3 id="referrals">০</h3></div></div><div class="card"><h3>দৈনিক অগ্রগতি</h3><p>আপনি আজ ৫০টি বিজ্ঞাপন সম্পূর্ণ করতে পারেন</p><div class="progress-bar"><div id="daily-progress-bar" class="progress-bar-inner"></div></div><small id="daily-progress-text">আজ: ০/৫০</small></div><br><div class="card"><h3>রেফার করুন ও আয় করুন</h3><div class="referral-item"><span>🎁 বন্ধুরা পাবে <strong id="join-bonus-text">২০ ৳</strong> বোনাস</span></div><div class="referral-item"><span>💵 আপনি প্রতি রেফারে <strong id="ref-bonus-text">৫ ৳</strong> পাবেন</span></div><p style="margin-top: 15px;">আপনার রেফারেল লিঙ্ক:</p><div class="referral-link" id="referral-link">লোড হচ্ছে...</div><button class="btn" id="share-btn">শেয়ার করুন</button></div></div></div>
-    <div id="tasks-page" class="page"><div class="container"><h2>টাস্ক সম্পূর্ণ করুন 🎁</h2><div class="task-card"><div class="task-header"><div><h4>বিজ্ঞাপন দেখুন</h4></div><span class="reward" id="ad-reward-text">৳০.৫০</span></div><div class="task-body"><p>পুরস্কার পেতে ছোট ভিডিও দেখুন।</p></div><button class="btn" id="watch-ad-btn">ভিডিও দেখুন</button></div><div id="survey-tasks-container"></div></div></div>
+    <div id="home-page" class="page active"><div class="container"><div class="header"><div class="user-info"><div class="avatar" id="user-avatar">?</div><div class="user-details"><h4 id="user-name">লোড হচ্ছে...</h4><p id="user-username">@লোড হচ্ছে...</p></div></div><div class="balance"><p>উপলব্ধ ব্যালেন্স</p><h3 id="available-balance">৳০.০০</h3></div></div><div class="welcome-banner"><h2>👋 আবার স্বাগতম!</h2><p>পুরস্কার জিততে কাজগুলো সম্পূর্ণ করুন।</p></div><div class="card" style="margin-bottom: 15px;"><button class="btn" id="home-tasks-btn">টাস্ক পেজে যান</button></div><div class="stats-grid"><div class="stat-card"><p>মোট আয়</p><h3 id="total-earnings">৳০.০০</h3></div><div class="stat-card"><p>রেফারেল</p><h3 id="referrals">০</h3></div></div><div class="card"><h3>দৈনিক অগ্রগতি</h3><p>আপনি আজ ৫০টি বিজ্ঞাপন সম্পূর্ণ করতে পারেন</p><div class="progress-bar"><div id="daily-progress-bar" class="progress-bar-inner"></div></div><small id="daily-progress-text">আজ: ০/৫০</small></div><br><div class="card"><h3>রেফার করুন ও আয় করুন</h3><div class="referral-item"><span>🎁 বন্ধুরা পাবে <strong id="join-bonus-text"></strong> বোনাস</span></div><div class="referral-item"><span>💵 আপনি প্রতি রেফারে <strong id="ref-bonus-text"></strong> পাবেন</span></div><p style="margin-top: 15px;">আপনার রেফারেল লিঙ্ক:</p><div class="referral-link" id="referral-link">লোড হচ্ছে...</div><button class="btn" id="share-btn">শেয়ার করুন</button></div></div></div>
+    <div id="tasks-page" class="page"><div class="container"><h2>টাস্ক সম্পূর্ণ করুন 🎁</h2><div class="task-card"><div class="task-header"><div><h4>বিজ্ঞাপন দেখুন</h4></div><span class="reward" id="ad-reward-text"></span></div><div class="task-body"><p>পুরস্কার পেতে ছোট ভিডিও দেখুন।</p></div><button class="btn" id="watch-ad-btn">ভিডিও দেখুন</button></div><div id="survey-tasks-container"></div></div></div>
     <div id="support-page" class="page" style="text-align:center; padding-top: 50px;"><div class="container"><svg style="width:80px; height:80px; color: var(--primary-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg><h2>সাহায্য প্রয়োজন?</h2><p>যেকোনো সমস্যার জন্য সাপোর্টে যোগাযোগ করুন।</p><br><button id="contact-support-btn" class="btn">সাপোর্টে যোগাযোগ করুন</button></div></div>
-    <div id="withdraw-page" class="page"><div class="container"><h2>টাকা উত্তোলন</h2><div class="card"><h4>উত্তোলনের প্রয়োজনীয়তা</h4><div><label>ন্যূনতম <span id="min-withdraw-req-text">১১০</span> ৳ ব্যালেন্স (<span id="balance-progress-text">০/১১০</span>)</label><div class="progress-bar"><div class="progress-bar-inner" id="balance-progress-bar"></div></div></div></div><div id="withdraw-requirement-notice" class="card" style="margin-top:15px; background-color: #ffebee; color: #c62828; text-align: center;">ন্যূনতম ১১০ ৳ প্রয়োজন।</div><div class="card" style="margin-top: 15px;"><div class="form-group"><label for="payment-method">পেমেন্ট পদ্ধতি</label><div class="payment-method"><img id="payment-logo" src="" class="logo"><select id="payment-method"></select></div></div><div class="form-group"><label for="account-number">অ্যাকাউন্ট তথ্য</label><input type="text" id="account-number" placeholder="আপনার অ্যাকাউন্ট নম্বর লিখুন"></div><div class="form-group"><label for="amount">পরিমাণ (৳)</label><input type="number" id="amount" placeholder="ন্যূনতম: ১১০.০০, সর্বোচ্চ: ২০০০.০০"></div><button id="submit-withdraw-btn" class="btn">অনুরোধ জমা দিন</button></div><div class="card" style="margin-top: 15px;"><h4>উত্তোলনের ইতিহাস</h4><div id="withdrawal-history"><p style="text-align: center; color: var(--light-text);">কোনো ইতিহাস পাওয়া যায়নি।</p></div></div></div></div>
+    <div id="withdraw-page" class="page"><div class="container"><h2>টাকা উত্তোলন</h2><div class="card"><h4>উত্তোলনের প্রয়োজনীয়তা</h4><div><label>ন্যূনতম <span id="min-withdraw-req-text"></span> ৳ ব্যালেন্স (<span id="balance-progress-text"></span>)</label><div class="progress-bar"><div class="progress-bar-inner" id="balance-progress-bar"></div></div></div></div><div id="withdraw-requirement-notice" class="card" style="margin-top:15px; background-color: #ffebee; color: #c62828; text-align: center;"></div><div class="card" style="margin-top: 15px;"><div class="form-group"><label for="payment-method">পেমেন্ট পদ্ধতি</label><div class="payment-method"><img id="payment-logo" src="" class="logo"><select id="payment-method"></select></div></div><div class="form-group"><label for="account-number">অ্যাকাউন্ট তথ্য</label><input type="text" id="account-number" placeholder="আপনার অ্যাকাউন্ট নম্বর লিখুন"></div><div class="form-group"><label for="amount">পরিমাণ (৳)</label><input type="number" id="amount" placeholder=""></div><button id="submit-withdraw-btn" class="btn">অনুরোধ জমা দিন</button></div><div class="card" style="margin-top: 15px;"><h4>উত্তোলনের ইতিহাস</h4><div id="withdrawal-history"><p style="text-align: center; color: var(--light-text);">কোনো ইতিহাস পাওয়া যায়নি।</p></div></div></div></div>
 
     <!-- VPN Check Modal -->
-    <div id="vpn-modal" class="modal"><div class="modal-content"><h3>VPN প্রয়োজন</h3><p>টাস্কগুলো সম্পূর্ণ করতে, আপনাকে অবশ্যই নিচের দেশগুলোর মধ্যে যেকোনো একটির VPN সংযোগ ব্যবহার করতে হবে:</p><strong id="allowed-countries-list">US, UK, Canada</strong><br><br><button id="close-vpn-modal-btn" class="btn btn-secondary">বন্ধ করুন</button></div></div>
+    <div id="vpn-modal" class="modal"><div class="modal-content"><h3>VPN প্রয়োজন</h3><p>টাস্কগুলো সম্পূর্ণ করতে, আপনাকে অবশ্যই নিচের দেশগুলোর মধ্যে যেকোনো একটির VPN সংযোগ ব্যবহার করতে হবে:</p><strong id="allowed-countries-list"></strong><br><br><button id="close-vpn-modal-btn" class="btn btn-secondary">বন্ধ করুন</button></div></div>
     
     <!-- Bottom Navigation Bar -->
     <nav class="bottom-nav">
@@ -100,23 +100,49 @@
         let teleUser;
         const user = tg.initDataUnsafe.user;
 
+        // ডিফল্ট ইউজার যদি টেলিগ্রাম থেকে ডেটা না পাওয়া যায়
         teleUser = (!user || Object.keys(user).length === 0) 
-            ? { id: '5788008001', first_name: 'Test', last_name: 'User', username: 'testuser' } 
+            ? { id: '12345678', first_name: 'Test', last_name: 'User', username: 'testuser' } 
             : user;
+
+        // ডিফল্ট সেটিংস (আপনার স্ক্রিনশট থেকে নেওয়া)
+        const defaultSettings = {
+            minWithdraw: 50, referralBonus: 0, joinBonus: 0, adReward: 0.50, surveyReward: 1.0, surveyAdsNeeded: 10,
+            supportLink: 'https://t.me/FunQuiz_toEarn', botUsername: 'Bkash_earn_free_TkBot', gigapubAppId: "4203",
+            vpnCheckEnabled: true, allowedCountries: "US,UK,CA",
+            paymentMethods: [{ name: 'বিকাশ', logo: 'https://i.ibb.co/L0f5bXN/bkash.png' }, { name: 'নগদ', logo: 'https://i.ibb.co/qYdG2sW/nagad.png' }]
+        };
 
         async function initializeApp() {
             try {
+                // প্রথমে ডিফল্ট সেটিংস দিয়ে অ্যাপ চালু করা
+                appSettings = defaultSettings;
+                updateStaticUI();
+
+                // ফায়ারবেস থেকে সেটিংস আনার চেষ্টা করা
                 const settingsDoc = await db.collection('settings').doc('appConfig').get();
-                appSettings = settingsDoc.exists ? settingsDoc.data() : {
-                    minWithdraw: 110, referralBonus: 5, joinBonus: 20, adReward: 0.50, surveyReward: 1.0, surveyAdsNeeded: 10,
-                    supportLink: 'https://t.me/your_support_contact', botUsername: 'Bkash_earn_free_TkBot', gigapubAppId: "4203",
-                    vpnCheckEnabled: true, allowedCountries: "US,UK,CA",
-                    paymentMethods: [{ name: 'বিকাশ', logo: 'https://i.ibb.co/L0f5bXN/bkash.png' }, { name: 'নগদ', logo: 'https://i.ibb.co/qYdG2sW/nagad.png' }]
-                };
+                if (settingsDoc.exists) {
+                    appSettings = { ...defaultSettings, ...settingsDoc.data() }; // ডিফল্টের উপর ফায়ারবেস ডেটা ওভাররাইট
+                    updateStaticUI();
+                }
+                
                 loadGigapubScript(appSettings.gigapubAppId);
                 loadPaymentMethods(appSettings.paymentMethods);
                 await loadUserData();
-            } catch (error) { console.error("Initialization error:", error); tg.showAlert("অ্যাপ চালু করতে একটি সমস্যা হয়েছে।"); }
+            } catch (error) { 
+                console.error("Initialization error:", error);
+                tg.showAlert("অ্যাপ চালু করতে একটি সমস্যা হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন।");
+                // ফায়ারবেস কানেক্ট না হলেও ডিফল্ট সেটিংসে চলবে
+                await loadUserData();
+            }
+        }
+        
+        function updateStaticUI() {
+            document.getElementById('join-bonus-text').textContent = `${appSettings.joinBonus} ৳`;
+            document.getElementById('ref-bonus-text').textContent = `${appSettings.referralBonus} ৳`;
+            document.getElementById('ad-reward-text').textContent = `৳${(appSettings.adReward || 0).toFixed(2)}`;
+            const botUsername = appSettings.botUsername || 'Bkash_earn_free_TkBot';
+            document.getElementById('referral-link').textContent = `https://t.me/${botUsername}?startapp=${teleUser.id}`;
         }
         
         const loadGigapubScript = appId => {
@@ -152,43 +178,31 @@
                 });
                 currentUserData = (await userRef.get()).data();
             } else { currentUserData = doc.data(); }
-            updateUI(currentUserData);
+            updateDynamicUI(currentUserData);
             loadWithdrawalHistory();
         }
         
-        function updateUI(data) {
+        function updateDynamicUI(data) {
             document.getElementById('available-balance').textContent = `৳${(data.balance || 0).toFixed(2)}`;
             document.getElementById('total-earnings').textContent = `৳${(data.totalEarnings || 0).toFixed(2)}`;
             document.getElementById('referrals').textContent = data.referrals || 0;
-            
-            const botUsername = appSettings.botUsername || 'Bkash_earn_free_TkBot';
-            document.getElementById('referral-link').textContent = `https://t.me/${botUsername}?startapp=${teleUser.id}`;
-
-            ['join-bonus-text', 'ref-bonus-text', 'ad-reward-text'].forEach(id => {
-                let key, suffix;
-                if(id === 'join-bonus-text') { key = 'joinBonus'; suffix = ' ৳'; }
-                else if (id === 'ref-bonus-text') { key = 'referralBonus'; suffix = ' ৳'; }
-                else { key = 'adReward'; suffix = ''; }
-                document.getElementById(id).innerHTML = id === 'ad-reward-text' ? `৳${(appSettings[key] || 0).toFixed(2)}` : `${appSettings[key]}${suffix}`;
-            });
-            
             const adsWatched = data.adsWatchedToday || 0;
             document.getElementById('daily-progress-bar').style.width = `${(adsWatched / 50) * 100}%`;
             document.getElementById('daily-progress-text').textContent = `আজ: ${adsWatched}/50`;
-            
             updateWithdrawUI(data.balance);
             renderSurveyTasks(data.surveyProgress || {});
         }
 
         function updateWithdrawUI(balance) {
-             const minBalance = appSettings.minWithdraw || 110;
+             const minBalance = appSettings.minWithdraw || 50;
              const balanceProgress = Math.min((balance / minBalance) * 100, 100);
              document.getElementById('min-withdraw-req-text').textContent = minBalance;
              document.getElementById('balance-progress-text').textContent = `${balance.toFixed(0)}/${minBalance}`;
              document.getElementById('balance-progress-bar').style.width = `${balanceProgress}%`;
              document.getElementById('amount').placeholder = `ন্যূনতম: ${minBalance.toFixed(2)}, সর্বোচ্চ: ${(appSettings.maxWithdraw || 2000).toFixed(2)}`;
-             document.getElementById('withdraw-requirement-notice').style.display = balance < minBalance ? 'block' : 'none';
-             document.getElementById('withdraw-requirement-notice').textContent = `ন্যূনতম ${minBalance} ৳ প্রয়োজন।`;
+             const notice = document.getElementById('withdraw-requirement-notice');
+             notice.style.display = balance < minBalance ? 'block' : 'none';
+             notice.textContent = `ন্যূনতম ${minBalance} ৳ প্রয়োজন।`;
              document.getElementById('submit-withdraw-btn').disabled = balance < minBalance;
         }
         
@@ -200,7 +214,7 @@
                 taskCard.innerHTML = `<div class="task-header"><div><h4>সার্ভে করে আয় করুন ${i}</h4></div><span class="reward">৳${(appSettings.surveyReward || 1).toFixed(2)}</span></div><div class="task-body"><p>পুরস্কার পেতে ${adsNeeded}টি বিজ্ঞাপন দেখুন। (${currentProgress}/${adsNeeded} সম্পন্ন)</p></div><button class="btn survey-btn" data-survey-id="${i}" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'সম্পন্ন' : 'বিজ্ঞাপন দেখুন'}</button>`;
                 container.appendChild(taskCard);
             }
-            document.querySelectorAll('.survey-btn').forEach(button => button.addEventListener('click', () => handleAdWatchWithReward(true, appSettings.surveyReward, button.dataset.surveyId)));
+            document.querySelectorAll('.survey-btn').forEach(button => button.addEventListener('click', () => handleAdWatch(true, appSettings.surveyReward, button.dataset.surveyId)));
         }
 
         async function checkVPN() {
@@ -215,15 +229,11 @@
                 document.getElementById('allowed-countries-list').textContent = appSettings.allowedCountries;
                 document.getElementById('vpn-modal').style.display = 'flex';
                 return false;
-            } catch (error) {
-                console.error("VPN check error:", error);
-                tg.showAlert("আপনার ইন্টারনেট সংযোগ যাচাই করা যাচ্ছে না।");
-                return false;
-            }
+            } catch (error) { console.error("VPN check error:", error); tg.showAlert("আপনার ইন্টারনেট সংযোগ যাচাই করা যাচ্ছে না।"); return false; }
         }
 
-        async function handleAdWatchWithReward(isSurvey, reward, surveyId = null) {
-            if (typeof window.showGiga !== 'function') { tg.showAlert('বিজ্ঞাপন লোড করা যাচ্ছে না।'); return; }
+        async function handleAdWatch(isSurvey, reward, surveyId = null) {
+             if (typeof window.showGiga !== 'function') { tg.showAlert('বিজ্ঞাপন লোড করা যাচ্ছে না।'); return; }
             try {
                 await window.showGiga();
                 const userRef = db.collection('users').doc(String(teleUser.id));
@@ -239,8 +249,7 @@
                              updateData.totalEarnings = (data.totalEarnings || 0) + (appSettings.surveyReward || 1);
                         }
                     } else {
-                        updateData.balance = (data.balance || 0) + reward;
-                        updateData.totalEarnings = (data.totalEarnings || 0) + reward;
+                        updateData.balance = (data.balance || 0) + reward; updateData.totalEarnings = (data.totalEarnings || 0) + reward;
                         updateData.adsWatchedToday = (data.adsWatchedToday || 0) + 1;
                     }
                     transaction.update(userRef, updateData);
@@ -253,13 +262,13 @@
             }
         }
         
-        document.getElementById('watch-ad-btn').addEventListener('click', () => handleAdWatchWithReward(false, appSettings.adReward));
+        document.getElementById('watch-ad-btn').addEventListener('click', () => handleAdWatch(false, appSettings.adReward));
 
-        async function loadWithdrawalHistory() {
+        function loadWithdrawalHistory() {
             const historyContainer = document.getElementById('withdrawal-history');
             historyContainer.innerHTML = '<p style="text-align:center;color:var(--light-text);">লোড হচ্ছে...</p>';
-            const query = db.collection('withdrawals').where('userId', '==', teleUser.id).orderBy('timestamp', 'desc').limit(10);
-            query.onSnapshot(snapshot => {
+            db.collection('withdrawals').where('userId', '==', teleUser.id).orderBy('timestamp', 'desc').limit(10)
+              .onSnapshot(snapshot => {
                 if (snapshot.empty) { historyContainer.innerHTML = '<p style="text-align:center;color:var(--light-text);">কোনো ইতিহাস পাওয়া যায়নি।</p>'; return; }
                 historyContainer.innerHTML = '';
                 snapshot.forEach(doc => {
@@ -268,7 +277,7 @@
                     item.innerHTML = `<div><strong>৳${data.amount.toFixed(2)}</strong> - ${data.method}<div style="font-size:12px;color:#777;">${date}</div></div><span class="status ${data.status}">${data.status}</span>`;
                     historyContainer.appendChild(item);
                 });
-            }, error => console.error("Error fetching history:", error));
+            }, error => { console.error("Error fetching history:", error); historyContainer.innerHTML = '<p>হিস্টোরি লোড করা যায়নি।</p>'; });
         }
         
         async function navigateToPage(pageId) {
@@ -284,8 +293,7 @@
 
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => navigateToPage(item.dataset.page)));
         document.getElementById('home-tasks-btn').addEventListener('click', () => navigateToPage('tasks-page'));
-        
-        document.getElementById('close-vpn-modal-btn').addEventListener('click', () => { document.getElementById('vpn-modal').style.display = 'none'; });
+        document.getElementById('close-vpn-modal-btn').addEventListener('click', () => document.getElementById('vpn-modal').style.display = 'none');
         document.getElementById('share-btn').addEventListener('click', () => {
             const link = document.getElementById('referral-link').textContent;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`💰 ক্যাশ বক্স প্রো-তে যোগ দিন এবং আয় করুন!\n\nআমার লিঙ্কে যোগ দিলে আপনি ${appSettings.joinBonus} ৳ বোনাস পাবেন!\n\nলিঙ্ক:\n${link}`)}`);
