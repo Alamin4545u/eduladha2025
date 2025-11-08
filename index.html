@@ -33,7 +33,7 @@
         .nav-button {
             background: none; border: none; color: var(--text-muted); display: flex;
             flex-direction: column; align-items: center; font-size: 12px; font-family: 'Poppins';
-            padding: 5px; border-radius: 8px; width: 80px; transition: color 0.2s;
+            padding: 5px; border-radius: 8px; width: 80px; transition: color 0.2s; cursor: pointer;
         }
         .nav-button.active { color: var(--primary-accent); }
         .nav-button svg { width: 24px; height: 24px; margin-bottom: 4px; }
@@ -46,17 +46,17 @@
         .balance-card { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
         .balance-card h3 { margin: 0; opacity: 0.9; }
         .balance-card .balance-amount { font-size: 2.5rem; font-weight: 700; }
-        .home-buttons button { width: 100%; margin-bottom: 12px; padding: 15px; font-size: 1rem; }
+        .home-buttons button { width: 100%; margin-bottom: 12px; padding: 15px; font-size: 1rem; cursor: pointer; border:none; color: white; }
         #start-task-btn { background-color: var(--success-color); }
         #extra-income-btn { background-color: var(--secondary-accent); }
         .task-summary { background: #333644; padding: 15px; border-radius: 12px; }
-        .cover-banner { width: 100%; border-radius: 12px; margin-top: 15px; display: none; /* Hidden by default */ }
+        .cover-banner { width: 100%; border-radius: 12px; margin-top: 15px; display: none; }
         
         /* --- Withdraw & Profile Pages --- */
         .page-content { padding: 20px; }
         .info-group { text-align: left; margin-bottom: 20px; }
         .info-group label { display: block; color: var(--text-muted); margin-bottom: 5px; }
-        .info-group p { background: #333644; padding: 12px; border-radius: 8px; margin: 0; }
+        .info-group p { background: #333644; padding: 12px; border-radius: 8px; margin: 0; word-wrap: break-word; }
         #logout-btn { background-color: var(--error-color); }
 
         /* --- Task Pages --- */
@@ -71,7 +71,7 @@
 
         .sub-task-view .container { padding: 15px; }
         .sub-task-view .header { display: flex; align-items: center; margin-bottom: 15px; }
-        .sub-task-view #back-btn { background: none; border: none; font-size: 1.5rem; color: #fff; padding: 0; cursor: pointer; }
+        .sub-task-view #back-btn { background: none; border: none; font-size: 1.5rem; color: #fff; cursor: pointer; padding: 0; }
         .sub-task-view h3 { margin: 0 0 0 15px; }
         .sub-task-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
         .sub-task-item { background: #444; color: #fff; border: none; border-radius: 8px; aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; }
@@ -81,15 +81,16 @@
         /* --- Loading Overlay --- */
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; color: #fff; }
         .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid var(--primary-accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        #loading-text { margin-top: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     
-    <div id="loading-overlay"><div class="loader"></div><p style="margin-top: 15px;">Loading...</p></div>
+    <div id="loading-overlay"><div class="loader"></div><p id="loading-text">Loading...</p></div>
 
     <!-- Pages -->
-    <div id="home-page" class="page active">
+    <div id="home-page" class="page">
         <div class="container">
             <header class="profile-header">
                 <img id="home-avatar" src="https://telegram.org/img/t_logo.png" alt="Avatar">
@@ -163,7 +164,7 @@
 
     <!-- Navigation Bar -->
     <nav class="nav-bar">
-        <button class="nav-button active" data-page="home-page">
+        <button class="nav-button" data-page="home-page">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"></path></svg>
             <span>Home</span>
         </button>
@@ -183,8 +184,14 @@
     <script>
         // --- CONFIGURATION ---
         const firebaseConfig = {
-            // আপনার আসল Firebase কনফিগারেশন কোড এখানে পেস্ট করুন
-        };
+  apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
+  authDomain: "comexaple.firebaseapp.com",
+  projectId: "comexaple",
+  storageBucket: "comexaple.firebasestorage.app",
+  messagingSenderId: "799294329351",
+  appId: "1:799294329351:web:0bb9620bc1d227a29650a2",
+  measurementId: "G-LRBREF5QV6"
+};
         const CONFIG = {
             mainTasksCount: 10,
             subTasksPerMainTask: 10,
@@ -194,24 +201,48 @@
         let APP_SETTINGS = {};
 
         // --- INITIALIZATION ---
+        if (!firebaseConfig.apiKey) {
+            alert("Firebase configuration is missing in index.html. The app will not work.");
+        }
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let currentUser, userBalance = 0, userDocRef = null, userData = {};
 
         // --- CORE APP LOGIC ---
         window.addEventListener('load', async () => {
-            document.getElementById('loading-overlay').style.display = 'flex';
-            await loadGlobalSettings();
-            
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-            currentUser = Telegram.WebApp.initDataUnsafe?.user || { id: `testuser_${Date.now()}`, first_name: 'Guest', username: 'guestuser' };
-            
-            await loadUserData();
-            setupEventListeners();
-            navigateTo('home-page');
-            document.getElementById('loading-overlay').style.display = 'none';
+            showLoading("Initializing App...");
+            try {
+                await loadGlobalSettings();
+                
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                currentUser = Telegram.WebApp.initDataUnsafe?.user || { id: `testuser_${Date.now()}`, first_name: 'Guest', username: 'guestuser' };
+                
+                await loadUserData();
+                setupEventListeners();
+                navigateTo('home-page');
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                alert("App could not start. Please check your internet connection and try again.");
+            } finally {
+                hideLoading();
+            }
         });
+
+        // The rest of the javascript code is identical to the last one provided, ensuring all functionalities
+        // like navigation, task generation, vpn check, and data handling work as intended.
+        // It includes: loadGlobalSettings, loadUserData, setupEventListeners, navigateTo, updateAllUI,
+        // checkVpnAndGoToMainTasks, generateMainTaskList, generateSubTaskList, performSubTask,
+        // showExtraIncomeAd, requestWithdrawal, showLoading, hideLoading.
+        
+        // Helper functions
+        function showLoading(text = "Loading...") {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
 
         async function loadGlobalSettings() {
             try {
@@ -250,7 +281,6 @@
             }
             userData.lastLoginDate = today;
             userBalance = userData.balance || 0;
-            updateAllUI();
         }
 
         function setupEventListeners() {
@@ -279,9 +309,10 @@
         }
 
         async function checkVpnAndGoToMainTasks() {
-            document.getElementById('loading-overlay').style.display = 'flex';
+            showLoading('Verifying Location...');
             try {
                 const resp = await fetch('https://ipapi.co/json/');
+                if (!resp.ok) throw new Error('Location service failed');
                 const data = await resp.json();
                 const countryCode = data.country_code;
                 if (CONFIG.allowedCountries.includes(countryCode)) {
@@ -293,7 +324,7 @@
             } catch (err) {
                 alert('Could not verify your location. Please check your internet/VPN.');
             } finally {
-                document.getElementById('loading-overlay').style.display = 'none';
+                hideLoading();
             }
         }
         
@@ -305,19 +336,42 @@
                 const subTasksDone = userData.subTasks?.[`task_${i}`] || 0;
                 const item = document.createElement('div');
                 item.className = 'task-item';
-                item.innerHTML = `...`; // Same as previous
+                item.innerHTML = `
+                    <div class="task-item-info">
+                        <span>Task #${i}</span>
+                        <p>${isCompleted ? 'Reward Claimed' : `${subTasksDone}/${CONFIG.subTasksPerMainTask} Ads Completed`}</p>
+                        ${!isCompleted ? `<div class="sub-task-progress"><div style="width: ${subTasksDone / CONFIG.subTasksPerMainTask * 100}%"></div></div>` : ''}
+                    </div>
+                    <span class="status-icon">${isCompleted ? '✅' : '➡️'}</span>`;
                 if (!isCompleted) item.addEventListener('click', () => generateSubTaskList(i));
                 listEl.appendChild(item);
             }
         }
 
         function generateSubTaskList(mainTaskIndex) {
-             // ... same as previous
+            navigateTo('sub-task-page');
+            document.getElementById('sub-task-title').textContent = `Task #${mainTaskIndex}`;
+            const gridEl = document.getElementById('sub-task-grid');
+            gridEl.innerHTML = '';
+            const subTasksDone = userData.subTasks?.[`task_${mainTaskIndex}`] || 0;
+            
+            for (let i = 1; i <= CONFIG.subTasksPerMainTask; i++) {
+                const isCompleted = i <= subTasksDone;
+                const item = document.createElement('button');
+                item.className = `sub-task-item ${isCompleted ? 'completed' : ''}`;
+                item.textContent = isCompleted ? '✓' : i;
+                if (!isCompleted && i === subTasksDone + 1) {
+                    item.addEventListener('click', () => performSubTask(mainTaskIndex, i));
+                } else {
+                    item.disabled = true;
+                }
+                gridEl.appendChild(item);
+            }
         }
 
         async function performSubTask(mainTaskIndex, subTaskIndex) {
             if (typeof window.showGiga !== 'function') return alert('Ad service not ready.');
-            document.getElementById('loading-overlay').style.display = 'flex';
+            showLoading('Loading Ad...');
             try {
                 await window.showGiga();
                 if (!userData.subTasks) userData.subTasks = {};
@@ -338,7 +392,7 @@
             } catch (e) {
                 alert('Ad failed to load. Please try again.');
             } finally {
-                document.getElementById('loading-overlay').style.display = 'none';
+                hideLoading();
             }
         }
         
@@ -352,20 +406,20 @@
         
         async function requestWithdrawal() {
             if (userBalance <= 0) return alert('Insufficient balance.');
-            document.getElementById('loading-overlay').style.display = 'flex';
+            showLoading('Submitting request...');
             try {
                 await db.collection('withdrawals').add({
                     userId: currentUser.id.toString(), username: currentUser.username,
                     amount: userBalance, requestedAt: new Date(), status: 'pending'
                 });
-                userBalance = 0; // Reset balance after request
+                userBalance = 0;
                 await userDocRef.update({ balance: 0 });
                 updateAllUI();
                 alert('Withdrawal request sent!');
             } catch(e) {
                 alert('Failed to send request.');
             } finally {
-                document.getElementById('loading-overlay').style.display = 'none';
+                hideLoading();
             }
         }
     </script>
