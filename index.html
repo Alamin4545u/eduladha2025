@@ -1,27 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Mini App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bkash Earn Free Tk</title>
     
     <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     
     <!-- Gigapub Ad Network Script -->
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
 
     <style>
-        /* CSS Code Starts Here */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        /* CSS Code - আপনার ছবির ডিজাইন অনুযায়ী তৈরি */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
         :root {
-            --primary-color: #2a2a72;
-            --secondary-color: #009ffd;
+            --header-gradient-start: #3A6BE3;
+            --header-gradient-end: #3682F8;
             --background-color: #f0f2f5;
-            --text-color: #333;
             --card-bg: #ffffff;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --text-color: #333;
+            --text-color-light: #6c757d;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            
+            --btn-red: #e74c3c;
+            --btn-blue: #3498db;
+            --btn-purple: #9b59b6;
+            --btn-green: #2ecc71;
         }
 
         body {
@@ -30,336 +36,378 @@
             padding: 0;
             background-color: var(--background-color);
             color: var(--text-color);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .container {
             padding: 15px;
-            padding-bottom: 80px; /* Space for bottom nav */
+            padding-bottom: 80px;
+        }
+        
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .page-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .back-btn {
+            margin-right: 15px;
+            cursor: pointer;
+            font-size: 1.2em;
         }
 
-        /* Header */
+        /* Header - ছবির মতো ডিজাইন */
         .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
             color: white;
             padding: 20px;
             border-radius: 20px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 25px rgba(58, 115, 230, 0.3);
             margin-bottom: 20px;
         }
-
-        .profile-section {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
+        .profile-section { display: flex; align-items: center; margin-bottom: 20px; }
+        #user-photo { width: 50px; height: 50px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); margin-right: 12px; background-color: #A0C4FF; }
+        .user-details p { margin: 0; font-weight: 500; }
+        #user-name { font-weight: 600; font-size: 1.1em; }
+        #user-username { font-size: 0.9em; opacity: 0.8; }
+        .balance-card { background: #3682F8; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .balance-card p { margin: 0; font-size: 1em; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+        .balance-amount { font-size: 2.5em; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
+        .balance-amount .fa-coins { font-size: 0.8em; margin-right: 10px; }
+        
+        /* Ad Placeholder */
+        .ad-placeholder {
+            background: var(--card-bg); text-align: center; padding: 20px;
+            border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 20px;
+            font-weight: 500; color: var(--text-color-light);
         }
 
-        #user-photo {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 3px solid white;
-            margin-right: 15px;
-        }
-
-        .user-details p {
-            margin: 0;
-            font-weight: 600;
-        }
-
-        #user-username {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-
-        .balance-card {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .balance-card p {
-            margin: 0;
-        }
-
-        .balance-amount {
-            font-size: 1.8em;
-            font-weight: 700;
-        }
-
-        /* Ad Containers */
-        .ad-container {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-            color: #999;
-        }
-
-        /* Task Buttons */
-        .task-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
+        /* Home Page Buttons - ছবির মতো ডিজাইন */
+        .task-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .task-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            border: none;
-            border-radius: 15px;
-            font-size: 1em;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 5px 0 #ccc;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+            border: none; border-radius: 18px; font-size: 1em; font-weight: 600; color: white; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+        .task-btn i { font-size: 1.8em; margin-bottom: 12px; }
+        .task-btn:active { transform: scale(0.95); }
+        #start-task-btn { background-color: var(--btn-red); }
+        #spin-earn-btn { background-color: var(--btn-blue); }
+        #scratch-card-btn { background-color: var(--btn-purple); }
+        #wallet-btn { background-color: var(--btn-green); }
+
+        /* Task List Page */
+        .task-list .task-item {
+            background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);
+            font-weight: 600; font-size: 1.1em;
+        }
+        .btn {
+            background-color: var(--header-gradient-end); color: white; border: none; padding: 10px 18px;
+            border-radius: 10px; font-weight: 600; cursor: pointer; transition: background-color 0.3s;
         }
 
-        .task-btn i {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
+        /* Other Pages Common Styles */
+        .content-box { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Poppins'; }
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        .status-Pending { color: orange; font-weight: 600; } .status-Approved { color: green; font-weight: 600; } .status-Rejected { color: red; font-weight: 600; }
+        .referral-link-area { background: #eee; padding: 10px; border-radius: 8px; margin: 15px 0; word-wrap: break-word; }
+        .notice-box { margin-top: 20px; padding: 15px; background: #eaf6ff; border-left: 5px solid var(--header-gradient-end); }
 
-        .task-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 #ccc;
-        }
-
-        .start-task { background-color: #e74c3c; box-shadow: 0 5px 0 #c0392b; }
-        .spin-earn { background-color: #3498db; box-shadow: 0 5px 0 #2980b9; }
-        .scratch-card { background-color: #9b59b6; box-shadow: 0 5px 0 #8e44ad; }
-        .wallet { background-color: #2ecc71; box-shadow: 0 5px 0 #27ae60; }
-
-        /* Bottom Navigation */
+        /* Bottom Navigation - ছবির মতো ডিজাইন */
         .bottom-nav {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--card-bg);
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
+            display: flex; justify-content: space-around; align-items: center; position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: var(--card-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding: 5px 0;
         }
-
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-            padding: 10px 0;
-            text-decoration: none;
-            color: #999;
-            transition: color 0.3s, background-color 0.3s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; padding: 8px 0;
+            text-decoration: none; color: var(--text-color-light); transition: color 0.3s; cursor: pointer;
         }
-
-        .nav-item i {
-            font-size: 1.5em;
-            margin-bottom: 3px;
-        }
-
-        .nav-item span {
-            font-size: 0.8em;
-        }
-
-        .nav-item.active {
-            color: var(--primary-color);
-        }
-        /* CSS Code Ends Here */
+        .nav-item i { font-size: 1.5em; margin-bottom: 4px; }
+        .nav-item span { font-size: 0.8em; font-weight: 500; }
+        .nav-item.active { color: var(--header-gradient-end); }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header Section -->
+        <!-- Header Section (সর্বদা দৃশ্যমান) -->
         <header class="header">
             <div class="profile-section">
-                <img id="user-photo" src="https://i.ibb.co/2k11yV0/user.png" alt="User Photo">
+                <img id="user-photo" alt="MM">
                 <div class="user-details">
-                    <p id="user-name">Your Name</p>
-                    <p id="user-username">@username</p>
+                    <p id="user-name">Loading...</p>
+                    <p id="user-username">@loading...</p>
                 </div>
             </div>
             <div class="balance-card">
                 <p>Balance</p>
-                <p class="balance-amount"><i class="fas fa-coins"></i> <span id="balance">1250</span></p>
+                <div class="balance-amount"><i class="fas fa-coins"></i><span id="balance">1250.00</span></div>
             </div>
         </header>
 
-        <!-- Main Content Section -->
-        <main class="main-content">
-            <!-- Adextra Ad Network Placeholder -->
-            <div id="adextra-ad-container" class="ad-container">
-                <!-- Adextra Ad Code Goes Here -->
-                <p>Adextra Ad Placeholder</p>
-            </div>
-
-            <!-- Task Buttons -->
-            <div class="task-section">
-                <button class="task-btn start-task">
-                    <i class="fas fa-rocket"></i> Start Task
-                </button>
-                <button class="task-btn spin-earn">
-                    <i class="fas fa-sync-alt"></i> Spin & Earn
-                </button>
-                <button class="task-btn scratch-card">
-                    <i class="fas fa-scratch"></i> Scratch Card
-                </button>
-                <button class="task-btn wallet">
-                    <i class="fas fa-wallet"></i> Wallet
-                </button>
+        <!-- Page: Home -->
+        <main id="home-page" class="page active">
+            <div class="ad-placeholder">Adextra Ad Placeholder</div>
+            <div class="task-btn-group">
+                <button id="start-task-btn" class="task-btn"><i class="fas fa-rocket"></i>Start Task</button>
+                <button id="spin-earn-btn" class="task-btn"><i class="fas fa-sync-alt"></i>Spin & Earn</button>
+                <button id="scratch-card-btn" class="task-btn"><i class="fas fa-palette"></i>Scratch Card</button>
+                <button id="wallet-btn" class="task-btn"><i class="fas fa-wallet"></i>Wallet</button>
             </div>
         </main>
+        
+        <!-- Page: Task List (VPN চেকের পর) -->
+        <main id="task-list-page" class="page">
+            <h2 class="page-title"><i class="fas fa-arrow-left back-btn"></i> Select a Task</h2>
+            <div class="task-list"> <!-- জাভাস্ক্রিপ্ট দিয়ে টাস্ক জেনারেট হবে --> </div>
+        </main>
 
+        <!-- Page: Withdraw -->
+        <main id="withdraw-page" class="page">
+             <div class="content-box">
+                <h2 class="page-title">Withdraw History</h2>
+                <table class="history-table">
+                    <thead><tr><th>Method</th><th>Amount</th><th>Status</th></tr></thead>
+                    <tbody id="withdraw-history-body"></tbody>
+                </table>
+            </div>
+        </main>
+        
+        <!-- Page: Referral -->
+        <main id="referral-page" class="page">
+            <div class="content-box">
+                <h2 class="page-title">Refer & Earn</h2>
+                <p>Share your referral link with friends and earn rewards!</p>
+                <div class="referral-link-area" id="referral-link">Generating link...</div>
+                <button id="copy-referral-link" class="btn"><i class="fas fa-copy"></i> Copy Link</button>
+                <div class="notice-box">
+                    <h4>Referral Policy</h4>
+                    <p id="referral-notice">Loading policy...</p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Page: Profile -->
+        <main id="profile-page" class="page">
+             <div class="content-box">
+                <h2 class="page-title">My Profile</h2>
+                <p><strong>Name:</strong> <span id="profile-name"></span></p>
+                <p><strong>Username:</strong> <span id="profile-username"></span></p>
+                <p><strong>Balance:</strong> <span id="profile-balance"></span> TK</p>
+            </div>
+        </main>
+        
         <!-- Bottom Navigation Bar -->
         <nav class="bottom-nav">
-            <a href="#" class="nav-item active" data-page="home">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </a>
-            <a href="#" class="nav-item" data-page="withdraw">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Withdraw</span>
-            </a>
-            <a href="#" class="nav-item" data-page="referral">
-                <i class="fas fa-user-friends"></i>
-                <span>Referral</span>
-            </a>
-            <a href="#" class="nav-item" data-page="profile">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
+            <a class="nav-item active" data-page="home"><i class="fas fa-home"></i><span>Home</span></a>
+            <a class="nav-item" data-page="withdraw"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></a>
+            <a class="nav-item" data-page="referral"><i class="fas fa-user-friends"></i><span>Referral</span></a>
+            <a class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></a>
         </nav>
     </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script>
-    
-    <!-- Telegram Web App Script -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <script>
-        // JavaScript Code Starts Here
-        document.addEventListener('DOMContentLoaded', function() {
-            // Firebase Configuration
-            const firebaseConfig = {
-                apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
-                authDomain: "comexaple.firebaseapp.com",
-                projectId: "comexaple",
-                storageBucket: "comexaple.firebasestorage.app",
-                messagingSenderId: "799294329351",
-                appId: "1:799294329351:web:0bb9620bc1d227a29650a2",
-                measurementId: "G-LRBREF5QV6"
-            };
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- অ্যাপ ইনিশিয়ালাইজেশন ---
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-            // Initialize Firebase
-            try {
-                firebase.initializeApp(firebaseConfig);
-                firebase.analytics();
-                console.log("Firebase initialized successfully.");
-            } catch (e) {
-                console.error("Firebase initialization failed:", e);
-            }
+        // --- সিমুলেটেড অ্যাডমিন প্যানেল সেটিংস ---
+        // একটি বাস্তব অ্যাপে, এই মানগুলি আপনার সার্ভার থেকে আসবে।
+        const adminSettings = {
+            botUsername: "Bkash_earn_free_TkBot",
+            vpnCountries: ['US', 'GB', 'CA'], // অনুমোদিত দেশ
+            dailyScratchLimit: 20,
+            scratchReward: 0.10,
+            dailySpinLimit: 20,
+            spinReward: 0.05,
+            adsPerTask: 10,
+            taskReward: 1.00,
+            paymentMethods: [ { name: "Bkash", min: 50 }, { name: "Nagad", min: 50 } ],
+            referralBonus: 5.00,
+            referralNotice: "প্রতিটি সফল রেফারের জন্য 5.00 টাকা বোনাস পান!"
+        };
 
-            // Initialize Telegram Web App
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            tg.expand(); // Expand the app to full height
+        // --- সিমুলেটেড ব্যবহারকারীর ডেটা ---
+        // একটি বাস্তব অ্যাপে, এটি আপনার ডাটাবেস থেকে লোড এবং সেভ হবে।
+        let userData = {
+            balance: 1250.00,
+            todayScratches: 5,
+            todaySpins: 8,
+            withdrawHistory: [
+                { method: 'Bkash', amount: 50, status: 'Approved' },
+                { method: 'Nagad', amount: 100, status: 'Pending' }
+            ]
+        };
+        
+        // টেলিগ্রাম থেকে ব্যবহারকারীর তথ্য নেওয়া
+        const userInfo = tg.initDataUnsafe.user || {
+            first_name: "MD ALAMIN", last_name: "MIA", username: "sagorikamim", id: 12345678, photo_url: null
+        };
+        
+        // --- পেজ পরিবর্তন করার ফাংশন ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
 
-            // Fetch and display user data
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                const userPhotoEl = document.getElementById('user-photo');
-                const userNameEl = document.getElementById('user-name');
-                const userUsernameEl = document.getElementById('user-username');
-
-                if (user.photo_url) {
-                    userPhotoEl.src = user.photo_url;
-                }
-                userNameEl.textContent = `${user.first_name} ${user.last_name || ''}`.trim();
-                if (user.username) {
-                    userUsernameEl.textContent = `@${user.username}`;
-                } else {
-                    userUsernameEl.textContent = 'No username';
-                }
-            } else {
-                console.log("User data not available.");
-            }
-
-            // --- Ad Network Integration ---
-            // Adextra Ad code should be placed in the placeholder div in the HTML body.
+        // --- UI আপডেট করার ফাংশন ---
+        function updateUI() {
+            document.getElementById('balance').textContent = userData.balance.toFixed(2);
+            document.getElementById('user-photo').src = userInfo.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.first_name)}+${encodeURIComponent(userInfo.last_name)}&background=A0C4FF&color=fff&bold=true`;
+            document.getElementById('user-name').textContent = `${userInfo.first_name} ${userInfo.last_name || ''}`.trim();
+            document.getElementById('user-username').textContent = `@${userInfo.username}`;
             
-            // --- Event Listeners for Buttons ---
+            document.getElementById('profile-name').textContent = `${userInfo.first_name} ${userInfo.last_name || ''}`.trim();
+            document.getElementById('profile-username').textContent = `@${userInfo.username}`;
+            document.getElementById('profile-balance').textContent = userData.balance.toFixed(2);
+        }
 
-            // "Start Task" button will trigger the Gigapub Ad
-            document.querySelector('.start-task').addEventListener('click', function() {
-                console.log("'Start Task' clicked. Trying to show Gigapub ad.");
-                if (window.showGiga) {
-                    window.showGiga()
-                        .then(() => {
-                            console.log("Ad shown successfully. Implement your reward logic here.");
-                            // Example: Show a success message
-                            tg.showPopup({
-                                title: 'Task Complete!',
-                                message: 'You have been rewarded.',
-                                buttons: [{type: 'ok'}]
-                            });
-                        })
-                        .catch(e => {
-                            console.error("Ad could not be shown:", e);
-                            // Example: Show an error message
-                            tg.showPopup({
-                                title: 'Error',
-                                message: 'Ad could not be loaded. Please try again later.',
-                                buttons: [{type: 'ok'}]
-                            });
-                        });
+        // --- VPN চেক করার ফাংশন ---
+        async function checkVPN() {
+            tg.showPopup({ title: 'Checking Connection...', message: 'Please wait...' });
+            try {
+                // Using a reliable IP geolocation service
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                tg.closePopup();
+                if (adminSettings.vpnCountries.includes(data.country_code)) {
+                    return true;
                 } else {
-                    console.error("showGiga function not found.");
-                    tg.showAlert("Ad function is not available yet. Please wait a moment and try again.");
+                    tg.showAlert(`Access Denied. Please connect to a VPN in ${adminSettings.vpnCountries.join(', ')}.`);
+                    return false;
                 }
-            });
-
-            // Other Task Buttons
-            document.querySelectorAll('.task-btn:not(.start-task)').forEach(button => {
-                button.addEventListener('click', function() {
-                    const taskName = this.innerText;
-                    tg.showPopup({
-                        title: 'Task Clicked',
-                        message: `You clicked on ${taskName}.`,
-                        buttons: [{type: 'ok', text: 'Got it!'}]
-                    });
+            } catch (error) {
+                tg.closePopup();
+                tg.showAlert("Could not verify your connection. Please check your internet and try again.");
+                return false;
+            }
+        }
+        
+        // --- টাস্ক লিস্ট জেনারেট করার ফাংশন ---
+        function generateTaskList() {
+            const taskList = document.querySelector('.task-list');
+            taskList.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const taskItem = document.createElement('div');
+                taskItem.className = 'task-item';
+                taskItem.innerHTML = `
+                    <span>Task ${i}</span>
+                    <button class="btn task-start-btn" data-task-id="${i}">Start</button>
+                `;
+                taskList.appendChild(taskItem);
+            }
+        }
+        
+        // --- টাস্ক শুরু এবং বিজ্ঞাপন দেখানোর প্রক্রিয়া ---
+        function startTaskFlow(taskId) {
+            let adsWatched = 0;
+            const watchAd = () => {
+                if (adsWatched >= adminSettings.adsPerTask) {
+                    userData.balance += adminSettings.taskReward;
+                    updateUI();
+                    tg.showAlert(`Task ${taskId} completed! You earned ${adminSettings.taskReward.toFixed(2)} TK.`);
+                    showPage('task-list-page'); // Stay on the task list page
+                    return;
+                }
+                
+                tg.showPopup({
+                    title: `Task ${taskId} (${adsWatched + 1}/${adminSettings.adsPerTask})`,
+                    message: `Click 'Watch Ad' to proceed.`,
+                    buttons: [{ id: 'watch', text: 'Watch Ad' }]
+                }, (buttonId) => {
+                    if (buttonId === 'watch') {
+                        if (window.showGiga) {
+                            window.showGiga()
+                                .then(() => { adsWatched++; setTimeout(watchAd, 500); })
+                                .catch(e => tg.showAlert("Ad could not be loaded. Please try again."));
+                        } else {
+                            // সিমুলেশন যদি showGiga কাজ না করে
+                            console.warn("showGiga not found. Simulating ad watch.");
+                            adsWatched++; 
+                            setTimeout(watchAd, 500);
+                        }
+                    }
                 });
-            });
+            };
+            watchAd();
+        }
 
-            // Navigation Buttons
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const page = this.dataset.page;
-                    console.log(`Navigated to ${page} page.`);
-                    // You can add logic here to show/hide different content based on the selected page
-                });
+        // --- সমস্ত বাটন এবং নেভিগেশনের জন্য ইভেন্ট লিসেনার ---
+
+        // হোম পেজের বাটন
+        document.getElementById('start-task-btn').addEventListener('click', async () => {
+            const isVpnConnected = await checkVPN();
+            if (isVpnConnected) {
+                generateTaskList();
+                showPage('task-list-page');
+            }
+        });
+
+        document.getElementById('spin-earn-btn').addEventListener('click', () => tg.showAlert("Spin & Earn feature is coming soon!"));
+        document.getElementById('scratch-card-btn').addEventListener('click', () => tg.showAlert("Scratch Card feature is coming soon!"));
+        document.getElementById('wallet-btn').addEventListener('click', () => document.querySelector('.nav-item[data-page="withdraw"]').click());
+
+        // টাস্ক লিস্ট পেজের বাটন
+        document.querySelector('.task-list').addEventListener('click', e => {
+            if (e.target.classList.contains('task-start-btn')) {
+                startTaskFlow(e.target.dataset.taskId);
+            }
+        });
+
+        // ব্যাক বাটন
+        document.querySelector('.back-btn').addEventListener('click', () => showPage('home-page'));
+
+        // নিচের নেভিগেশন মেন্যু
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const pageId = item.dataset.page + '-page';
+                showPage(pageId);
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                if (pageId === 'withdraw-page') loadWithdrawPage();
+                if (pageId === 'referral-page') loadReferralPage();
             });
         });
-        // JavaScript Code Ends Here
+
+        function loadWithdrawPage() {
+            // এই ফাংশনটি উইথড্র পেজের ডেটা লোড করার জন্য।
+            // আপাতত এটি খালি রাখা হলো, কারণ এই পেজের ডিজাইনটি আপনার নতুন নির্দেশে নেই।
+            // আপনি চাইলে এখানে আগের কোডের মতো উইথড্র ফর্ম এবং হিস্টোরি টেবিল যুক্ত করতে পারেন।
+             const historyBody = document.getElementById('withdraw-history-body');
+            historyBody.innerHTML = '';
+            userData.withdrawHistory.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.method}</td><td>${item.amount.toFixed(2)}</td><td><span class="status-${item.status}">${item.status}</span></td>`;
+                historyBody.appendChild(row);
+            });
+        }
+        
+        function loadReferralPage() {
+            const referralLink = `https://t.me/${adminSettings.botUsername}?start=${userInfo.id}`;
+            document.getElementById('referral-link').textContent = referralLink;
+            document.getElementById('referral-notice').textContent = adminSettings.referralNotice;
+        }
+
+        document.getElementById('copy-referral-link').addEventListener('click', () => {
+            const link = document.getElementById('referral-link').textContent;
+            navigator.clipboard.writeText(link).then(() => tg.showAlert('Referral link copied!'));
+        });
+
+        // --- অ্যাপ প্রথমবার চালু হলে ---
+        updateUI();
+    });
     </script>
 </body>
 </html>
