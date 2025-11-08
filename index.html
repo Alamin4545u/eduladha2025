@@ -3,74 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Bkash Earn Free Tk</title>
+    <title>Telegram Mini App</title>
     
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-    
-    <!-- Gigapub Ad Network Script -->
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
 
     <style>
-        /* CSS Code - আপনার ছবির ডিজাইন অনুযায়ী তৈরি */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
         :root {
-            --header-gradient-start: #3A6BE3;
-            --header-gradient-end: #3682F8;
-            --background-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-color: #333;
-            --text-color-light: #6c757d;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            
-            --btn-red: #e74c3c;
-            --btn-blue: #3498db;
-            --btn-purple: #9b59b6;
-            --btn-green: #2ecc71;
+            --header-gradient-start: #3A6BE3; --header-gradient-end: #3682F8; --background-color: #f0f2f5; --card-bg: #ffffff;
+            --text-color: #333; --text-color-light: #6c757d; --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --btn-red: #e74c3c; --btn-blue: #3498db; --btn-purple: #9b59b6; --btn-green: #2ecc71;
         }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .container {
-            padding: 15px;
-            padding-bottom: 80px;
-        }
-        
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background-color: var(--background-color); color: var(--text-color); user-select: none; -webkit-user-select: none; }
+        .container { padding: 15px; padding-bottom: 80px; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .page-title {
-            font-size: 1.4em;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-        }
-        .back-btn {
-            margin-right: 15px;
-            cursor: pointer;
-            font-size: 1.2em;
-        }
-
-        /* Header - ছবির মতো ডিজাইন */
-        .header {
-            background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
-            color: white;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 8px 25px rgba(58, 115, 230, 0.3);
-            margin-bottom: 20px;
-        }
+        .page-title { font-size: 1.4em; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; }
+        .back-btn { margin-right: 15px; cursor: pointer; font-size: 1.2em; }
+        .header { background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)); color: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 25px rgba(58, 115, 230, 0.3); margin-bottom: 20px; }
         .profile-section { display: flex; align-items: center; margin-bottom: 20px; }
         #user-photo { width: 50px; height: 50px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); margin-right: 12px; background-color: #A0C4FF; }
         .user-details p { margin: 0; font-weight: 500; }
@@ -80,40 +32,16 @@
         .balance-card p { margin: 0; font-size: 1em; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
         .balance-amount { font-size: 2.5em; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
         .balance-amount .fa-coins { font-size: 0.8em; margin-right: 10px; }
-        
-        /* Ad Placeholder */
-        .ad-placeholder {
-            background: var(--card-bg); text-align: center; padding: 20px;
-            border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 20px;
-            font-weight: 500; color: var(--text-color-light);
-        }
-
-        /* Home Page Buttons - ছবির মতো ডিজাইন */
         .task-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .task-btn {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
-            border: none; border-radius: 18px; font-size: 1em; font-weight: 600; color: white; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.3s;
-        }
+        .task-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border: none; border-radius: 18px; font-size: 1em; font-weight: 600; color: white; cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; }
         .task-btn i { font-size: 1.8em; margin-bottom: 12px; }
         .task-btn:active { transform: scale(0.95); }
         #start-task-btn { background-color: var(--btn-red); }
         #spin-earn-btn { background-color: var(--btn-blue); }
         #scratch-card-btn { background-color: var(--btn-purple); }
         #wallet-btn { background-color: var(--btn-green); }
-
-        /* Task List Page */
-        .task-list .task-item {
-            background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);
-            font-weight: 600; font-size: 1.1em;
-        }
-        .btn {
-            background-color: var(--header-gradient-end); color: white; border: none; padding: 10px 18px;
-            border-radius: 10px; font-weight: 600; cursor: pointer; transition: background-color 0.3s;
-        }
-
-        /* Other Pages Common Styles */
+        .task-list .task-item { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); font-weight: 600; font-size: 1.1em; }
+        .btn { background-color: var(--header-gradient-end); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
         .content-box { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
@@ -123,16 +51,8 @@
         .status-Pending { color: orange; font-weight: 600; } .status-Approved { color: green; font-weight: 600; } .status-Rejected { color: red; font-weight: 600; }
         .referral-link-area { background: #eee; padding: 10px; border-radius: 8px; margin: 15px 0; word-wrap: break-word; }
         .notice-box { margin-top: 20px; padding: 15px; background: #eaf6ff; border-left: 5px solid var(--header-gradient-end); }
-
-        /* Bottom Navigation - ছবির মতো ডিজাইন */
-        .bottom-nav {
-            display: flex; justify-content: space-around; align-items: center; position: fixed; bottom: 0; left: 0; width: 100%;
-            background-color: var(--card-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding: 5px 0;
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; padding: 8px 0;
-            text-decoration: none; color: var(--text-color-light); transition: color 0.3s; cursor: pointer;
-        }
+        .bottom-nav { display: flex; justify-content: space-around; align-items: center; position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--card-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding: 5px 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; padding: 8px 0; text-decoration: none; color: var(--text-color-light); transition: color 0.3s; cursor: pointer; }
         .nav-item i { font-size: 1.5em; margin-bottom: 4px; }
         .nav-item span { font-size: 0.8em; font-weight: 500; }
         .nav-item.active { color: var(--header-gradient-end); }
@@ -140,24 +60,17 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header Section (সর্বদা দৃশ্যমান) -->
         <header class="header">
             <div class="profile-section">
                 <img id="user-photo" alt="MM">
-                <div class="user-details">
-                    <p id="user-name">Loading...</p>
-                    <p id="user-username">@loading...</p>
-                </div>
+                <div class="user-details"><p id="user-name"></p><p id="user-username"></p></div>
             </div>
             <div class="balance-card">
                 <p>Balance</p>
-                <div class="balance-amount"><i class="fas fa-coins"></i><span id="balance">1250.00</span></div>
+                <div class="balance-amount"><i class="fas fa-coins"></i><span id="balance"></span></div>
             </div>
         </header>
-
-        <!-- Page: Home -->
         <main id="home-page" class="page active">
-            <div class="ad-placeholder">Adextra Ad Placeholder</div>
             <div class="task-btn-group">
                 <button id="start-task-btn" class="task-btn"><i class="fas fa-rocket"></i>Start Task</button>
                 <button id="spin-earn-btn" class="task-btn"><i class="fas fa-sync-alt"></i>Spin & Earn</button>
@@ -165,213 +78,182 @@
                 <button id="wallet-btn" class="task-btn"><i class="fas fa-wallet"></i>Wallet</button>
             </div>
         </main>
-        
-        <!-- Page: Task List (VPN চেকের পর) -->
         <main id="task-list-page" class="page">
             <h2 class="page-title"><i class="fas fa-arrow-left back-btn"></i> Select a Task</h2>
-            <div class="task-list"> <!-- জাভাস্ক্রিপ্ট দিয়ে টাস্ক জেনারেট হবে --> </div>
+            <div class="task-list"></div>
         </main>
-
-        <!-- Page: Withdraw -->
         <main id="withdraw-page" class="page">
+            <div class="content-box">
+                <h2 class="page-title">Request Withdraw</h2>
+                <div class="form-group"><label for="payment-method">Payment Method</label><select id="payment-method"></select></div>
+                <div class="form-group"><label for="account-number">Account Number</label><input type="text" id="account-number" placeholder="e.g., 01700000000"></div>
+                <div class="form-group"><label for="amount">Amount (TK)</label><input type="number" id="amount" placeholder="Enter amount"></div>
+                <button id="submit-withdraw" class="btn" style="width: 100%;">Submit Request</button>
+            </div>
              <div class="content-box">
                 <h2 class="page-title">Withdraw History</h2>
-                <table class="history-table">
-                    <thead><tr><th>Method</th><th>Amount</th><th>Status</th></tr></thead>
-                    <tbody id="withdraw-history-body"></tbody>
-                </table>
+                <table class="history-table"><thead><tr><th>Method</th><th>Amount</th><th>Status</th></tr></thead><tbody id="withdraw-history-body"></tbody></table>
             </div>
         </main>
-        
-        <!-- Page: Referral -->
         <main id="referral-page" class="page">
             <div class="content-box">
                 <h2 class="page-title">Refer & Earn</h2>
-                <p>Share your referral link with friends and earn rewards!</p>
-                <div class="referral-link-area" id="referral-link">Generating link...</div>
+                <div class="notice-box"><h4 style="margin-top:0;">Referral Policy</h4><p id="referral-notice"></p></div>
+                <p style="margin-top:20px;">Share your referral link with friends and earn rewards!</p>
+                <div class="referral-link-area" id="referral-link"></div>
                 <button id="copy-referral-link" class="btn"><i class="fas fa-copy"></i> Copy Link</button>
-                <div class="notice-box">
-                    <h4>Referral Policy</h4>
-                    <p id="referral-notice">Loading policy...</p>
-                </div>
             </div>
         </main>
-        
-        <!-- Page: Profile -->
         <main id="profile-page" class="page">
              <div class="content-box">
                 <h2 class="page-title">My Profile</h2>
                 <p><strong>Name:</strong> <span id="profile-name"></span></p>
                 <p><strong>Username:</strong> <span id="profile-username"></span></p>
-                <p><strong>Balance:</strong> <span id="profile-balance"></span> TK</p>
+                <p><strong>Balance:</strong> <span id="profile-balance"></span></p>
             </div>
         </main>
-        
-        <!-- Bottom Navigation Bar -->
         <nav class="bottom-nav">
             <a class="nav-item active" data-page="home"><i class="fas fa-home"></i><span>Home</span></a>
-            <a class="nav-item" data-page="withdraw"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></a>
+            <a class="nav-item" data-page="withdraw"><i class="fas fa-money-bill-wave"></i><span>Wallet</span></a>
             <a class="nav-item" data-page="referral"><i class="fas fa-user-friends"></i><span>Referral</span></a>
             <a class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></a>
         </nav>
     </div>
-    
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- অ্যাপ ইনিশিয়ালাইজেশন ---
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
-        // --- সিমুলেটেড অ্যাডমিন প্যানেল সেটিংস ---
-        // একটি বাস্তব অ্যাপে, এই মানগুলি আপনার সার্ভার থেকে আসবে।
         const adminSettings = {
-            botUsername: "Bkash_earn_free_TkBot",
-            vpnCountries: ['US', 'GB', 'CA'], // অনুমোদিত দেশ
-            dailyScratchLimit: 20,
-            scratchReward: 0.10,
-            dailySpinLimit: 20,
-            spinReward: 0.05,
-            adsPerTask: 10,
-            taskReward: 1.00,
-            paymentMethods: [ { name: "Bkash", min: 50 }, { name: "Nagad", min: 50 } ],
-            referralBonus: 5.00,
-            referralNotice: "প্রতিটি সফল রেফারের জন্য 5.00 টাকা বোনাস পান!"
+            botUsername: "Bkash_earn_free_TkBot", vpnCountries: ['US', 'GB', 'CA'],
+            adsPerTask: 10, taskReward: 1.00,
+            spinLimit: 20, spinReward: 1.00,
+            scratchLimit: 20, scratchReward: 1.00,
+            paymentMethods: [{ name: "Bkash", min: 50 }, { name: "Nagad", min: 50 }],
+            referralBonus: 5.00, referralNotice: "প্রতিটি সফল রেফারের জন্য 5.00 টাকা বোনাস পান!"
         };
 
-        // --- সিমুলেটেড ব্যবহারকারীর ডেটা ---
-        // একটি বাস্তব অ্যাপে, এটি আপনার ডাটাবেস থেকে লোড এবং সেভ হবে।
         let userData = {
-            balance: 1250.00,
-            todayScratches: 5,
-            todaySpins: 8,
-            withdrawHistory: [
-                { method: 'Bkash', amount: 50, status: 'Approved' },
-                { method: 'Nagad', amount: 100, status: 'Pending' }
-            ]
+            balance: 10.50,
+            withdrawHistory: [{ method: 'Bkash', amount: 50, status: 'Approved' }]
         };
         
-        // টেলিগ্রাম থেকে ব্যবহারকারীর তথ্য নেওয়া
         const userInfo = tg.initDataUnsafe.user || {
             first_name: "MD ALAMIN", last_name: "MIA", username: "sagorikamim", id: 12345678, photo_url: null
         };
         
-        // --- পেজ পরিবর্তন করার ফাংশন ---
+        let isTaskRunning = false;
+
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
         }
 
-        // --- UI আপডেট করার ফাংশন ---
         function updateUI() {
             document.getElementById('balance').textContent = userData.balance.toFixed(2);
-            document.getElementById('user-photo').src = userInfo.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.first_name)}+${encodeURIComponent(userInfo.last_name)}&background=A0C4FF&color=fff&bold=true`;
-            document.getElementById('user-name').textContent = `${userInfo.first_name} ${userInfo.last_name || ''}`.trim();
+            const userName = `${userInfo.first_name} ${userInfo.last_name || ''}`.trim();
+            document.getElementById('user-photo').src = userInfo.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=A0C4FF&color=fff&bold=true`;
+            document.getElementById('user-name').textContent = userName;
             document.getElementById('user-username').textContent = `@${userInfo.username}`;
-            
-            document.getElementById('profile-name').textContent = `${userInfo.first_name} ${userInfo.last_name || ''}`.trim();
+            document.getElementById('profile-name').textContent = userName;
             document.getElementById('profile-username').textContent = `@${userInfo.username}`;
-            document.getElementById('profile-balance').textContent = userData.balance.toFixed(2);
+            document.getElementById('profile-balance').textContent = `${userData.balance.toFixed(2)} TK`;
         }
 
-        // --- VPN চেক করার ফাংশন ---
         async function checkVPN() {
             tg.showPopup({ title: 'Checking Connection...', message: 'Please wait...' });
             try {
-                // Using a reliable IP geolocation service
                 const response = await fetch('https://ipapi.co/json/');
                 const data = await response.json();
                 tg.closePopup();
-                if (adminSettings.vpnCountries.includes(data.country_code)) {
-                    return true;
-                } else {
-                    tg.showAlert(`Access Denied. Please connect to a VPN in ${adminSettings.vpnCountries.join(', ')}.`);
-                    return false;
-                }
+                if (adminSettings.vpnCountries.includes(data.country_code)) return true;
+                tg.showAlert(`Access Denied. Please connect to a VPN in ${adminSettings.vpnCountries.join(', ')}.`);
             } catch (error) {
                 tg.closePopup();
-                tg.showAlert("Could not verify your connection. Please check your internet and try again.");
-                return false;
+                tg.showAlert("Could not verify your connection. Please try again.");
             }
+            return false;
         }
         
-        // --- টাস্ক লিস্ট জেনারেট করার ফাংশন ---
         function generateTaskList() {
             const taskList = document.querySelector('.task-list');
             taskList.innerHTML = '';
             for (let i = 1; i <= 5; i++) {
-                const taskItem = document.createElement('div');
-                taskItem.className = 'task-item';
-                taskItem.innerHTML = `
-                    <span>Task ${i}</span>
-                    <button class="btn task-start-btn" data-task-id="${i}">Start</button>
-                `;
-                taskList.appendChild(taskItem);
+                taskList.innerHTML += `<div class="task-item"><span>Task ${i}</span><button class="btn task-start-btn" data-task-id="${i}">Start</button></div>`;
             }
         }
         
-        // --- টাস্ক শুরু এবং বিজ্ঞাপন দেখানোর প্রক্রিয়া ---
-        function startTaskFlow(taskId) {
+        function startAdViewingFlow(taskName, adLimit, reward) {
+            isTaskRunning = true;
             let adsWatched = 0;
             const watchAd = () => {
-                if (adsWatched >= adminSettings.adsPerTask) {
-                    userData.balance += adminSettings.taskReward;
+                if (adsWatched >= adLimit) {
+                    userData.balance += reward;
                     updateUI();
-                    tg.showAlert(`Task ${taskId} completed! You earned ${adminSettings.taskReward.toFixed(2)} TK.`);
-                    showPage('task-list-page'); // Stay on the task list page
+                    tg.showAlert(`${taskName} completed! You earned ${reward.toFixed(2)} TK.`);
+                    isTaskRunning = false;
                     return;
                 }
                 
                 tg.showPopup({
-                    title: `Task ${taskId} (${adsWatched + 1}/${adminSettings.adsPerTask})`,
+                    title: `${taskName} (${adsWatched + 1}/${adLimit})`,
                     message: `Click 'Watch Ad' to proceed.`,
                     buttons: [{ id: 'watch', text: 'Watch Ad' }]
                 }, (buttonId) => {
                     if (buttonId === 'watch') {
-                        if (window.showGiga) {
-                            window.showGiga()
-                                .then(() => { adsWatched++; setTimeout(watchAd, 500); })
-                                .catch(e => tg.showAlert("Ad could not be loaded. Please try again."));
+                        // --- Gigapub Ad Logic ---
+                        if (typeof showGiga === 'function') {
+                            showGiga()
+                                .then(() => { adsWatched++; setTimeout(watchAd, 300); })
+                                .catch(e => { tg.showAlert("Ad could not be loaded."); isTaskRunning = false; });
                         } else {
-                            // সিমুলেশন যদি showGiga কাজ না করে
                             console.warn("showGiga not found. Simulating ad watch.");
-                            adsWatched++; 
-                            setTimeout(watchAd, 500);
+                            adsWatched++; setTimeout(watchAd, 300);
                         }
-                    }
+                    } else { isTaskRunning = false; }
                 });
             };
             watchAd();
         }
 
-        // --- সমস্ত বাটন এবং নেভিগেশনের জন্য ইভেন্ট লিসেনার ---
-
-        // হোম পেজের বাটন
+        // --- Event Listeners ---
         document.getElementById('start-task-btn').addEventListener('click', async () => {
-            const isVpnConnected = await checkVPN();
-            if (isVpnConnected) {
-                generateTaskList();
-                showPage('task-list-page');
-            }
+            if (isTaskRunning) { tg.showAlert("Another task is already running."); return; }
+            if (await checkVPN()) { generateTaskList(); showPage('task-list-page'); }
         });
 
-        document.getElementById('spin-earn-btn').addEventListener('click', () => tg.showAlert("Spin & Earn feature is coming soon!"));
-        document.getElementById('scratch-card-btn').addEventListener('click', () => tg.showAlert("Scratch Card feature is coming soon!"));
-        document.getElementById('wallet-btn').addEventListener('click', () => document.querySelector('.nav-item[data-page="withdraw"]').click());
+        document.getElementById('spin-earn-btn').addEventListener('click', async () => {
+            if (isTaskRunning) { tg.showAlert("Another task is already running."); return; }
+            if (await checkVPN()) { startAdViewingFlow('Spin Task', adminSettings.spinLimit, adminSettings.spinReward); }
+        });
 
-        // টাস্ক লিস্ট পেজের বাটন
+        document.getElementById('scratch-card-btn').addEventListener('click', async () => {
+            if (isTaskRunning) { tg.showAlert("Another task is already running."); return; }
+            if (await checkVPN()) { startAdViewingFlow('Scratch Task', adminSettings.scratchLimit, adminSettings.scratchReward); }
+        });
+
+        document.getElementById('wallet-btn').addEventListener('click', () => {
+            if (isTaskRunning) { tg.showAlert("Please complete your current task first."); return; }
+            document.querySelector('.nav-item[data-page="withdraw"]').click();
+        });
+
         document.querySelector('.task-list').addEventListener('click', e => {
             if (e.target.classList.contains('task-start-btn')) {
-                startTaskFlow(e.target.dataset.taskId);
+                if (isTaskRunning) { tg.showAlert("Another task is already running."); return; }
+                startAdViewingFlow(`Task ${e.target.dataset.taskId}`, adminSettings.adsPerTask, adminSettings.taskReward);
             }
         });
 
-        // ব্যাক বাটন
-        document.querySelector('.back-btn').addEventListener('click', () => showPage('home-page'));
-
-        // নিচের নেভিগেশন মেন্যু
+        document.querySelector('.back-btn').addEventListener('click', () => {
+             if (isTaskRunning) { tg.showAlert("Please complete your current task first."); return; }
+             showPage('home-page');
+        });
+        
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
+                if (isTaskRunning) { tg.showAlert("Please complete your current task first."); return; }
                 const pageId = item.dataset.page + '-page';
                 showPage(pageId);
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -382,30 +264,25 @@
         });
 
         function loadWithdrawPage() {
-            // এই ফাংশনটি উইথড্র পেজের ডেটা লোড করার জন্য।
-            // আপাতত এটি খালি রাখা হলো, কারণ এই পেজের ডিজাইনটি আপনার নতুন নির্দেশে নেই।
-            // আপনি চাইলে এখানে আগের কোডের মতো উইথড্র ফর্ম এবং হিস্টোরি টেবিল যুক্ত করতে পারেন।
-             const historyBody = document.getElementById('withdraw-history-body');
+            const methodSelect = document.getElementById('payment-method');
+            methodSelect.innerHTML = '';
+            adminSettings.paymentMethods.forEach(method => methodSelect.innerHTML += `<option value="${method.name}">${method.name} (Min: ${method.min} TK)</option>`);
+            const historyBody = document.getElementById('withdraw-history-body');
             historyBody.innerHTML = '';
-            userData.withdrawHistory.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${item.method}</td><td>${item.amount.toFixed(2)}</td><td><span class="status-${item.status}">${item.status}</span></td>`;
-                historyBody.appendChild(row);
-            });
+            userData.withdrawHistory.forEach(item => historyBody.innerHTML += `<tr><td>${item.method}</td><td>${item.amount.toFixed(2)}</td><td><span class="status-${item.status}">${item.status}</span></td></tr>`);
         }
         
+        document.getElementById('submit-withdraw').addEventListener('click', () => tg.showAlert("Withdrawal request submitted (simulated)."));
+        
         function loadReferralPage() {
-            const referralLink = `https://t.me/${adminSettings.botUsername}?start=${userInfo.id}`;
-            document.getElementById('referral-link').textContent = referralLink;
+            document.getElementById('referral-link').textContent = `https://t.me/${adminSettings.botUsername}?start=${userInfo.id}`;
             document.getElementById('referral-notice').textContent = adminSettings.referralNotice;
         }
 
         document.getElementById('copy-referral-link').addEventListener('click', () => {
-            const link = document.getElementById('referral-link').textContent;
-            navigator.clipboard.writeText(link).then(() => tg.showAlert('Referral link copied!'));
+            navigator.clipboard.writeText(document.getElementById('referral-link').textContent).then(() => tg.showAlert('Referral link copied!'));
         });
 
-        // --- অ্যাপ প্রথমবার চালু হলে ---
         updateUI();
     });
     </script>
