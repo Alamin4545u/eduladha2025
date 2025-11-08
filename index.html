@@ -122,10 +122,33 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const tg = window.Telegram.WebApp;
+        
+        // --- ERROR সমাধান: টেলিগ্রামের বাইরে টেস্টিং এর জন্য ফলব্যাক অবজেক্ট ---
+        const tg = window.Telegram ? window.Telegram.WebApp : {
+            ready: () => console.log("Telegram WebApp not found, running in MOCK mode."),
+            expand: () => console.log("Expand called in MOCK mode."),
+            showAlert: (message) => alert(message),
+            showPopup: (params, callback) => {
+                const confirmed = confirm(params.message);
+                if (confirmed && callback && params.buttons && params.buttons.length > 0) {
+                    callback(params.buttons[0].id || 'ok');
+                } else if (!confirmed && callback) {
+                    callback(null);
+                }
+            },
+            closePopup: () => {},
+            initDataUnsafe: {
+                user: {
+                    first_name: "Test", last_name: "User", username: "testuser",
+                    id: 12345, photo_url: null
+                }
+            }
+        };
+
         tg.ready();
         tg.expand();
 
+        // --- অ্যাডমিন প্যানেল থেকে নিয়ন্ত্রিত হবে (সিমুলেশন) ---
         const adminSettings = {
             botUsername: "Bkash_earn_free_TkBot", vpnCountries: ['US', 'GB', 'CA'],
             adsPerTask: 10, taskReward: 1.00,
@@ -140,10 +163,7 @@
             withdrawHistory: [{ method: 'Bkash', amount: 50, status: 'Approved' }]
         };
         
-        const userInfo = tg.initDataUnsafe.user || {
-            first_name: "MD ALAMIN", last_name: "MIA", username: "sagorikamim", id: 12345678, photo_url: null
-        };
-        
+        const userInfo = tg.initDataUnsafe.user;
         let isTaskRunning = false;
 
         function showPage(pageId) {
@@ -203,7 +223,6 @@
                     buttons: [{ id: 'watch', text: 'Watch Ad' }]
                 }, (buttonId) => {
                     if (buttonId === 'watch') {
-                        // --- Gigapub Ad Logic ---
                         if (typeof showGiga === 'function') {
                             showGiga()
                                 .then(() => { adsWatched++; setTimeout(watchAd, 300); })
@@ -218,7 +237,6 @@
             watchAd();
         }
 
-        // --- Event Listeners ---
         document.getElementById('start-task-btn').addEventListener('click', async () => {
             if (isTaskRunning) { tg.showAlert("Another task is already running."); return; }
             if (await checkVPN()) { generateTaskList(); showPage('task-list-page'); }
