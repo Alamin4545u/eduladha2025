@@ -58,7 +58,7 @@
         .card h3, .card h2, .card h4 { margin-top: 0; }
         .referral-item { display: flex; align-items: center; background-color: #f0f8ff; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
         .referral-item span { margin-left: 10px; }
-        .referral-link { background-color: #e9ecef; padding: 12px; border-radius: 8px; word-wrap: break-word; font-family: monospace; margin-bottom: 15px; }
+        .referral-link { background-color: #e9ecef; padding: 12px; border-radius: 8px; word-wrap: break-word; font-family: monospace; margin-bottom: 15px; text-align: center; }
         
         .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 8px; background-color: var(--primary-color); color: white; font-size: 16px; font-weight: bold; text-align: center; cursor: pointer; box-sizing: border-box; text-decoration: none; }
         .btn-secondary { background-color: var(--btn-secondary-bg); }
@@ -76,7 +76,7 @@
         .page { display: none; }
         .page.active { display: block; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; background-color: var(--card-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 5px 0; border-top: 1px solid #eee; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; background-color: var(--card-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 5px 0; border-top: 1px solid #eee; z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--light-text); padding: 5px 15px; cursor: pointer; border-radius: 10px; transition: background-color 0.3s, color 0.3s; }
         .nav-item.active { color: var(--primary-color); }
         .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
@@ -110,7 +110,7 @@
             </div>
             <div class="card"><h3>দৈনিক অগ্রগতি</h3><p>আপনি আজ ৫০টি বিজ্ঞাপন সম্পূর্ণ করতে পারেন</p><div class="progress-bar"><div id="daily-progress-bar" class="progress-bar-inner"></div></div><small id="daily-progress-text">আজ: ০/৫০</small></div>
             <br>
-            <div class="card"><h3>রেফার করুন ও আয় করুন</h3><div class="referral-item"><span>🎁 বন্ধুরা পাবে <strong>২০ ৳</strong> বোনাস</span></div><div class="referral-item"><span>💵 আপনি প্রতি রেফারে <strong>৫ ৳</strong> পাবেন</span></div><p style="margin-top: 15px;">আপনার রেফারেল লিঙ্ক:</p><div class="referral-link" id="referral-link">লোড হচ্ছে...</div><button class="btn" id="share-btn">শেয়ার করুন</button></div>
+            <div class="card"><h3>রেফার করুন ও আয় করুন</h3><div class="referral-item"><span>🎁 বন্ধুরা পাবে <strong id="join-bonus-text">২০ ৳</strong> বোনাস</span></div><div class="referral-item"><span>💵 আপনি প্রতি রেফারে <strong id="ref-bonus-text">৫ ৳</strong> পাবেন</span></div><p style="margin-top: 15px;">আপনার রেফারেল লিঙ্ক:</p><div class="referral-link" id="referral-link">লোড হচ্ছে...</div><button class="btn" id="share-btn">শেয়ার করুন</button></div>
         </div>
     </div>
 
@@ -118,7 +118,7 @@
     <div id="tasks-page" class="page">
          <div class="container">
             <h2>টাস্ক সম্পূর্ণ করুন 🎁</h2>
-            <div class="task-card"><div class="task-header"><div><h4>বিজ্ঞাপন দেখুন</h4></div><span class="reward">৳০.৫০</span></div><div class="task-body"><p>পুরস্কার পেতে ছোট ভিডিও দেখুন।</p></div><button class="btn" id="watch-ad-btn">ভিডিও দেখুন</button></div>
+            <div class="task-card"><div class="task-header"><div><h4>বিজ্ঞাপন দেখুন</h4></div><span class="reward" id="ad-reward-text">৳০.৫০</span></div><div class="task-body"><p>পুরস্কার পেতে ছোট ভিডিও দেখুন।</p></div><button class="btn" id="watch-ad-btn">ভিডিও দেখুন</button></div>
             <div id="survey-tasks-container"></div>
         </div>
     </div>
@@ -132,7 +132,7 @@
     <div id="withdraw-page" class="page">
         <div class="container">
             <h2>টাকা উত্তোলন</h2>
-            <div class="card"><h4>উত্তোলনের প্রয়োজনীয়তা</h4><div><label>ন্যূনতম ১১০ ৳ ব্যালেন্স (<span id="balance-progress-text">০/১১০</span>)</label><div class="progress-bar"><div class="progress-bar-inner" id="balance-progress-bar" style="width: 0%;"></div></div></div></div>
+            <div class="card"><h4>উত্তোলনের প্রয়োজনীয়তা</h4><div><label>ন্যূনতম <span id="min-withdraw-req-text">১১০</span> ৳ ব্যালেন্স (<span id="balance-progress-text">০/১১০</span>)</label><div class="progress-bar"><div class="progress-bar-inner" id="balance-progress-bar" style="width: 0%;"></div></div></div></div>
             <div id="withdraw-requirement-notice" class="card" style="margin-top:15px; background-color: #ffebee; color: #c62828; text-align: center;">ন্যূনতম ১১০ ৳ প্রয়োজন।</div>
             <div class="card" style="margin-top: 15px;"><div class="form-group"><label for="payment-method">পেমেন্ট পদ্ধতি</label><div class="payment-method"><img id="payment-logo" src="" class="logo"><select id="payment-method"></select></div></div><div class="form-group"><label for="account-number">অ্যাকাউন্ট তথ্য</label><input type="text" id="account-number" placeholder="আপনার অ্যাকাউন্ট নম্বর লিখুন"></div><div class="form-group"><label for="amount">পরিমাণ (৳)</label><input type="number" id="amount" placeholder="ন্যূনতম: ১১০.০০, সর্বোচ্চ: ২০০০.০০"></div><button id="submit-withdraw-btn" class="btn">অনুরোধ জমা দিন</button></div>
             <div class="card" style="margin-top: 15px;"><h4>উত্তোলনের ইতিহাস</h4><div id="withdrawal-history"><p style="text-align: center; color: var(--light-text);">কোনো ইতিহাস পাওয়া যায়নি।</p></div></div>
@@ -182,7 +182,6 @@
 
         async function initializeApp() {
             try {
-                // Firebase থেকে অ্যাপ সেটিংস আনা
                 const settingsDoc = await db.collection('settings').doc('appConfig').get();
                 if (settingsDoc.exists) {
                     appSettings = settingsDoc.data();
@@ -195,8 +194,9 @@
                         surveyReward: 1.0,
                         surveyAdsNeeded: 10,
                         supportLink: 'https://t.me/your_support_contact',
-                        gigapubAppId: "4203", // ডিফল্ট Gigapub ID
-                        paymentMethods: [ // ডিফল্ট পেমেন্ট মেথড
+                        botUsername: 'YourBotUsername', // <-- আপনার বটের ইউজারনেম এখানে সেট করতে হবে
+                        gigapubAppId: "4203",
+                        paymentMethods: [
                             { name: 'বিকাশ', logo: 'https://i.ibb.co/L0f5bXN/bkash.png' },
                             { name: 'নগদ', logo: 'https://i.ibb.co/qYdG2sW/nagad.png' }
                         ]
@@ -217,6 +217,7 @@
                 console.error("Gigapub App ID is not configured.");
                 return;
             }
+            if (document.querySelector(`script[src*="${appId}"]`)) return; // স্ক্রিপ্ট আগে থেকে থাকলে আবার লোড না করা
             const script = document.createElement('script');
             script.src = `https://ad.gigapub.tech/script?id=${appId}`;
             script.onerror = () => console.error("Gigapub script failed to load.");
@@ -225,7 +226,7 @@
 
         function loadPaymentMethods(methods) {
             const select = document.getElementById('payment-method');
-            select.innerHTML = ''; // আগের অপশনগুলো মুছে ফেলা
+            select.innerHTML = '';
             methods.forEach(method => {
                 const option = document.createElement('option');
                 option.value = method.name;
@@ -272,9 +273,15 @@
             document.getElementById('total-earnings').textContent = `৳${(data.totalEarnings || 0).toFixed(2)}`;
             document.getElementById('referrals').textContent = data.referrals || 0;
             
-            const botUsername = 'CashBoxPro_Bot';
+            // --- রেফারেল লিঙ্ক সংশোধিত অংশ ---
+            const botUsername = appSettings.botUsername || 'YourBotUsername';
             const referralLink = `https://t.me/${botUsername}?startapp=${teleUser.id}`;
             document.getElementById('referral-link').textContent = referralLink;
+            // --- শেষ ---
+
+            document.getElementById('join-bonus-text').textContent = `${appSettings.joinBonus} ৳`;
+            document.getElementById('ref-bonus-text').textContent = `${appSettings.referralBonus} ৳`;
+            document.getElementById('ad-reward-text').textContent = `৳${(appSettings.adReward || 0).toFixed(2)}`;
             
             const adsWatched = data.adsWatchedToday || 0;
             document.getElementById('daily-progress-bar').style.width = `${(adsWatched / 50) * 100}%`;
@@ -288,6 +295,7 @@
              const minBalance = appSettings.minWithdraw || 110;
              const balanceProgress = Math.min((balance / minBalance) * 100, 100);
 
+             document.getElementById('min-withdraw-req-text').textContent = minBalance;
              document.getElementById('balance-progress-text').textContent = `${balance.toFixed(0)}/${minBalance}`;
              document.getElementById('balance-progress-bar').style.width = `${balanceProgress}%`;
              
@@ -339,10 +347,8 @@
                 tg.showAlert('বিজ্ঞাপন লোড করা যাচ্ছে না। অনুগ্রহ করে আবার চেষ্টা করুন।');
                 return;
             }
-
             try {
                 await window.showGiga();
-                // বিজ্ঞাপন সফলভাবে দেখা হলে
                 const userRef = db.collection('users').doc(String(teleUser.id));
                 await db.runTransaction(async (transaction) => {
                     const userDoc = await transaction.get(userRef);
@@ -350,22 +356,16 @@
                     
                     const newBalance = (userDoc.data().balance || 0) + reward;
                     const newTotalEarnings = (userDoc.data().totalEarnings || 0) + reward;
-                    
                     let updateData = { balance: newBalance, totalEarnings: newTotalEarnings };
-                    
-                    // onRewardCallback-এর মাধ্যমে অতিরিক্ত ডেটা আপডেট করা
                     if (onRewardCallback) {
                         updateData = { ...updateData, ...onRewardCallback(userDoc.data()) };
                     }
-                    
                     transaction.update(userRef, updateData);
                 });
-                
                 tg.HapticFeedback.notificationOccurred('success');
-                await loadUserData(); // UI আপডেট করার জন্য ডেটা রি-লোড
+                await loadUserData();
             } catch (e) {
                 console.error("Ad or transaction error: ", e);
-                // ব্যবহারকারী বিজ্ঞাপন বন্ধ করলে কোনো এলার্ট দেখানোর দরকার নেই
                 if(e && e.message !== "Ad was closed by user") {
                     tg.showAlert("একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
                 }
@@ -375,57 +375,45 @@
         document.getElementById('watch-ad-btn').addEventListener('click', () => {
             const reward = appSettings.adReward || 0.50;
             handleAdWatch(reward, (userData) => {
-                 // adsWatchedToday সংখ্যা বাড়ানো
                  return { adsWatchedToday: (userData.adsWatchedToday || 0) + 1 };
             });
         });
         
         async function handleSurveyAdWatch(event) {
             const button = event.currentTarget;
-            button.disabled = true; // ডাবল ক্লিক প্রতিরোধ করতে
+            button.disabled = true;
             const surveyId = button.dataset.surveyId;
             const adsNeeded = appSettings.surveyAdsNeeded || 10;
-            
             try {
                 await window.showGiga();
-                
                 const userRef = db.collection('users').doc(String(teleUser.id));
                 await db.runTransaction(async (transaction) => {
                     const userDoc = await transaction.get(userRef);
                     if (!userDoc.exists) throw "User not found";
-                    
                     const surveyProgress = userDoc.data().surveyProgress || {};
                     const currentProgress = (surveyProgress[`survey_${surveyId}`] || 0) + 1;
-                    
                     let updateData = { [`surveyProgress.survey_${surveyId}`]: currentProgress };
-
                     if (currentProgress >= adsNeeded) {
                         updateData.balance = (userDoc.data().balance || 0) + (appSettings.surveyReward || 1);
                         updateData.totalEarnings = (userDoc.data().totalEarnings || 0) + (appSettings.surveyReward || 1);
                     }
-                    
                     transaction.update(userRef, updateData);
                 });
-
                 tg.HapticFeedback.notificationOccurred('success');
                 await loadUserData();
-                
             } catch (e) {
                 console.error("Survey ad error:", e);
                  if(e && e.message !== "Ad was closed by user") {
                     tg.showAlert("একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
                 }
             } finally {
-                // একটি ছোট ডিলে পর বাটন আবার এনাবল করা
                 setTimeout(() => {
-                    // UI আপডেটের পর বাটন স্টেট চেক করে এনাবল করা
                     const newProgress = (currentUserData.surveyProgress || {})[`survey_${surveyId}`] || 0;
                     if(newProgress < adsNeeded) button.disabled = false;
                 }, 500);
             }
         }
 
-        // পেজ পরিবর্তন
         const navItems = document.querySelectorAll('.nav-item');
         navItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -437,19 +425,16 @@
             });
         });
 
-        // শেয়ার বাটন
         document.getElementById('share-btn').addEventListener('click', () => {
             const referralLink = document.getElementById('referral-link').textContent;
             const shareText = `💰 ক্যাশ বক্স প্রো-তে যোগ দিন এবং আয় করুন!\n\nআমার লিঙ্কে যোগ দিলে আপনি ${appSettings.joinBonus} ৳ বোনাস পাবেন!\n\nলিঙ্ক:\n${referralLink}`;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`);
         });
 
-        // সাপোর্ট বাটন
         document.getElementById('contact-support-btn').addEventListener('click', () => {
             tg.openTelegramLink(appSettings.supportLink);
         });
         
-        // পেমেন্ট পদ্ধতি UI আপডেট
         const paymentMethodSelect = document.getElementById('payment-method');
         paymentMethodSelect.addEventListener('change', updatePaymentMethodUI);
 
@@ -460,34 +445,26 @@
             document.getElementById('account-number').placeholder = `আপনার ${selectedOption.textContent} নম্বর লিখুন`;
         }
         
-        // উইথড্র অনুরোধ জমা
         document.getElementById('submit-withdraw-btn').addEventListener('click', async (e) => {
-             e.currentTarget.disabled = true; // ডাবল সাবমিট প্রতিরোধ
+             e.currentTarget.disabled = true;
              const method = document.getElementById('payment-method').value;
              const number = document.getElementById('account-number').value;
              const amount = parseFloat(document.getElementById('amount').value);
              
              if (!number || !amount) {
                  tg.showAlert('অনুগ্রহ করে সমস্ত তথ্য পূরণ করুন।');
-                 e.currentTarget.disabled = false;
-                 return;
+                 e.currentTarget.disabled = false; return;
              }
              if (amount < appSettings.minWithdraw) {
                  tg.showAlert(`ন্যূনতম উত্তোলনের পরিমাণ ${appSettings.minWithdraw} ৳।`);
-                 e.currentTarget.disabled = false;
-                 return;
+                 e.currentTarget.disabled = false; return;
              }
-             
              const userRef = db.collection('users').doc(String(teleUser.id));
              const doc = await userRef.get();
-             const currentBalance = doc.data().balance;
-             
-             if (amount > currentBalance) {
+             if (amount > doc.data().balance) {
                  tg.showAlert('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।');
-                 e.currentTarget.disabled = false;
-                 return;
+                 e.currentTarget.disabled = false; return;
              }
-             
              await db.collection('withdrawals').add({
                  userId: teleUser.id,
                  username: teleUser.username,
@@ -497,9 +474,7 @@
                  status: 'pending',
                  timestamp: firebase.firestore.FieldValue.serverTimestamp()
              });
-             
-             await userRef.update({ balance: currentBalance - amount });
-             
+             await userRef.update({ balance: doc.data().balance - amount });
              tg.showAlert('আপনার উত্তোলন অনুরোধ সফলভাবে জমা দেওয়া হয়েছে।');
              await loadUserData();
              document.getElementById('account-number').value = '';
