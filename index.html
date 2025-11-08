@@ -229,7 +229,7 @@
                 document.getElementById('allowed-countries-list').textContent = appSettings.allowedCountries;
                 document.getElementById('vpn-modal').style.display = 'flex';
                 return false;
-            } catch (error) { console.error("VPN check error:", error); tg.showAlert("আপনার ইন্টারনেট সংযোগ যাচাই করা যাচ্ছে না।"); return false; }
+            } catch (error) { console.error("VPN check error:", error); tg.showAlert("আপনার VPN চালু নেই VPN এর US,UK,CA কান্ট্রি চালু করুন।"); return false; }
         }
 
         async function handleAdWatch(isSurvey, reward, surveyId = null) {
