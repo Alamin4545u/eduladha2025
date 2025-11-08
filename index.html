@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Reward Center</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
@@ -11,96 +11,111 @@
             --secondary-accent: #4158D0; --text-color: #ffffff; --text-muted: #a9a9c4;
             --success-color: #00b894; --error-color: #d63031;
         }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color);
             margin: 0; padding: 20px; text-align: center; display: flex; justify-content: center;
-            align-items: center; min-height: 100vh; box-sizing: border-box;
+            align-items: center; min-height: 100vh;
         }
-        /* Views */
-        .view { display: none; width: 100%; max-width: 400px; }
-        #main-view { display: block; } /* Show main view by default */
-        
+        .view { display: none; width: 100%; max-width: 420px; }
+        #main-view { display: block; }
         .container {
-            background-color: var(--card-color); border-radius: 20px; padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); box-sizing: border-box;
+            background-color: var(--card-color); border-radius: 20px; padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
         }
-        .profile-header { display: flex; align-items: center; margin-bottom: 25px; }
-        .profile-header img { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; background-color: var(--background-color); }
-        .profile-header .welcome-text { text-align: left; }
-        .profile-header h2 { margin: 0; font-size: 1.2em; font-weight: 600; }
-        .profile-header p { margin: 0; font-size: 0.9em; color: var(--text-muted); }
-        .balance-card { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; text-align: center; }
-        .balance-card h3 { margin: 0; font-size: 1em; font-weight: 400; opacity: 0.8; }
-        .balance-card .balance-amount { font-size: 2.8em; font-weight: 700; margin: 5px 0 0; }
-        button { border: none; color: white; padding: 16px; font-size: 16px; font-weight: 600; border-radius: 12px; cursor: pointer; width: 100%; transition: all 0.3s ease; font-family: 'Poppins', sans-serif; }
-        #start-task-btn { background: linear-gradient(90deg, #00b894, #00cec9); margin-bottom: 12px; }
-        .withdraw-button { background: linear-gradient(90deg, #ff7675, #d63031); }
-        #status { margin-top: 15px; font-weight: 500; color: var(--text-muted); min-height: 20px; }
+        .profile-header { display: flex; align-items: center; margin-bottom: 18px; text-align: left; }
+        .profile-header img { width: 56px; height: 56px; border-radius: 50%; margin-right: 14px; object-fit: cover; background: #111; }
+        .profile-header .welcome-text h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+        .profile-header .welcome-text p { margin: 2px 0 0; color: var(--text-muted); font-size: 0.9rem; }
 
-        /* Task View Styles */
-        #task-view .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        #task-view .header h2 { margin: 0; font-size: 1.5em; }
-        #back-btn { font-size: 1.5em; cursor: pointer; background: none; width: auto; padding: 0; }
-        #task-progress { background-color: #1e1e2f; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-        #task-list { max-height: 350px; overflow-y: auto; padding-right: 10px; }
-        .task-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-        .task-item span { font-weight: 600; }
-        .task-item button { width: auto; padding: 8px 18px; font-size: 14px; background: var(--primary-accent); }
-        .task-item button:disabled { background: var(--success-color); cursor: default; }
+        .balance-card { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); color: white; padding: 20px; border-radius: 14px; margin-bottom: 18px; text-align: center; }
+        .balance-card h3 { margin: 0; font-size: 0.95rem; font-weight: 500; opacity: 0.9; }
+        .balance-card .balance-amount { font-size: 2.4rem; font-weight: 700; margin-top: 6px; }
 
-        /* Loading Overlay */
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 30, 47, 0.8); backdrop-filter: blur(5px); z-index: 999; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        .loader { border: 4px solid var(--card-color); border-top: 4px solid var(--primary-accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        #loading-overlay p { margin-top: 15px; font-size: 1.1em; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        button { border: none; color: white; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; width: 100%; transition: all 0.25s ease; font-family: 'Poppins', sans-serif; }
+        #start-task-btn { background: linear-gradient(90deg, #00b894, #00cec9); margin-bottom: 10px; }
+        .withdraw-button { background: linear-gradient(90deg, #ff7675, #d63031); margin-bottom: 6px; }
+        #status { margin-top: 10px; font-weight: 500; color: var(--text-muted); min-height: 20px; font-size: 0.95rem; }
+
+        /* Task view */
+        #task-view .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        #task-view .header h2 { margin: 0; font-size: 1.2rem; }
+        #back-btn { font-size: 1.4rem; cursor: pointer; background: none; border: none; color: var(--text-color); padding: 0; }
+
+        #task-progress { background-color: #1e1e2f; border-radius: 10px; padding: 12px; margin-bottom: 12px; color: var(--text-muted); font-weight: 600; }
+        #task-list { max-height: 360px; overflow-y: auto; padding-right: 6px; }
+        .task-item { display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.04); padding:12px; border-radius:10px; margin-bottom:8px; }
+        .task-item span { font-weight:600; }
+        .task-item button { width:auto; padding:8px 16px; font-size:14px; border-radius:10px; background:var(--primary-accent); }
+        .task-item button:disabled { background: var(--success-color); cursor: default; color: #042; }
+
+        /* Loading overlay */
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(30,30,47,0.82); backdrop-filter: blur(4px); z-index: 9999; display: none; justify-content:center; align-items:center; flex-direction:column; padding:20px; }
+        .loader { border: 4px solid rgba(255,255,255,0.08); border-top: 4px solid var(--primary-accent); border-radius:50%; width:46px; height:46px; animation: spin 1s linear infinite; }
+        #loading-overlay p { margin-top:12px; color: #fff; font-weight:600; }
+        @keyframes spin { 0%{ transform: rotate(0deg);} 100%{ transform: rotate(360deg);} }
+
+        /* small screens tweaks */
+        @media (max-width:420px) {
+            body { padding: 12px; }
+            .container { padding: 18px; }
+            .balance-card .balance-amount { font-size: 2rem; }
+        }
     </style>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
+
+    <!-- Optional ad script (kept as in original) -->
+    <script src="https://ad.gigapub.tech/script?id=4203" async></script>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="loader"></div>
+    <div id="loading-overlay" role="status" aria-hidden="true">
+        <div class="loader" aria-hidden="true"></div>
         <p id="loading-text">Verifying your location...</p>
     </div>
 
-    <!-- Main View: Wallet -->
+    <!-- Main View -->
     <div id="main-view" class="view">
         <div class="container">
             <header class="profile-header">
-                <img src="https://telegram.org/img/t_logo.png" alt="Avatar">
+                <img id="avatar" src="https://telegram.org/img/t_logo.png" alt="Avatar">
                 <div class="welcome-text">
                     <h2 id="welcome-name">Welcome!</h2>
                     <p>Let's earn some rewards.</p>
                 </div>
             </header>
-            <section class="balance-card">
+
+            <section class="balance-card" aria-live="polite">
                 <h3>Current Balance</h3>
                 <p class="balance-amount" id="balance">Loading...</p>
             </section>
-            <button id="start-task-btn">Start Task</button>
-            <button class="withdraw-button" onclick="requestWithdrawal()">Request Withdrawal</button>
-            <p id="status"></p>
+
+            <button id="start-task-btn" aria-label="Start tasks">Start Task</button>
+            <button class="withdraw-button" id="withdraw-btn">Request Withdrawal</button>
+            <p id="status" role="status"></p>
         </div>
     </div>
 
     <!-- Task View -->
-    <div id="task-view" class="view">
+    <div id="task-view" class="view" aria-hidden="true">
         <div class="container">
             <div class="header">
-                <span id="back-btn" onclick="showMainView()">&#8592;</span>
+                <button id="back-btn" onclick="showMainView()" aria-label="Back to wallet">&#8592;</button>
                 <h2>Daily Tasks</h2>
+                <div style="width:32px"></div>
             </div>
-            <div id="task-progress">Tasks Completed: <span id="completed-count">0</span> / <span id="total-count">0</span></div>
-            <div id="task-list"></div>
+
+            <div id="task-progress">Tasks Completed: <strong id="completed-count">0</strong> / <strong id="total-count">0</strong></div>
+            <div id="task-list" aria-live="polite"></div>
         </div>
     </div>
 
+    <!-- Firebase / Telegram SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <script>
-        // --- CONFIGURATION ---
+        // ---------------- CONFIG ----------------
         const firebaseConfig = {
             apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
             authDomain: "comexaple.firebaseapp.com",
@@ -110,69 +125,95 @@
             appId: "1:799294329351:web:0bb9620bc1d227a29650a2",
             measurementId: "G-LRBREF5QV6"
         };
-        const totalTasks = 20; // <-- টাস্কের সংখ্যা এখানে পরিবর্তন করুন
-        const allowedCountries = ['US', 'GB', 'CA']; // United States, United Kingdom, Canada
-        const taskReward = 15;
 
-        // --- INITIALIZATION ---
+        const totalTasks = 20; // টাস্ক সংখ্যা
+        const allowedCountries = ['US', 'GB', 'CA']; // অনুমোদিত দেশগুলো
+        const taskReward = 15; // প্রতিটি টাস্ক রিওয়ার্ড
+
+        // ---------------- INIT ----------------
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        let currentUser = null, userBalance = 0, tasksCompletedToday = 0;
 
-        // --- DOM ELEMENTS ---
+        let currentUser = null;
+        let userBalance = 0;
+        let tasksCompletedToday = 0;
+        let userDocRef = null;
+
+        // DOM
         const mainView = document.getElementById('main-view');
         const taskView = document.getElementById('task-view');
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
+        const balanceEl = document.getElementById('balance');
+        const statusEl = document.getElementById('status');
 
-        // --- APP LOGIC ---
         window.addEventListener('load', () => {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-            currentUser = Telegram.WebApp.initDataUnsafe?.user;
-            
+            try {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+            } catch (e) {
+                console.warn('Telegram WebApp not available in this environment.');
+            }
+
+            currentUser = Telegram?.WebApp?.initDataUnsafe?.user || null;
+
             if (currentUser) {
-                document.getElementById('welcome-name').innerText = `Welcome, ${currentUser.first_name}!`;
+                document.getElementById('welcome-name').innerText = `Welcome, ${currentUser.first_name || 'Guest'}!`;
+                if (currentUser.photo_url) document.getElementById('avatar').src = currentUser.photo_url;
                 loadUserData(currentUser.id.toString());
             } else {
-                document.getElementById('balance').innerText = 'Error';
-                document.getElementById('status').innerText = 'Please open this app inside Telegram.';
+                balanceEl.innerText = 'N/A';
+                statusEl.innerText = 'Please open this app inside Telegram.';
             }
 
             document.getElementById('start-task-btn').addEventListener('click', checkVpnAndStartTasks);
+            document.getElementById('withdraw-btn').addEventListener('click', requestWithdrawal);
         });
 
+        // ---------------- VPN CHECK (HTTPS API) ----------------
         async function checkVpnAndStartTasks() {
-            loadingOverlay.style.display = 'flex';
+            showLoading('Verifying your location...');
             try {
-                const response = await fetch('http://ip-api.com/json');
-                const data = await response.json();
-                
-                if (data.status === 'success' && allowedCountries.includes(data.countryCode)) {
-                    loadingOverlay.style.display = 'none';
+                // Use a secure HTTPS geo-IP service (ipapi.co). Returns country_code
+                const resp = await fetch('https://ipapi.co/json/');
+                if (!resp.ok) throw new Error('Location service response not OK: ' + resp.status);
+                const data = await resp.json();
+                console.log('GeoIP data:', data);
+
+                const countryCode = (data && (data.country_code || data.country)) ? (data.country_code || data.country) : null;
+                if (countryCode && allowedCountries.includes(countryCode.toUpperCase())) {
+                    hideLoading();
                     showTaskView();
                 } else {
-                    loadingOverlay.style.display = 'none';
-                    alert(`Access Denied. Please connect to a VPN in the US, UK, or Canada to start tasks.`);
+                    hideLoading();
+                    alert(`Access Denied. Detected country: ${countryCode || 'Unknown'}. Please connect to a VPN in the US, UK, or Canada to start tasks.`);
                 }
-            } catch (error) {
-                loadingOverlay.style.display = 'none';
-                alert('Could not verify your location. Please check your internet connection.');
+            } catch (err) {
+                console.error('VPN/location check failed:', err);
+                hideLoading();
+                // Friendly fallback message
+                alert('Could not verify your location. Please check your internet connection or VPN and try again.');
             }
         }
 
+        // ---------------- UI: switch views ----------------
         function showMainView() {
             taskView.style.display = 'none';
             mainView.style.display = 'block';
-            document.getElementById('balance').innerText = `${userBalance} Points`;
+            taskView.setAttribute('aria-hidden', 'true');
+            mainView.setAttribute('aria-hidden', 'false');
+            balanceEl.innerText = `${userBalance} Points`;
         }
 
         function showTaskView() {
             mainView.style.display = 'none';
             taskView.style.display = 'block';
+            mainView.setAttribute('aria-hidden', 'true');
+            taskView.setAttribute('aria-hidden', 'false');
             generateTasks();
         }
-        
+
+        // ---------------- Tasks ----------------
         function generateTasks() {
             const taskList = document.getElementById('task-list');
             taskList.innerHTML = '';
@@ -183,77 +224,165 @@
                 const isCompleted = i <= tasksCompletedToday;
                 const taskItem = document.createElement('div');
                 taskItem.className = 'task-item';
+                const btnText = isCompleted ? 'Completed' : 'View Ad';
+                const disabledAttr = isCompleted ? 'disabled' : '';
                 taskItem.innerHTML = `
                     <span>Task #${i}</span>
-                    <button data-task-id="${i}" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'Completed' : 'View Ad'}</button>
+                    <button data-task-id="${i}" ${disabledAttr}>${btnText}</button>
                 `;
                 taskList.appendChild(taskItem);
             }
-            // Add click listeners to new buttons
+
             taskList.querySelectorAll('button:not(:disabled)').forEach(button => {
                 button.addEventListener('click', (e) => performTask(e.target));
             });
         }
-        
-        function performTask(buttonElement) {
-            loadingText.innerText = 'Loading Ad...';
-            loadingOverlay.style.display = 'flex';
-            
-            if (window.showGiga) {
-                window.showGiga().then(async () => {
+
+        async function performTask(buttonElement) {
+            showLoading('Loading Ad...');
+            try {
+                // window.showGiga presumably provided by ad script
+                if (typeof window.showGiga === 'function') {
+                    await window.showGiga();
+                    // on success
                     userBalance += taskReward;
                     tasksCompletedToday++;
 
-                    const userRef = db.collection('users').doc(currentUser.id.toString());
-                    await userRef.update({
-                        balance: userBalance,
-                        lastTaskDate: new Date().toISOString().slice(0, 10) // YYYY-MM-DD format
-                    });
-                    
+                    // update firestore with transactional safety
+                    if (userDocRef) {
+                        await userDocRef.set({
+                            balance: userBalance,
+                            lastTaskDate: getTodayString(),
+                            tasksCompletedToday: tasksCompletedToday,
+                            username: currentUser.username || null
+                        }, { merge: true });
+                    }
+
                     buttonElement.innerText = 'Completed';
                     buttonElement.disabled = true;
                     document.getElementById('completed-count').innerText = tasksCompletedToday;
-                    loadingOverlay.style.display = 'none';
-
-                }).catch(e => {
-                    loadingOverlay.style.display = 'none';
-                    alert('Ad not available right now. Please try again.');
-                });
-            } else {
-                 loadingOverlay.style.display = 'none';
-                 alert('Ad service is not ready. Please refresh.');
+                    balanceEl.innerText = `${userBalance} Points`;
+                    hideLoading();
+                } else {
+                    hideLoading();
+                    alert('Ad service is not ready. Please refresh the page or try again later.');
+                }
+            } catch (err) {
+                console.error('Ad/display error:', err);
+                hideLoading();
+                alert('Ad not available right now. Please try again.');
             }
         }
-        
+
+        // ---------------- Firestore: load/save user ----------------
         async function loadUserData(userId) {
-            const userRef = db.collection('users').doc(userId);
             try {
-                const doc = await userRef.get();
+                userDocRef = db.collection('users').doc(userId);
+                const doc = await userDocRef.get();
+                const today = getTodayString();
+
                 if (doc.exists) {
-                    const data = doc.data();
-                    userBalance = data.balance || 0;
-                    const today = new Date().toISOString().slice(0, 10);
-                    // Reset daily tasks if last task was on a different day
-                    if (data.lastTaskDate !== today) {
-                        tasksCompletedToday = 0;
+                    const data = doc.data() || {};
+                    userBalance = Number(data.balance || 0);
+
+                    // Restore tasksCompletedToday only if lastTaskDate is today
+                    if (data.lastTaskDate === today && typeof data.tasksCompletedToday === 'number') {
+                        tasksCompletedToday = data.tasksCompletedToday;
                     } else {
-                        // This part is a simplification. A more robust solution would store the count.
-                        // For now, we assume if the date is today, all tasks are done. A better approach would be to save `tasksCompletedToday` in Firebase.
+                        tasksCompletedToday = 0;
+                        // Persist reset so server and client stay in sync
+                        await userDocRef.set({ lastTaskDate: today, tasksCompletedToday: 0 }, { merge: true });
                     }
                 } else {
                     userBalance = 0;
                     tasksCompletedToday = 0;
-                    await userRef.set({ balance: 0, username: currentUser.username || 'N/A', joinedAt: new Date() });
+                    // create user doc
+                    await userDocRef.set({
+                        balance: 0,
+                        username: currentUser.username || null,
+                        joinedAt: new Date().toISOString(),
+                        lastTaskDate: today,
+                        tasksCompletedToday: 0
+                    });
                 }
-                document.getElementById('balance').innerText = `${userBalance} Points`;
-            } catch (error) {
-                console.error("Error loading data:", error);
-                document.getElementById('status').innerText = 'Failed to load data.';
+
+                balanceEl.innerText = `${userBalance} Points`;
+                statusEl.innerText = '';
+            } catch (err) {
+                console.error('Error loading user data:', err);
+                statusEl.innerText = 'Failed to load data. Try again later.';
+                balanceEl.innerText = 'Error';
             }
         }
 
+        // ---------------- Withdrawal (placeholder) ----------------
         async function requestWithdrawal() {
-            // This function remains the same
+            // Simple placeholder flow — তোমার প্রকৃত পেমেন্ট লজিক এখানে সংযুক্ত করো।
+            if (!currentUser) {
+                alert('User not detected. Open inside Telegram.');
+                return;
+            }
+            if (userBalance <= 0) {
+                alert('Insufficient balance for withdrawal.');
+                return;
+            }
+
+            // Example: create a withdrawal request record
+            try {
+                showLoading('Submitting withdrawal request...');
+                const req = {
+                    userId: currentUser.id.toString(),
+                    username: currentUser.username || null,
+                    amount: userBalance,
+                    requestedAt: new Date().toISOString(),
+                    status: 'pending'
+                };
+                await db.collection('withdrawals').add(req);
+
+                // reset balance locally & in firestore (or implement admin approval flow)
+                userBalance = 0;
+                tasksCompletedToday = 0;
+                if (userDocRef) {
+                    await userDocRef.set({ balance: 0, tasksCompletedToday: 0, lastWithdrawalRequestedAt: new Date().toISOString() }, { merge: true });
+                }
+
+                balanceEl.innerText = `${userBalance} Points`;
+                document.getElementById('completed-count').innerText = tasksCompletedToday;
+                hideLoading();
+                alert('Withdrawal requested. Our team will process it shortly.');
+            } catch (err) {
+                console.error('Withdrawal request failed:', err);
+                hideLoading();
+                alert('Could not submit withdrawal request. Try again later.');
+            }
+        }
+
+        // ---------------- Helpers ----------------
+        function getTodayString() {
+            return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        }
+
+        function showLoading(text) {
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.setAttribute('aria-hidden', 'false');
+            loadingText.innerText = text || 'Loading...';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+            loadingOverlay.setAttribute('aria-hidden', 'true');
+        }
+
+        // Optional: small defensive fallback so UI won't break if ad script doesn't provide showGiga()
+        // You can remove this after ensuring ad provider works.
+        if (!window.showGiga) {
+            window.showGiga = function() {
+                return new Promise((resolve, reject) => {
+                    // temporary fake ad behavior for debug: resolves after 1s
+                    console.warn('showGiga not found — using debug fallback (no real ad shown). Replace with real ad provider.');
+                    setTimeout(resolve, 1000);
+                });
+            };
         }
     </script>
 </body>
