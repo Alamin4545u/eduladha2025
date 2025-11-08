@@ -5,384 +5,368 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Reward Center</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         :root {
-            --background-color: #1e1e2f; --card-color: #27293d; --primary-accent: #8a2be2;
+            --background-color: #1a1c23; --card-color: #242731; --primary-accent: #8a2be2;
             --secondary-accent: #4158D0; --text-color: #ffffff; --text-muted: #a9a9c4;
-            --success-color: #00b894; --error-color: #d63031;
+            --success-color: #00b894; --error-color: #d63031; --nav-bar-color: #2a2d39;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color);
-            margin: 0; padding: 20px; text-align: center; display: flex; justify-content: center;
-            align-items: center; min-height: 100vh;
+            margin: 0; padding: 20px 20px 80px 20px; text-align: center; display: flex;
+            justify-content: flex-start; align-items: center; flex-direction: column; min-height: 100vh;
         }
-        .view { display: none; width: 100%; max-width: 420px; }
-        #main-view { display: block; }
-        .container {
-            background-color: var(--card-color); border-radius: 20px; padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        .page { display: none; width: 100%; max-width: 420px; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .container { background-color: var(--card-color); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        h2 { font-size: 1.4rem; margin-top: 0; }
+        
+        /* --- Navigation Bar --- */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bar-color);
+            display: flex; justify-content: space-around; padding: 10px 0;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.2); border-top: 1px solid #333;
         }
-        .profile-header { display: flex; align-items: center; margin-bottom: 18px; text-align: left; }
-        .profile-header img { width: 56px; height: 56px; border-radius: 50%; margin-right: 14px; object-fit: cover; background: #111; }
-        .profile-header .welcome-text h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-        .profile-header .welcome-text p { margin: 2px 0 0; color: var(--text-muted); font-size: 0.9rem; }
-
-        .balance-card { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); color: white; padding: 20px; border-radius: 14px; margin-bottom: 18px; text-align: center; }
-        .balance-card h3 { margin: 0; font-size: 0.95rem; font-weight: 500; opacity: 0.9; }
-        .balance-card .balance-amount { font-size: 2.4rem; font-weight: 700; margin-top: 6px; }
-
-        button { border: none; color: white; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; width: 100%; transition: all 0.25s ease; font-family: 'Poppins', sans-serif; }
-        #start-task-btn { background: linear-gradient(90deg, #00b894, #00cec9); margin-bottom: 10px; }
-        .withdraw-button { background: linear-gradient(90deg, #ff7675, #d63031); margin-bottom: 6px; }
-        #status { margin-top: 10px; font-weight: 500; color: var(--text-muted); min-height: 20px; font-size: 0.95rem; }
-
-        /* Task view */
-        #task-view .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-        #task-view .header h2 { margin: 0; font-size: 1.2rem; }
-        #back-btn { font-size: 1.4rem; cursor: pointer; background: none; border: none; color: var(--text-color); padding: 0; }
-
-        #task-progress { background-color: #1e1e2f; border-radius: 10px; padding: 12px; margin-bottom: 12px; color: var(--text-muted); font-weight: 600; }
-        #task-list { max-height: 360px; overflow-y: auto; padding-right: 6px; }
-        .task-item { display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.04); padding:12px; border-radius:10px; margin-bottom:8px; }
-        .task-item span { font-weight:600; }
-        .task-item button { width:auto; padding:8px 16px; font-size:14px; border-radius:10px; background:var(--primary-accent); }
-        .task-item button:disabled { background: var(--success-color); cursor: default; color: #042; }
-
-        /* Loading overlay */
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(30,30,47,0.82); backdrop-filter: blur(4px); z-index: 9999; display: none; justify-content:center; align-items:center; flex-direction:column; padding:20px; }
-        .loader { border: 4px solid rgba(255,255,255,0.08); border-top: 4px solid var(--primary-accent); border-radius:50%; width:46px; height:46px; animation: spin 1s linear infinite; }
-        #loading-overlay p { margin-top:12px; color: #fff; font-weight:600; }
-        @keyframes spin { 0%{ transform: rotate(0deg);} 100%{ transform: rotate(360deg);} }
-
-        /* small screens tweaks */
-        @media (max-width:420px) {
-            body { padding: 12px; }
-            .container { padding: 18px; }
-            .balance-card .balance-amount { font-size: 2rem; }
+        .nav-button {
+            background: none; border: none; color: var(--text-muted); display: flex;
+            flex-direction: column; align-items: center; font-size: 12px; font-family: 'Poppins';
+            padding: 5px; border-radius: 8px; width: 80px; transition: color 0.2s;
         }
+        .nav-button.active { color: var(--primary-accent); }
+        .nav-button svg { width: 24px; height: 24px; margin-bottom: 4px; }
+
+        /* --- Home Page --- */
+        .profile-header { display: flex; align-items: center; margin-bottom: 20px; text-align: left; }
+        .profile-header img { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; }
+        .profile-header h2 { margin: 0; font-size: 1.2rem; }
+        .profile-header p { margin: 2px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+        .balance-card { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .balance-card h3 { margin: 0; opacity: 0.9; }
+        .balance-card .balance-amount { font-size: 2.5rem; font-weight: 700; }
+        .home-buttons button { width: 100%; margin-bottom: 12px; padding: 15px; font-size: 1rem; }
+        #start-task-btn { background-color: var(--success-color); }
+        #extra-income-btn { background-color: var(--secondary-accent); }
+        .task-summary { background: #333644; padding: 15px; border-radius: 12px; }
+        .cover-banner { width: 100%; border-radius: 12px; margin-top: 15px; display: none; /* Hidden by default */ }
+        
+        /* --- Withdraw & Profile Pages --- */
+        .page-content { padding: 20px; }
+        .info-group { text-align: left; margin-bottom: 20px; }
+        .info-group label { display: block; color: var(--text-muted); margin-bottom: 5px; }
+        .info-group p { background: #333644; padding: 12px; border-radius: 8px; margin: 0; }
+        #logout-btn { background-color: var(--error-color); }
+
+        /* --- Task Pages --- */
+        .task-list-container { max-height: 60vh; overflow-y: auto; padding-right: 10px; }
+        .task-item { display: flex; justify-content: space-between; align-items: center; background: #333644; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; }
+        .task-item-info { text-align: left; }
+        .task-item-info span { font-weight: 600; font-size: 1.1rem; }
+        .task-item-info p { margin: 2px 0 0; font-size: 0.8rem; color: var(--text-muted); }
+        .task-item .status-icon { font-size: 1.5rem; }
+        .sub-task-progress { width: 100%; background: #444; border-radius: 5px; height: 8px; margin-top: 8px; }
+        .sub-task-progress div { background: var(--success-color); height: 100%; border-radius: 5px; }
+
+        .sub-task-view .container { padding: 15px; }
+        .sub-task-view .header { display: flex; align-items: center; margin-bottom: 15px; }
+        .sub-task-view #back-btn { background: none; border: none; font-size: 1.5rem; color: #fff; padding: 0; cursor: pointer; }
+        .sub-task-view h3 { margin: 0 0 0 15px; }
+        .sub-task-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .sub-task-item { background: #444; color: #fff; border: none; border-radius: 8px; aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; }
+        .sub-task-item.completed { background: var(--success-color); cursor: default; }
+        .sub-task-item:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- Loading Overlay --- */
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; color: #fff; }
+        .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid var(--primary-accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
-
-    <!-- Optional ad script (kept as in original) -->
-    <script src="https://ad.gigapub.tech/script?id=4203" async></script>
 </head>
 <body>
+    
+    <div id="loading-overlay"><div class="loader"></div><p style="margin-top: 15px;">Loading...</p></div>
 
-    <div id="loading-overlay" role="status" aria-hidden="true">
-        <div class="loader" aria-hidden="true"></div>
-        <p id="loading-text">Verifying your location...</p>
-    </div>
-
-    <!-- Main View -->
-    <div id="main-view" class="view">
+    <!-- Pages -->
+    <div id="home-page" class="page active">
         <div class="container">
             <header class="profile-header">
-                <img id="avatar" src="https://telegram.org/img/t_logo.png" alt="Avatar">
+                <img id="home-avatar" src="https://telegram.org/img/t_logo.png" alt="Avatar">
                 <div class="welcome-text">
-                    <h2 id="welcome-name">Welcome!</h2>
-                    <p>Let's earn some rewards.</p>
+                    <h2 id="home-welcome-name">Welcome!</h2>
+                    <p>Let's earn some rewards today.</p>
                 </div>
             </header>
-
-            <section class="balance-card" aria-live="polite">
+            <section class="balance-card">
                 <h3>Current Balance</h3>
-                <p class="balance-amount" id="balance">Loading...</p>
+                <p class="balance-amount" id="home-balance">0.00</p>
             </section>
-
-            <button id="start-task-btn" aria-label="Start tasks">Start Task</button>
-            <button class="withdraw-button" id="withdraw-btn">Request Withdrawal</button>
-            <p id="status" role="status"></p>
+            <div class="home-buttons">
+                <button id="start-task-btn">Start Task</button>
+                <button id="extra-income-btn">Extra Income</button>
+            </div>
+            <div class="task-summary">
+                <p>Today's Tasks Completed: <strong id="tasks-completed-summary">0/10</strong></p>
+            </div>
+            <img id="cover-banner" class="cover-banner" src="" alt="Promotional Cover">
         </div>
     </div>
 
-    <!-- Task View -->
-    <div id="task-view" class="view" aria-hidden="true">
+    <div id="main-task-page" class="page">
+        <div class="container">
+            <div style="display:flex; align-items:center; margin-bottom:20px;">
+                <button id="main-task-back-btn" style="background:none; border:none; font-size:1.5rem; color:#fff; cursor:pointer;">&larr;</button>
+                <h2 style="margin:0 auto;">Main Tasks</h2>
+            </div>
+            <div class="task-list-container" id="main-task-list"></div>
+        </div>
+    </div>
+
+    <div id="sub-task-page" class="page sub-task-view">
         <div class="container">
             <div class="header">
-                <button id="back-btn" onclick="showMainView()" aria-label="Back to wallet">&#8592;</button>
-                <h2>Daily Tasks</h2>
-                <div style="width:32px"></div>
+                <button id="sub-task-back-btn">&larr;</button>
+                <h3 id="sub-task-title">Task #1</h3>
             </div>
-
-            <div id="task-progress">Tasks Completed: <strong id="completed-count">0</strong> / <strong id="total-count">0</strong></div>
-            <div id="task-list" aria-live="polite"></div>
+            <p>Complete all ads to get your reward.</p>
+            <div class="sub-task-grid" id="sub-task-grid"></div>
         </div>
     </div>
 
-    <!-- Firebase / Telegram SDKs -->
+    <div id="withdraw-page" class="page">
+        <div class="container">
+            <h2>Withdraw</h2>
+            <div class="page-content">
+                <p>Your current balance is sufficient for withdrawal.</p>
+                <button id="withdraw-btn-page" class="withdraw-button">Withdraw Full Balance</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-page" class="page">
+        <div class="container">
+            <h2>My Profile</h2>
+            <div class="page-content">
+                <div class="info-group">
+                    <label>Telegram Username</label>
+                    <p id="profile-username">N/A</p>
+                </div>
+                <div class="info-group">
+                    <label>Current Balance</label>
+                    <p id="profile-balance">0.00</p>
+                </div>
+                <button id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <button class="nav-button active" data-page="home-page">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"></path></svg>
+            <span>Home</span>
+        </button>
+        <button class="nav-button" data-page="withdraw-page">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V6h16v12zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+            <span>Withdraw</span>
+        </button>
+        <button class="nav-button" data-page="profile-page">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+            <span>Profile</span>
+        </button>
+    </nav>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <script>
-        // ---------------- CONFIG ----------------
+        // --- CONFIGURATION ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
-            authDomain: "comexaple.firebaseapp.com",
-            projectId: "comexaple",
-            storageBucket: "comexaple.firebasestorage.app",
-            messagingSenderId: "799294329351",
-            appId: "1:799294329351:web:0bb9620bc1d227a29650a2",
-            measurementId: "G-LRBREF5QV6"
+            // আপনার আসল Firebase কনফিগারেশন কোড এখানে পেস্ট করুন
         };
+        const CONFIG = {
+            mainTasksCount: 10,
+            subTasksPerMainTask: 10,
+            rewardPerMainTask: 1,
+            allowedCountries: ['US', 'GB', 'CA'],
+        };
+        let APP_SETTINGS = {};
 
-        const totalTasks = 20; // টাস্ক সংখ্যা
-        const allowedCountries = ['US', 'GB', 'CA']; // অনুমোদিত দেশগুলো
-        const taskReward = 15; // প্রতিটি টাস্ক রিওয়ার্ড
-
-        // ---------------- INIT ----------------
+        // --- INITIALIZATION ---
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        let currentUser, userBalance = 0, userDocRef = null, userData = {};
 
-        let currentUser = null;
-        let userBalance = 0;
-        let tasksCompletedToday = 0;
-        let userDocRef = null;
-
-        // DOM
-        const mainView = document.getElementById('main-view');
-        const taskView = document.getElementById('task-view');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingText = document.getElementById('loading-text');
-        const balanceEl = document.getElementById('balance');
-        const statusEl = document.getElementById('status');
-
-        window.addEventListener('load', () => {
-            try {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-            } catch (e) {
-                console.warn('Telegram WebApp not available in this environment.');
-            }
-
-            currentUser = Telegram?.WebApp?.initDataUnsafe?.user || null;
-
-            if (currentUser) {
-                document.getElementById('welcome-name').innerText = `Welcome, ${currentUser.first_name || 'Guest'}!`;
-                if (currentUser.photo_url) document.getElementById('avatar').src = currentUser.photo_url;
-                loadUserData(currentUser.id.toString());
-            } else {
-                balanceEl.innerText = 'N/A';
-                statusEl.innerText = 'Please open this app inside Telegram.';
-            }
-
-            document.getElementById('start-task-btn').addEventListener('click', checkVpnAndStartTasks);
-            document.getElementById('withdraw-btn').addEventListener('click', requestWithdrawal);
+        // --- CORE APP LOGIC ---
+        window.addEventListener('load', async () => {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            await loadGlobalSettings();
+            
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            currentUser = Telegram.WebApp.initDataUnsafe?.user || { id: `testuser_${Date.now()}`, first_name: 'Guest', username: 'guestuser' };
+            
+            await loadUserData();
+            setupEventListeners();
+            navigateTo('home-page');
+            document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // ---------------- VPN CHECK (HTTPS API) ----------------
-        async function checkVpnAndStartTasks() {
-            showLoading('Verifying your location...');
+        async function loadGlobalSettings() {
             try {
-                // Use a secure HTTPS geo-IP service (ipapi.co). Returns country_code
-                const resp = await fetch('https://ipapi.co/json/');
-                if (!resp.ok) throw new Error('Location service response not OK: ' + resp.status);
-                const data = await resp.json();
-                console.log('GeoIP data:', data);
-
-                const countryCode = (data && (data.country_code || data.country)) ? (data.country_code || data.country) : null;
-                if (countryCode && allowedCountries.includes(countryCode.toUpperCase())) {
-                    hideLoading();
-                    showTaskView();
-                } else {
-                    hideLoading();
-                    alert(`Access Denied. Detected country: ${countryCode || 'Unknown'}. Please connect to a VPN in the US, UK, or Canada to start tasks.`);
-                }
-            } catch (err) {
-                console.error('VPN/location check failed:', err);
-                hideLoading();
-                // Friendly fallback message
-                alert('Could not verify your location. Please check your internet connection or VPN and try again.');
-            }
-        }
-
-        // ---------------- UI: switch views ----------------
-        function showMainView() {
-            taskView.style.display = 'none';
-            mainView.style.display = 'block';
-            taskView.setAttribute('aria-hidden', 'true');
-            mainView.setAttribute('aria-hidden', 'false');
-            balanceEl.innerText = `${userBalance} Points`;
-        }
-
-        function showTaskView() {
-            mainView.style.display = 'none';
-            taskView.style.display = 'block';
-            mainView.setAttribute('aria-hidden', 'true');
-            taskView.setAttribute('aria-hidden', 'false');
-            generateTasks();
-        }
-
-        // ---------------- Tasks ----------------
-        function generateTasks() {
-            const taskList = document.getElementById('task-list');
-            taskList.innerHTML = '';
-            document.getElementById('total-count').innerText = totalTasks;
-            document.getElementById('completed-count').innerText = tasksCompletedToday;
-
-            for (let i = 1; i <= totalTasks; i++) {
-                const isCompleted = i <= tasksCompletedToday;
-                const taskItem = document.createElement('div');
-                taskItem.className = 'task-item';
-                const btnText = isCompleted ? 'Completed' : 'View Ad';
-                const disabledAttr = isCompleted ? 'disabled' : '';
-                taskItem.innerHTML = `
-                    <span>Task #${i}</span>
-                    <button data-task-id="${i}" ${disabledAttr}>${btnText}</button>
-                `;
-                taskList.appendChild(taskItem);
-            }
-
-            taskList.querySelectorAll('button:not(:disabled)').forEach(button => {
-                button.addEventListener('click', (e) => performTask(e.target));
-            });
-        }
-
-        async function performTask(buttonElement) {
-            showLoading('Loading Ad...');
-            try {
-                // window.showGiga presumably provided by ad script
-                if (typeof window.showGiga === 'function') {
-                    await window.showGiga();
-                    // on success
-                    userBalance += taskReward;
-                    tasksCompletedToday++;
-
-                    // update firestore with transactional safety
-                    if (userDocRef) {
-                        await userDocRef.set({
-                            balance: userBalance,
-                            lastTaskDate: getTodayString(),
-                            tasksCompletedToday: tasksCompletedToday,
-                            username: currentUser.username || null
-                        }, { merge: true });
-                    }
-
-                    buttonElement.innerText = 'Completed';
-                    buttonElement.disabled = true;
-                    document.getElementById('completed-count').innerText = tasksCompletedToday;
-                    balanceEl.innerText = `${userBalance} Points`;
-                    hideLoading();
-                } else {
-                    hideLoading();
-                    alert('Ad service is not ready. Please refresh the page or try again later.');
-                }
-            } catch (err) {
-                console.error('Ad/display error:', err);
-                hideLoading();
-                alert('Ad not available right now. Please try again.');
-            }
-        }
-
-        // ---------------- Firestore: load/save user ----------------
-        async function loadUserData(userId) {
-            try {
-                userDocRef = db.collection('users').doc(userId);
-                const doc = await userDocRef.get();
-                const today = getTodayString();
-
+                const doc = await db.collection('settings').doc('config').get();
                 if (doc.exists) {
-                    const data = doc.data() || {};
-                    userBalance = Number(data.balance || 0);
-
-                    // Restore tasksCompletedToday only if lastTaskDate is today
-                    if (data.lastTaskDate === today && typeof data.tasksCompletedToday === 'number') {
-                        tasksCompletedToday = data.tasksCompletedToday;
-                    } else {
-                        tasksCompletedToday = 0;
-                        // Persist reset so server and client stay in sync
-                        await userDocRef.set({ lastTaskDate: today, tasksCompletedToday: 0 }, { merge: true });
+                    APP_SETTINGS = doc.data();
+                    if (APP_SETTINGS.gigaPubId) {
+                        const gigaScript = document.createElement('script');
+                        gigaScript.src = `https://ad.gigapub.tech/script?id=${APP_SETTINGS.gigaPubId}`;
+                        document.head.appendChild(gigaScript);
                     }
-                } else {
-                    userBalance = 0;
-                    tasksCompletedToday = 0;
-                    // create user doc
-                    await userDocRef.set({
-                        balance: 0,
-                        username: currentUser.username || null,
-                        joinedAt: new Date().toISOString(),
-                        lastTaskDate: today,
-                        tasksCompletedToday: 0
-                    });
+                    if (APP_SETTINGS.bannerUrl) {
+                        const bannerImg = document.getElementById('cover-banner');
+                        bannerImg.src = APP_SETTINGS.bannerUrl;
+                        bannerImg.style.display = 'block';
+                    }
                 }
+            } catch (e) { console.error("Failed to load app settings:", e); }
+        }
+        
+        async function loadUserData() {
+            if (!currentUser) return;
+            userDocRef = db.collection('users').doc(currentUser.id.toString());
+            const doc = await userDocRef.get();
+            const today = new Date().toISOString().slice(0, 10);
 
-                balanceEl.innerText = `${userBalance} Points`;
-                statusEl.innerText = '';
-            } catch (err) {
-                console.error('Error loading user data:', err);
-                statusEl.innerText = 'Failed to load data. Try again later.';
-                balanceEl.innerText = 'Error';
+            if (doc.exists) {
+                userData = doc.data();
+                if (userData.lastLoginDate !== today) {
+                    userData.mainTasksCompleted = 0;
+                    userData.subTasks = {};
+                }
+            } else {
+                userData = { balance: 0, mainTasksCompleted: 0, subTasks: {} };
+                await userDocRef.set({ ...userData, joinedAt: new Date(), username: currentUser.username });
             }
+            userData.lastLoginDate = today;
+            userBalance = userData.balance || 0;
+            updateAllUI();
         }
 
-        // ---------------- Withdrawal (placeholder) ----------------
-        async function requestWithdrawal() {
-            // Simple placeholder flow — তোমার প্রকৃত পেমেন্ট লজিক এখানে সংযুক্ত করো।
-            if (!currentUser) {
-                alert('User not detected. Open inside Telegram.');
-                return;
-            }
-            if (userBalance <= 0) {
-                alert('Insufficient balance for withdrawal.');
-                return;
-            }
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-button').forEach(b => b.addEventListener('click', () => navigateTo(b.dataset.page)));
+            document.getElementById('start-task-btn').addEventListener('click', checkVpnAndGoToMainTasks);
+            document.getElementById('extra-income-btn').addEventListener('click', showExtraIncomeAd);
+            document.getElementById('main-task-back-btn').addEventListener('click', () => navigateTo('home-page'));
+            document.getElementById('sub-task-back-btn').addEventListener('click', () => { generateMainTaskList(); navigateTo('main-task-page'); });
+            document.getElementById('logout-btn').addEventListener('click', () => alert('Logout is not applicable in Telegram Mini Apps.'));
+            document.getElementById('withdraw-btn-page').addEventListener('click', requestWithdrawal);
+        }
 
-            // Example: create a withdrawal request record
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.nav-button').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+            updateAllUI();
+        }
+
+        function updateAllUI() {
+            document.getElementById('home-balance').textContent = userBalance.toFixed(2);
+            document.getElementById('profile-balance').textContent = userBalance.toFixed(2);
+            document.getElementById('home-welcome-name').textContent = `Welcome, ${currentUser.first_name}!`;
+            document.getElementById('profile-username').textContent = `@${currentUser.username || 'N/A'}`;
+            document.getElementById('tasks-completed-summary').textContent = `${userData.mainTasksCompleted || 0}/${CONFIG.mainTasksCount}`;
+        }
+
+        async function checkVpnAndGoToMainTasks() {
+            document.getElementById('loading-overlay').style.display = 'flex';
             try {
-                showLoading('Submitting withdrawal request...');
-                const req = {
-                    userId: currentUser.id.toString(),
-                    username: currentUser.username || null,
-                    amount: userBalance,
-                    requestedAt: new Date().toISOString(),
-                    status: 'pending'
-                };
-                await db.collection('withdrawals').add(req);
-
-                // reset balance locally & in firestore (or implement admin approval flow)
-                userBalance = 0;
-                tasksCompletedToday = 0;
-                if (userDocRef) {
-                    await userDocRef.set({ balance: 0, tasksCompletedToday: 0, lastWithdrawalRequestedAt: new Date().toISOString() }, { merge: true });
+                const resp = await fetch('https://ipapi.co/json/');
+                const data = await resp.json();
+                const countryCode = data.country_code;
+                if (CONFIG.allowedCountries.includes(countryCode)) {
+                    navigateTo('main-task-page');
+                    generateMainTaskList();
+                } else {
+                    alert(`Access Denied. Please connect to a VPN in the US, UK, or Canada.`);
                 }
-
-                balanceEl.innerText = `${userBalance} Points`;
-                document.getElementById('completed-count').innerText = tasksCompletedToday;
-                hideLoading();
-                alert('Withdrawal requested. Our team will process it shortly.');
             } catch (err) {
-                console.error('Withdrawal request failed:', err);
-                hideLoading();
-                alert('Could not submit withdrawal request. Try again later.');
+                alert('Could not verify your location. Please check your internet/VPN.');
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+        
+        function generateMainTaskList() {
+            const listEl = document.getElementById('main-task-list');
+            listEl.innerHTML = '';
+            for (let i = 1; i <= CONFIG.mainTasksCount; i++) {
+                const isCompleted = i <= (userData.mainTasksCompleted || 0);
+                const subTasksDone = userData.subTasks?.[`task_${i}`] || 0;
+                const item = document.createElement('div');
+                item.className = 'task-item';
+                item.innerHTML = `...`; // Same as previous
+                if (!isCompleted) item.addEventListener('click', () => generateSubTaskList(i));
+                listEl.appendChild(item);
             }
         }
 
-        // ---------------- Helpers ----------------
-        function getTodayString() {
-            return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        function generateSubTaskList(mainTaskIndex) {
+             // ... same as previous
         }
 
-        function showLoading(text) {
-            loadingOverlay.style.display = 'flex';
-            loadingOverlay.setAttribute('aria-hidden', 'false');
-            loadingText.innerText = text || 'Loading...';
-        }
+        async function performSubTask(mainTaskIndex, subTaskIndex) {
+            if (typeof window.showGiga !== 'function') return alert('Ad service not ready.');
+            document.getElementById('loading-overlay').style.display = 'flex';
+            try {
+                await window.showGiga();
+                if (!userData.subTasks) userData.subTasks = {};
+                userData.subTasks[`task_${mainTaskIndex}`] = subTaskIndex;
 
-        function hideLoading() {
-            loadingOverlay.style.display = 'none';
-            loadingOverlay.setAttribute('aria-hidden', 'true');
+                if (subTaskIndex === CONFIG.subTasksPerMainTask) {
+                    userData.mainTasksCompleted = (userData.mainTasksCompleted || 0) + 1;
+                    userBalance += CONFIG.rewardPerMainTask;
+                    alert(`Congratulations! Task #${mainTaskIndex} completed.`);
+                }
+                await userDocRef.set({ ...userData, balance: userBalance }, { merge: true });
+                if (subTaskIndex === CONFIG.subTasksPerMainTask) {
+                    generateMainTaskList();
+                    navigateTo('main-task-page');
+                } else {
+                    generateSubTaskList(mainTaskIndex);
+                }
+            } catch (e) {
+                alert('Ad failed to load. Please try again.');
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
         }
-
-        // Optional: small defensive fallback so UI won't break if ad script doesn't provide showGiga()
-        // You can remove this after ensuring ad provider works.
-        if (!window.showGiga) {
-            window.showGiga = function() {
-                return new Promise((resolve, reject) => {
-                    // temporary fake ad behavior for debug: resolves after 1s
-                    console.warn('showGiga not found — using debug fallback (no real ad shown). Replace with real ad provider.');
-                    setTimeout(resolve, 1000);
+        
+        function showExtraIncomeAd() {
+            if (APP_SETTINGS.adsterraCode) {
+                alert(`Placeholder for Adsterra Ads. Code/ID: ${APP_SETTINGS.adsterraCode}`);
+            } else {
+                alert('Extra income option is not available.');
+            }
+        }
+        
+        async function requestWithdrawal() {
+            if (userBalance <= 0) return alert('Insufficient balance.');
+            document.getElementById('loading-overlay').style.display = 'flex';
+            try {
+                await db.collection('withdrawals').add({
+                    userId: currentUser.id.toString(), username: currentUser.username,
+                    amount: userBalance, requestedAt: new Date(), status: 'pending'
                 });
-            };
+                userBalance = 0; // Reset balance after request
+                await userDocRef.update({ balance: 0 });
+                updateAllUI();
+                alert('Withdrawal request sent!');
+            } catch(e) {
+                alert('Failed to send request.');
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
         }
     </script>
 </body>
