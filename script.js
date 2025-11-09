@@ -4,8 +4,12 @@ document.addEventListener('DOMContentLoaded', function () {
     tg.expand();
 
     // --- VPN CHECK SIMULATION ---
-    // Change this to 'true' to simulate a connected VPN
-    const isVpnConnected = false; 
+    // -------------------------------------------------------------------------
+    //  গুরুত্বপূর্ণ: পরীক্ষার জন্য এই মানটি পরিবর্তন করুন।
+    //  'true' মানে হলো VPN চালু আছে বলে ধরে নেওয়া হবে।
+    //  'false' মানে হলো VPN বন্ধ আছে বলে ধরে নেওয়া হবে।
+    // -------------------------------------------------------------------------
+    const isVpnConnected = true; 
 
     // --- ADMIN PANEL SIMULATION ---
     const adminSettings = {
@@ -17,10 +21,10 @@ document.addEventListener('DOMContentLoaded', function () {
             video: 10,
         },
         rewards: {
-            dailyBonus: 1.00, // Reward for daily check-in (in Taka/currency)
-            spin: 0.50,      // Reward for completing 10 spins
-            scratch: 0.75,   // Reward for completing 10 scratches
-            video: 0.25,     // Reward for completing one video task (e.g., Task 1)
+            dailyBonus: 1.00,
+            spin: 0.50,
+            scratch: 0.75,
+            video: 0.25,
         },
         referralNotice: "Invite friends and get a reward for each new user!",
         rewardPerReferral: 1.50,
@@ -98,7 +102,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const populateUserData = () => {
-        // Correctly handle the case where the app is opened outside Telegram
         const telegramUser = tg.initDataUnsafe?.user;
         const name = telegramUser?.first_name || 'User';
         const username = telegramUser?.username ? `@${telegramUser.username}` : '@username';
@@ -113,9 +116,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    const populateAdminSettings = () => { /* ... (code remains same) */ };
-    const initializeVideoTasks = () => { /* ... (code remains same) */ };
-    const updateVideoTaskUI = (card, progress) => { /* ... (code remains same) */ };
+    const populateAdminSettings = () => {
+        document.getElementById('referral-notice').textContent = adminSettings.referralNotice;
+        document.getElementById('referral-reward-info').textContent = `$${adminSettings.rewardPerReferral.toFixed(2)} per referral`;
+    };
+
+    const initializeVideoTasks = () => {
+        document.querySelectorAll('.video-task-card').forEach(card => {
+            const progressBlocksContainer = card.querySelector('.progress-blocks');
+            progressBlocksContainer.innerHTML = '';
+            for (let i = 0; i < adminSettings.taskLimits.video; i++) {
+                const block = document.createElement('div');
+                block.classList.add('progress-block');
+                progressBlocksContainer.appendChild(block);
+            }
+            updateVideoTaskUI(card, taskProgress.video[card.dataset.taskId]);
+        });
+    };
+
+    const updateVideoTaskUI = (card, progress) => {
+        card.querySelector('.progress-text').textContent = `${progress}/${adminSettings.taskLimits.video}`;
+        card.querySelectorAll('.progress-block').forEach((block, index) => {
+            block.classList.toggle('completed', index < progress);
+        });
+        card.querySelector('.watch-ad-btn').style.display = progress >= adminSettings.taskLimits.video ? 'none' : 'block';
+        card.querySelector('.claim-reward-btn').style.display = progress >= adminSettings.taskLimits.video ? 'block' : 'none';
+    };
 
     // --- Event Listeners ---
     allNavItems.forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target); }); });
@@ -186,7 +212,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ... (rest of the event listeners for copy, withdraw, etc. remain the same)
+    document.getElementById('copy-link-btn').addEventListener('click', (e) => {
+        navigator.clipboard.writeText(document.getElementById('referral-link').value).then(() => {
+            e.target.textContent = 'Copied!';
+            setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
+        });
+    });
+
+    document.querySelector('.withdraw-confirm-btn').addEventListener('click', () => {
+        const amount = parseFloat(document.getElementById('amount').value);
+        if (amount > 0 && amount <= currentBalance) {
+            currentBalance -= amount; updateBalanceDisplay();
+            tg.showAlert(`Successfully withdrew $${amount.toFixed(2)}.`);
+        } else {
+            tg.showAlert('Invalid amount or insufficient balance.');
+        }
+    });
     
     // --- Initial Call ---
     updateBalanceDisplay();
