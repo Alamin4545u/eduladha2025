@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
             video: 10,
         },
         rewards: {
+            dailyBonus: 1.00, // Reward for daily check-in (in Taka/currency)
             spin: 0.50,      // Reward for completing 10 spins
             scratch: 0.75,   // Reward for completing 10 scratches
             video: 0.25,     // Reward for completing one video task (e.g., Task 1)
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const spinBtn = document.getElementById('spin-btn');
     const scratchCard = document.querySelector('.scratch-card-container');
     const watchAdButtons = document.querySelectorAll('.watch-ad-btn');
+    const dailyClaimBtn = document.getElementById('daily-claim-btn');
     const protectedNavs = {
         'nav-spin': 'spin-page',
         'nav-scratch': 'scratch-page',
@@ -84,22 +86,33 @@ document.addEventListener('DOMContentLoaded', function () {
             counter.textContent = `${progress}/${adminSettings.taskLimits[taskName]}`;
         }
     };
-
-    const showAdSimulation = (callback) => {
-        // In a real app, you would integrate your ad network here.
-        tg.showPopup({
-            title: 'Advertisement',
-            message: 'Simulating an ad view. Please wait...',
-            buttons: []
-        });
+    
+    const showAdSimulation = (callback, button) => {
+        if (button) button.disabled = true;
+        tg.showPopup({ title: 'Advertisement', message: 'Simulating an ad view. Please wait...', buttons: [] });
         setTimeout(() => {
             tg.closePopup();
-            callback(); // Run the next step after the "ad" closes
-        }, 2000); // Simulate a 2-second ad
+            if (callback) callback();
+            if (button) button.disabled = false;
+        }, 2000);
     };
 
-    // --- Initial Setup and Populate Functions ---
-    const populateUserData = () => { /* ... (code remains same) */ };
+    const populateUserData = () => {
+        // Correctly handle the case where the app is opened outside Telegram
+        const telegramUser = tg.initDataUnsafe?.user;
+        const name = telegramUser?.first_name || 'User';
+        const username = telegramUser?.username ? `@${telegramUser.username}` : '@username';
+        
+        document.getElementById('user-name').textContent = name;
+        document.getElementById('user-username').textContent = username;
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-username').textContent = username;
+        
+        if (telegramUser) {
+            document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${telegramUser.id}`;
+        }
+    };
+
     const populateAdminSettings = () => { /* ... (code remains same) */ };
     const initializeVideoTasks = () => { /* ... (code remains same) */ };
     const updateVideoTaskUI = (card, progress) => { /* ... (code remains same) */ };
@@ -112,34 +125,39 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById(buttonId).addEventListener('click', () => handleProtectedNav(pageId));
     });
 
+    dailyClaimBtn.addEventListener('click', (e) => {
+        showAdSimulation(() => {
+            currentBalance += adminSettings.rewards.dailyBonus;
+            updateBalanceDisplay();
+            tg.showAlert(`Daily bonus of ${adminSettings.rewards.dailyBonus.toFixed(2)} Tk has been added!`);
+            e.target.disabled = true;
+            e.target.textContent = 'Claimed';
+        }, e.target);
+    });
+
     watchAdButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             const card = e.target.closest('.video-task-card');
             const taskId = card.dataset.taskId;
             if (taskProgress.video[taskId] >= adminSettings.taskLimits.video) return;
-            button.disabled = true;
 
-            // This is where you would place your window.showGiga() call
             showAdSimulation(() => {
                 taskProgress.video[taskId]++;
                 updateVideoTaskUI(card, taskProgress.video[taskId]);
-                button.disabled = false;
                 tg.HapticFeedback.notificationOccurred('success');
-            });
+            }, e.target);
         });
     });
 
-    spinBtn.addEventListener('click', () => {
+    spinBtn.addEventListener('click', (e) => {
         if (isSpinning || taskProgress.spin >= adminSettings.taskLimits.spin) return;
-        isSpinning = true; spinBtn.disabled = true;
-        tg.HapticFeedback.impactOccurred('heavy');
+        isSpinning = true;
         
         showAdSimulation(() => {
             currentRotation += Math.floor(Math.random() * 360) + 360 * 5;
             spinWheel.style.transform = `rotate(${currentRotation}deg)`;
             setTimeout(() => {
-                isSpinning = false; spinBtn.disabled = false;
-                tg.HapticFeedback.notificationOccurred('success');
+                isSpinning = false;
                 taskProgress.spin++;
                 updateTaskCounter('spin', taskProgress.spin);
                 if (taskProgress.spin === adminSettings.taskLimits.spin) {
@@ -148,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.spin.toFixed(2)}.`);
                 }
             }, 2000);
-        });
+        }, e.target);
     });
     
     scratchCard.addEventListener('click', () => {
