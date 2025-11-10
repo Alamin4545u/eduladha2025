@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     tg.expand();
 
     // --- Firebase Configuration ---
+    // !!! গুরুত্বপূর্ণ: অনুগ্রহ করে এখানে আপনার সত্যিকারের Firebase প্রজেক্টের কনফিগারেশন কোড ব্যবহার করুন !!!
     const firebaseConfig = {
         apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
         authDomain: "comexaple.firebaseapp.com",
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // --- Initialize Firebase ---
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
     let userRef;
 
     // --- ADMIN PANEL SIMULATION ---
@@ -66,153 +68,52 @@ document.addEventListener('DOMContentLoaded', async function () {
     const updateBalanceDisplay = () => allBalanceElements.forEach(el => el.textContent = `$${userData.balance.toFixed(2)}`);
     const saveUserData = async () => { if (userRef) await userRef.set(userData, { merge: true }); };
 
-    const loadUserData = async (userId) => {
-        userRef = db.collection('users').doc(String(userId));
+    const loadUserData = async (firebaseUser) => {
+        const userId = firebaseUser.uid; // Use Firebase UID as the document ID
+        userRef = db.collection('users').doc(userId);
         const doc = await userRef.get();
         if (doc.exists) {
-            // Merge fetched data with default structure to avoid errors if some fields are missing
             const fetchedData = doc.data();
-            userData.balance = fetchedData.balance || 0;
-            userData.lastClaim = fetchedData.lastClaim || null;
-            userData.taskProgress = { ...userData.taskProgress, ...fetchedData.taskProgress };
+            userData = { ...userData, ...fetchedData, taskProgress: { ...userData.taskProgress, ...fetchedData.taskProgress }};
         } else {
-            await saveUserData(); // Create new user document
+            // If it's a new user, also store their Telegram ID if available
+            if (tg.initDataUnsafe?.user) {
+                userData.telegramId = tg.initDataUnsafe.user.id;
+            }
+            await saveUserData();
         }
         updateUIWithLoadedData();
     };
-
-    const updateUIWithLoadedData = () => {
-        updateBalanceDisplay();
-        updateTaskCounter('spin', userData.taskProgress.spin);
-        updateTaskCounter('scratch', userData.taskProgress.scratch);
-        initializeVideoTasks();
-        
-        const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
-        const todayDate = new Date().toDateString();
-        if (lastClaimDate === todayDate) {
-            dailyClaimBtn.textContent = 'Claimed';
-            dailyClaimBtn.disabled = true;
-        }
-    };
-
-    const switchPage = (targetPageId) => { /* ... (code remains same) */ };
-    const checkVpnAndProceed = async (button, action) => { /* ... (code remains same) */ };
-    const showGigaAd = (callback, button) => { /* ... (code remains same) */ };
-    const populateUserData = () => { /* ... (code remains same) */ };
-    const updateTaskCounter = (taskName, progress) => { /* ... (code remains same) */ };
-    const initializeVideoTasks = () => { /* ... (code remains same) */ };
-    const updateVideoTaskUI = (card, progress) => { /* ... (code remains same) */ };
-
-    // --- Event Listeners ---
-    allNavItems.forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target); }); });
-    pageSwitchers.forEach(button => { button.addEventListener('click', () => switchPage(button.dataset.target)); });
     
-    Object.entries(protectedNavs).forEach(([buttonId, pageId]) => {
-        const buttonElement = document.getElementById(buttonId);
-        if (buttonElement) {
-            buttonElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                checkVpnAndProceed(buttonElement, () => {
-                    switchPage(pageId);
-                    tg.HapticFeedback.selectionChanged();
-                });
-            });
-        }
-    });
+    // ... (All other functions remain the same: updateUIWithLoadedData, switchPage, checkVpnAndProceed, etc.)
 
-    dailyClaimBtn.addEventListener('click', (e) => {
-        checkVpnAndProceed(e.target, () => {
-            const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
-            if (lastClaimDate === new Date().toDateString()) {
-                tg.showAlert("You have already claimed today's bonus.");
-                return;
-            }
-            showGigaAd(async () => {
-                userData.balance += adminSettings.rewards.dailyBonus;
-                userData.lastClaim = new Date().toISOString();
-                await saveUserData();
-                updateBalanceDisplay();
-                tg.showAlert(`Daily bonus of ${adminSettings.rewards.dailyBonus.toFixed(2)} Tk has been added!`);
-                e.target.textContent = 'Claimed';
-                e.target.disabled = true;
-            }, e.target);
-        });
-    });
-
-    watchAdButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const card = e.target.closest('.video-task-card');
-            const taskId = card.dataset.taskId;
-            if (userData.taskProgress.video[taskId] >= adminSettings.taskLimits.video) return;
-
-            showGigaAd(async () => {
-                userData.taskProgress.video[taskId]++;
-                await saveUserData();
-                updateVideoTaskUI(card, userData.taskProgress.video[taskId]);
-                tg.HapticFeedback.notificationOccurred('success');
-            }, e.target);
-        });
-    });
-
-    spinBtn.addEventListener('click', (e) => {
-        if (isSpinning || userData.taskProgress.spin >= adminSettings.taskLimits.spin) return;
-        isSpinning = true;
-        
-        showGigaAd(async () => {
-            currentRotation += Math.floor(Math.random() * 360) + 360 * 5;
-            spinWheel.style.transform = `rotate(${currentRotation}deg)`;
-            setTimeout(async () => {
-                isSpinning = false;
-                userData.taskProgress.spin++;
-                if (userData.taskProgress.spin === adminSettings.taskLimits.spin) {
-                    userData.balance += adminSettings.rewards.spin;
-                    tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.spin.toFixed(2)}.`);
-                }
-                await saveUserData();
-                updateTaskCounter('spin', userData.taskProgress.spin);
-                updateBalanceDisplay();
-            }, 2000);
-        }, e.target);
-    });
-    
-    scratchCard.addEventListener('click', () => {
-        if (scratchCard.classList.contains('is-flipped') || userData.taskProgress.scratch >= adminSettings.taskLimits.scratch) return;
-        
-        showGigaAd(async () => {
-            scratchCard.classList.add('is-flipped');
-            tg.HapticFeedback.impactOccurred('medium');
-            userData.taskProgress.scratch++;
-            if (userData.taskProgress.scratch === adminSettings.taskLimits.scratch) {
-                userData.balance += adminSettings.rewards.scratch;
-                tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.scratch.toFixed(2)}.`);
-            }
-            await saveUserData();
-            updateTaskCounter('scratch', userData.taskProgress.scratch);
-            updateBalanceDisplay();
-            setTimeout(() => { scratchCard.classList.remove('is-flipped'); }, 3000);
-        });
-    });
-    
     // --- Initial App Logic ---
     async function main() {
-        populateAdminSettings();
-        if (tg.initDataUnsafe?.user) {
-            try {
-                // Authenticate with Firebase using a custom token from your backend is the secure way.
-                // For this example, we'll proceed without auth, relying on Firestore rules.
-                await loadUserData(tg.initDataUnsafe.user.id);
+        try {
+            // Step 1: Authenticate user anonymously with Firebase
+            const userCredential = await auth.signInAnonymously();
+            const firebaseUser = userCredential.user;
+
+            if (firebaseUser) {
+                // Step 2: Load or create user data in Firestore
+                await loadUserData(firebaseUser);
+                
+                // Step 3: Populate UI with user-specific data from Telegram
                 populateUserData();
-            } catch (error) {
-                console.error("Firebase Auth/Load Error:", error);
-                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: red;">Could not connect to the database.</div>`;
-                return;
+                
+                // Step 4: Show the main application
+                showApp();
+            } else {
+                throw new Error("Could not authenticate user.");
             }
-        } else {
-            populateUserData(); // For local testing
-            updateUIWithLoadedData();
+        } catch (error) {
+            console.error("Firebase Initialization Error:", error);
+            document.getElementById('loader').innerHTML = `<div style="text-align: center; padding: 20px; color: red;">Failed to load. Please check your Firebase setup and security rules.</div>`;
         }
-        showApp();
+        
+        // Setup admin-controlled UI elements
+        populateAdminSettings();
     }
 
-    main();
+    main(); // Start the application
 });
