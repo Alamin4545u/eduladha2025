@@ -12,14 +12,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Firebase Configuration ---
     // !!! গুরুত্বপূর্ণ: অনুগ্রহ করে এখানে আপনার সত্যিকারের Firebase প্রজেক্টের কনফিগারেশন কোড ব্যবহার করুন !!!
     const firebaseConfig = {
-      apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
-      authDomain: "comexaple.firebaseapp.com",
-      projectId: "comexaple",
-      storageBucket: "comexaple.firebasestorage.app",
-      messagingSenderId: "799294329351",
-      appId: "1:799294329351:web:0bb9620bc1d227a29650a2",
-      measurementId: "G-LRBREF5QV6"
-    };
+  apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
+  authDomain: "mini-bot-735bf.firebaseapp.com",
+  projectId: "mini-bot-735bf",
+  storageBucket: "mini-bot-735bf.firebasestorage.app",
+  messagingSenderId: "1056580233393",
+  appId: "1:1056580233393:web:058609b1ca944020755a90",
+  measurementId: "G-L50J7R33WZ"
+};
 
     // --- Initialize Firebase ---
     try {
