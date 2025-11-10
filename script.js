@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- ADMIN PANEL SIMULATION ---
     const adminSettings = {
         vpnRequired: true,
-        allowedCountries: ['US', 'UK', 'CA'], // Using standard 2-letter country codes
+        allowedCountries: ['US', 'UK', 'CA'], // Standard 2-letter country codes
         taskLimits: {
             spin: 10,
             scratch: 10,
@@ -58,43 +58,39 @@ document.addEventListener('DOMContentLoaded', function () {
         allNavItems.forEach(nav => nav.classList.toggle('active', nav.dataset.target === targetPageId));
     };
 
-    // --- NEW: REALISTIC VPN CHECK FUNCTION ---
-    async function checkVpnConnection() {
-        if (!adminSettings.vpnRequired) return true;
+    // --- NEW & ROBUST VPN CHECK FUNCTION ---
+    const checkVpnAndProceed = async (button, action) => {
+        if (!adminSettings.vpnRequired) {
+            action();
+            return;
+        }
+
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span>Checking...</span>';
+
         try {
-            const response = await fetch('https://ip-api.com/json/?fields=countryCode');
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const data = await response.json();
-            const userCountry = data.countryCode;
+            // Using a reliable IP info service.
+            // Note: Public APIs can have rate limits. For a production app, consider a paid plan.
+            const response = await fetch('https://ipinfo.io/json?token=YOUR_IPINFO_TOKEN'); // Replace with a token for production
+            if (!response.ok) throw new Error('Network response was not ok.');
             
+            const data = await response.json();
+            const userCountry = data.country; // e.g., 'US'
+
             if (adminSettings.allowedCountries.includes(userCountry)) {
-                return true; // Country is allowed
+                action(); // VPN/Country is correct, perform the action
             } else {
                 tg.showAlert(`আপনি ভিপিএন চালু করুন ${adminSettings.allowedCountries.join(', ')} কান্ট্রি`);
-                return false; // Country is not allowed
             }
         } catch (error) {
-            console.error('Failed to check VPN:', error);
+            console.error('Error checking VPN:', error);
             tg.showAlert('ভিপিএন চেক করা সম্ভব হচ্ছে না। অনুগ্রহ করে আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।');
-            return false;
+        } finally {
+            // This block will always run, ensuring the button is re-enabled and text is restored.
+            button.disabled = false;
+            button.innerHTML = originalHTML;
         }
-    }
-
-    const handleProtectedNav = async (targetPageId, buttonElement) => {
-        const originalText = buttonElement.innerHTML;
-        buttonElement.innerHTML = '<span>Checking...</span>';
-        buttonElement.disabled = true;
-
-        const isAllowed = await checkVpnConnection();
-        if (isAllowed) {
-            switchPage(targetPageId);
-            tg.HapticFeedback.selectionChanged();
-        }
-
-        buttonElement.innerHTML = originalText;
-        buttonElement.disabled = false;
     };
 
     const updateTaskCounter = (taskName, progress) => { /* ... (code remains same) */ };
@@ -106,70 +102,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Event Listeners ---
     allNavItems.forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target); }); });
-    document.querySelectorAll('[data-target]').forEach(button => { button.addEventListener('click', () => switchPage(button.dataset.target)); });
+    document.querySelectorAll('[data-target]').forEach(button => {
+        if (!Object.values(protectedNavs).includes(button.dataset.target)) {
+            button.addEventListener('click', () => switchPage(button.dataset.target));
+        }
+    });
     
     Object.entries(protectedNavs).forEach(([buttonId, pageId]) => {
         const buttonElement = document.getElementById(buttonId);
         if (buttonElement) {
             buttonElement.addEventListener('click', (e) => {
                 e.preventDefault();
-                handleProtectedNav(pageId, buttonElement);
+                checkVpnAndProceed(buttonElement, () => {
+                    switchPage(pageId);
+                    tg.HapticFeedback.selectionChanged();
+                });
             });
         }
     });
 
-    dailyClaimBtn.addEventListener('click', async (e) => {
-        const button = e.target;
-        const originalText = button.textContent;
-        button.disabled = true;
-        button.textContent = 'Checking...';
-
-        const isAllowed = await checkVpnConnection();
-        if (isAllowed) {
-            button.textContent = 'Claiming...';
+    dailyClaimBtn.addEventListener('click', (e) => {
+        checkVpnAndProceed(e.target, () => {
             showAdSimulation(() => {
                 currentBalance += adminSettings.rewards.dailyBonus;
                 updateBalanceDisplay();
                 tg.showAlert(`Daily bonus of ${adminSettings.rewards.dailyBonus.toFixed(2)} Tk has been added!`);
-                button.textContent = 'Claimed';
-                // Button remains disabled after claiming
-            }, null); // No need to re-enable button here
-        } else {
-            button.disabled = false;
-            button.textContent = originalText;
-        }
+                e.target.textContent = 'Claimed';
+                e.target.disabled = true; // Keep it disabled after claiming
+            }, null); // No need to pass button to re-enable it
+        });
     });
 
-    // ... (rest of the event listeners for spin, scratch, video, copy, withdraw remain same, but their internal logic is now wrapped)
-    // Example for spin button, others follow the same pattern
-    spinBtn.addEventListener('click', (e) => {
-        if (isSpinning || taskProgress.spin >= adminSettings.taskLimits.spin) return;
-        isSpinning = true;
-        
-        showAdSimulation(() => {
-            currentRotation += Math.floor(Math.random() * 360) + 360 * 5;
-            spinWheel.style.transform = `rotate(${currentRotation}deg)`;
-            setTimeout(() => {
-                isSpinning = false;
-                taskProgress.spin++;
-                updateTaskCounter('spin', taskProgress.spin);
-                if (taskProgress.spin === adminSettings.taskLimits.spin) {
-                    currentBalance += adminSettings.rewards.spin;
-                    updateBalanceDisplay();
-                    tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.spin.toFixed(2)}.`);
-                }
-            }, 2000);
-        }, e.target);
-    });
+    // ... (rest of the event listeners for spin, scratch, video, copy, withdraw remain same)
     
     // --- Initial Call ---
-    updateBalanceDisplay();
-    populateUserData();
-    populateAdminSettings();
-    initializeVideoTasks();
-    updateTaskCounter('spin', taskProgress.spin);
-    updateTaskCounter('scratch', taskProgress.scratch);
-});    // --- Initial Call ---
     updateBalanceDisplay();
     populateUserData();
     populateAdminSettings();
