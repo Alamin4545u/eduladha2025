@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- ADMIN PANEL SIMULATION ---
     const adminSettings = {
         vpnRequired: true,
-        allowedCountries: ['US', 'UK', 'CA'], // Standard 2-letter country codes
+        allowedCountries: ['US', 'UK', 'CA'],
         taskLimits: { spin: 10, scratch: 10, video: 10 },
         rewards: { dailyBonus: 1.00, spin: 0.50, scratch: 0.75, video: 0.25 },
         referralNotice: "Invite friends and get a reward!",
@@ -47,20 +47,16 @@ document.addEventListener('DOMContentLoaded', function () {
         allNavItems.forEach(nav => nav.classList.toggle('active', nav.dataset.target === targetPageId));
     };
 
-    // --- NEW & ROBUST VPN CHECK FUNCTION ---
     const checkVpnAndProceed = async (button, action) => {
-        if (!adminSettings.vpnRequired) {
-            action();
-            return;
-        }
+        if (!adminSettings.vpnRequired) { action(); return; }
 
         const originalHTML = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<span>Checking...</span>';
 
         try {
-            const response = await fetch('https://ipinfo.io/json?token=1151161c93b97a'); // Replace with a token for production
-            if (!response.ok) throw new Error(`Network response error: ${response.statusText}`);
+            const response = await fetch('https://ipinfo.io/json?token=YOUR_IPINFO_TOKEN'); // Replace with your token for production
+            if (!response.ok) throw new Error('Network response failed');
             
             const data = await response.json();
             const userCountry = data.country;
@@ -74,38 +70,70 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('VPN Check Error:', error);
             tg.showAlert('ভিপিএন চেক করা সম্ভব হচ্ছে না। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।');
         } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
+            if (button.textContent !== 'Claimed') {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
         }
     };
 
-    const updateTaskCounter = (taskName, progress) => {
-        const counter = document.getElementById(`${taskName}-counter`);
-        if (counter) {
-            counter.textContent = `${progress}/${adminSettings.taskLimits[taskName]}`;
-        }
+    const showGigaAd = (callback, button) => {
+        if (button) button.disabled = true;
+
+        window.showGiga()
+            .then(() => {
+                // Ad watched successfully
+                if (callback) callback();
+            })
+            .catch(e => {
+                // Handle errors if the ad fails to load
+                tg.showAlert('Ad could not be loaded. Please try again.');
+                console.error("GigaPay Ad Error: ", e);
+            })
+            .finally(() => {
+                // This will run whether the ad succeeded or failed
+                if (button && button.textContent !== 'Claimed') {
+                     button.disabled = false;
+                }
+            });
     };
     
-    // CORRECTED: Using showAlert as a fallback for showPopup
-    const showAdSimulation = (callback, button) => {
-        if (button) button.disabled = true;
-        
-        // Use showAlert as it's more compatible
-        tg.showAlert('Simulating an ad view. Please wait...', () => {
-             // This callback for showAlert runs after the user closes the alert.
-             // We'll simulate the ad delay with a timeout.
-        });
-
-        setTimeout(() => {
-            if (callback) callback();
-            if (button) button.disabled = false;
-        }, 2000); // Simulate a 2-second ad
+    const populateUserData = () => {
+        const name = user?.first_name || 'User';
+        const username = user?.username ? `@${user.username}` : '@username';
+        document.getElementById('user-name').textContent = name;
+        document.getElementById('user-username').textContent = username;
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-username').textContent = username;
+        if (user) document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${user.id}`;
+    };
+    
+    const updateTaskCounter = (taskName, progress) => {
+        const counter = document.getElementById(`${taskName}-counter`);
+        if (counter) counter.textContent = `${progress}/${adminSettings.taskLimits[taskName]}`;
     };
 
-    const populateUserData = () => { /* ... (code remains same) */ };
-    const populateAdminSettings = () => { /* ... (code remains same) */ };
-    const initializeVideoTasks = () => { /* ... (code remains same) */ };
-    const updateVideoTaskUI = (card, progress) => { /* ... (code remains same) */ };
+    const initializeVideoTasks = () => {
+        document.querySelectorAll('.video-task-card').forEach(card => {
+            const progressBlocksContainer = card.querySelector('.progress-blocks');
+            progressBlocksContainer.innerHTML = '';
+            for (let i = 0; i < adminSettings.taskLimits.video; i++) {
+                const block = document.createElement('div');
+                block.classList.add('progress-block');
+                progressBlocksContainer.appendChild(block);
+            }
+            updateVideoTaskUI(card, taskProgress.video[card.dataset.taskId]);
+        });
+    };
+
+    const updateVideoTaskUI = (card, progress) => {
+        card.querySelector('.progress-text').textContent = `${progress}/${adminSettings.taskLimits.video}`;
+        card.querySelectorAll('.progress-block').forEach((block, index) => {
+            block.classList.toggle('completed', index < progress);
+        });
+        card.querySelector('.watch-ad-btn').style.display = progress >= adminSettings.taskLimits.video ? 'none' : 'block';
+        card.querySelector('.claim-reward-btn').style.display = progress >= adminSettings.taskLimits.video ? 'block' : 'none';
+    };
 
     // --- Event Listeners ---
     allNavItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target); }));
@@ -127,22 +155,76 @@ document.addEventListener('DOMContentLoaded', function () {
 
     dailyClaimBtn.addEventListener('click', (e) => {
         checkVpnAndProceed(e.target, () => {
-            showAdSimulation(() => {
+            showGigaAd(() => {
                 currentBalance += adminSettings.rewards.dailyBonus;
                 updateBalanceDisplay();
                 tg.showAlert(`Daily bonus of ${adminSettings.rewards.dailyBonus.toFixed(2)} Tk has been added!`);
                 e.target.textContent = 'Claimed';
                 e.target.disabled = true;
-            }, null);
+            });
         });
     });
 
-    // ... (rest of the event listeners for spin, scratch, video, copy, withdraw remain same)
+    watchAdButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const card = e.target.closest('.video-task-card');
+            const taskId = card.dataset.taskId;
+            if (taskProgress.video[taskId] >= adminSettings.taskLimits.video) return;
+
+            showGigaAd(() => {
+                taskProgress.video[taskId]++;
+                updateVideoTaskUI(card, taskProgress.video[taskId]);
+                tg.HapticFeedback.notificationOccurred('success');
+            }, e.target);
+        });
+    });
+
+    spinBtn.addEventListener('click', (e) => {
+        if (isSpinning || taskProgress.spin >= adminSettings.taskLimits.spin) return;
+        isSpinning = true;
+        
+        showGigaAd(() => {
+            currentRotation += Math.floor(Math.random() * 360) + 360 * 5;
+            spinWheel.style.transform = `rotate(${currentRotation}deg)`;
+            setTimeout(() => {
+                isSpinning = false;
+                taskProgress.spin++;
+                updateTaskCounter('spin', taskProgress.spin);
+                if (taskProgress.spin === adminSettings.taskLimits.spin) {
+                    currentBalance += adminSettings.rewards.spin;
+                    updateBalanceDisplay();
+                    tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.spin.toFixed(2)}.`);
+                }
+            }, 2000);
+        }, e.target);
+    });
+    
+    scratchCard.addEventListener('click', () => {
+        if (scratchCard.classList.contains('is-flipped') || taskProgress.scratch >= adminSettings.taskLimits.scratch) return;
+        
+        showGigaAd(() => {
+            scratchCard.classList.add('is-flipped');
+            tg.HapticFeedback.impactOccurred('medium');
+            taskProgress.scratch++;
+            updateTaskCounter('scratch', taskProgress.scratch);
+            if (taskProgress.scratch === adminSettings.taskLimits.scratch) {
+                currentBalance += adminSettings.rewards.scratch;
+                updateBalanceDisplay();
+                tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.scratch.toFixed(2)}.`);
+            }
+            setTimeout(() => { scratchCard.classList.remove('is-flipped'); }, 3000);
+        });
+    });
+
+    // --- Other Event Listeners ---
+    document.getElementById('copy-link-btn').addEventListener('click', (e) => { /* ... (code remains same) */ });
+    document.querySelector('.withdraw-confirm-btn').addEventListener('click', () => { /* ... (code remains same) */ });
     
     // --- Initial Call ---
     updateBalanceDisplay();
     populateUserData();
-    populateAdminSettings();
+    document.getElementById('referral-notice').textContent = adminSettings.referralNotice;
+    document.getElementById('referral-reward-info').textContent = `$${adminSettings.rewardPerReferral.toFixed(2)}`;
     initializeVideoTasks();
     updateTaskCounter('spin', taskProgress.spin);
     updateTaskCounter('scratch', taskProgress.scratch);
