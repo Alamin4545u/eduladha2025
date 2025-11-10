@@ -8,18 +8,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
-
-    // --- Firebase Configuration ---
     const firebaseConfig = {
-      apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
-      authDomain: "mini-bot-735bf.firebaseapp.com",
-      projectId: "mini-bot-735bf",
-      storageBucket: "mini-bot-735bf.appspot.com",
-      messagingSenderId: "1056580233393",
-      appId: "1:1056580233393:web:058609b1ca944020755a90",
-      measurementId: "G-L50J7R33WZ"
-    };
-
+  apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
+  authDomain: "mini-bot-735bf.firebaseapp.com",
+  projectId: "mini-bot-735bf",
+  storageBucket: "mini-bot-735bf.firebasestorage.app",
+  messagingSenderId: "1056580233393",
+  appId: "1:1056580233393:web:058609b1ca944020755a90",
+  measurementId: "G-L50J7R33WZ"
+};
     // --- Initialize Firebase (v8 SDK style) ---
     let db, auth, userRef, currentUserId;
     try {
