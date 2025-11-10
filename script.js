@@ -8,15 +8,18 @@ document.addEventListener('DOMContentLoaded', async function () {
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
+
+    // --- Firebase Configuration ---
     const firebaseConfig = {
-  apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
-  authDomain: "mini-bot-735bf.firebaseapp.com",
-  projectId: "mini-bot-735bf",
-  storageBucket: "mini-bot-735bf.firebasestorage.app",
-  messagingSenderId: "1056580233393",
-  appId: "1:1056580233393:web:058609b1ca944020755a90",
-  measurementId: "G-L50J7R33WZ"
-};
+      apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
+      authDomain: "mini-bot-735bf.firebaseapp.com",
+      projectId: "mini-bot-735bf",
+      storageBucket: "mini-bot-735bf.appspot.com",
+      messagingSenderId: "1056580233393",
+      appId: "1:1056580233393:web:058609b1ca944020755a90",
+      measurementId: "G-L50J7R33WZ"
+    };
+
     // --- Initialize Firebase (v8 SDK style) ---
     let db, auth, userRef, currentUserId;
     try {
@@ -33,10 +36,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     // --- ADMIN PANEL SIMULATION ---
     const adminSettings = {
-        vpnRequired: true,
+        vpnRequired: false, // টেস্টিং এর জন্য false রাখা হয়েছে
         allowedCountries: ['US', 'UK', 'CA'],
         taskLimits: { spin: 10, scratch: 10, video: 10 },
-        rewards: { dailyBonus: 1.00, spin: 0.50, scratch: 0.75, video: 0.25 },
+        rewards: { dailyBonus: 1.00, spin: 0.50, scratch: 0.75, video: 0.25, videoTaskClaim: 1.25 },
         referralNotice: "Invite friends and get a reward!",
         rewardPerReferral: 1.50,
         botLink: "https://t.me/YourEarningBotName",
@@ -59,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const allBalanceElements = document.querySelectorAll('.balance-amount');
     const spinWheel = document.querySelector('.spinner-wheel');
     const spinBtn = document.getElementById('spin-btn');
-    const scratchCard = document.querySelector('.scratch-card-container');
+    const scratchCardContainer = document.querySelector('.scratch-card-container');
     const watchAdButtons = document.querySelectorAll('.watch-ad-btn');
     const dailyClaimBtn = document.getElementById('daily-claim-btn');
     const withdrawBtn = document.querySelector('.withdraw-confirm-btn');
@@ -81,7 +84,19 @@ document.addEventListener('DOMContentLoaded', async function () {
         const doc = await userRef.get();
         if (doc.exists) {
             const fetchedData = doc.data();
-            userData = { ...userData, ...fetchedData, taskProgress: { ...userData.taskProgress, ...fetchedData.taskProgress } };
+            // userData অবজেক্টকে fetchedData দিয়ে আপডেট করা হচ্ছে
+            userData = {
+                ...userData,
+                ...fetchedData,
+                taskProgress: {
+                    ...userData.taskProgress,
+                    ...(fetchedData.taskProgress || {}),
+                    video: {
+                        ...userData.taskProgress.video,
+                        ...((fetchedData.taskProgress || {}).video || {})
+                    }
+                }
+            };
         } else {
             if (tg.initDataUnsafe?.user) userData.telegramId = tg.initDataUnsafe.user.id;
             await saveUserData();
@@ -106,15 +121,49 @@ document.addEventListener('DOMContentLoaded', async function () {
         allPages.forEach(page => page.classList.remove('active-page'));
         document.getElementById(targetPageId).classList.add('active-page');
         allNavItems.forEach(nav => nav.classList.toggle('active', nav.dataset.target === targetPageId));
-        
-        // Load history if switching to history page
         if (targetPageId === 'history-page') {
             loadWithdrawalHistory();
         }
     };
     
-    const checkVpnAndProceed = async (button, action) => { /* ... (code from previous correct response) ... */ };
-    const showGigaAd = (callback, button) => { /* ... (code from previous correct response) ... */ };
+    const checkVpnAndProceed = async (button, action) => {
+        if (!adminSettings.vpnRequired) {
+            action();
+            return;
+        }
+        button.disabled = true;
+        button.textContent = 'Checking...';
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            if (adminSettings.allowedCountries.includes(data.country_code)) {
+                action();
+            } else {
+                tg.showAlert('This task requires a VPN connection from a specific country (e.g., US, UK, CA).');
+            }
+        } catch (error) {
+            tg.showAlert('Could not verify location. Please check your internet connection.');
+        } finally {
+            button.disabled = false;
+        }
+    };
+
+    const showGigaAd = (callback, button) => {
+        const ad_container = document.createElement("div");
+        ad_container.id = "giga-ad-container";
+        document.body.appendChild(ad_container);
+        giga_fullscreen_Ad.showAd({
+            'container': 'giga-ad-container',
+            'finish_callback': () => {
+                document.body.removeChild(ad_container);
+                callback();
+            },
+            'close_callback': () => {
+                document.body.removeChild(ad_container);
+                tg.showAlert("You must watch the ad to get the reward.");
+            }
+        });
+    };
     
     const populateUserData = () => {
         const user = tg.initDataUnsafe?.user;
@@ -127,9 +176,51 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (user) document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${user.id}`;
     };
 
-    const updateTaskCounter = (taskName, progress) => { /* ... (code from previous correct response) ... */ };
-    const initializeVideoTasks = () => { /* ... (code from previous correct response) ... */ };
-    const updateVideoTaskUI = (card, progress) => { /* ... (code from previous correct response) ... */ };
+    const updateTaskCounter = (taskName, progress) => {
+        const counterElement = document.getElementById(`${taskName}-counter`);
+        if (counterElement) {
+            counterElement.textContent = `${progress || 0}/${adminSettings.taskLimits[taskName]}`;
+        }
+    };
+    
+    const initializeVideoTasks = () => {
+        document.querySelectorAll('.video-task-card').forEach(card => {
+            const taskId = card.dataset.taskId;
+            const progress = userData.taskProgress.video[taskId] || 0;
+            updateVideoTaskUI(card, progress);
+        });
+    };
+
+    const updateVideoTaskUI = (card, progress) => {
+        const taskId = card.dataset.taskId;
+        const progressText = card.querySelector('.progress-text');
+        const progressBlocksContainer = card.querySelector('.progress-blocks');
+        const watchBtn = card.querySelector('.watch-ad-btn');
+        const claimBtn = card.querySelector('.claim-reward-btn');
+
+        progressText.textContent = `${progress}/10`;
+        progressBlocksContainer.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+            const block = document.createElement('div');
+            block.className = 'progress-block' + (i < progress ? ' completed' : '');
+            progressBlocksContainer.appendChild(block);
+        }
+
+        if (progress >= 10) {
+            watchBtn.style.display = 'none';
+            claimBtn.style.display = 'block';
+            if (userData.taskProgress.video[`${taskId}_claimed`]) {
+                claimBtn.textContent = 'Claimed';
+                claimBtn.disabled = true;
+            } else {
+                claimBtn.textContent = 'Claim Reward';
+                claimBtn.disabled = false;
+            }
+        } else {
+            watchBtn.style.display = 'block';
+            claimBtn.style.display = 'none';
+        }
+    };
 
     const loadWithdrawalHistory = async () => {
         historyContainer.innerHTML = '<div class="spinner"></div>';
@@ -173,11 +264,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     // --- Event Listeners ---
     allNavItems.forEach(item => {
         const targetPageId = item.dataset.target;
-        if (Object.values(protectedNavs).includes(targetPageId)) return;
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchPage(targetPageId);
-        });
+        if (!Object.values(protectedNavs).includes(targetPageId)) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPage(targetPageId);
+            });
+        }
     });
     
     pageSwitchers.forEach(button => button.addEventListener('click', () => switchPage(button.dataset.target)));
@@ -220,27 +312,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         const accountNumber = document.getElementById('account-number').value;
 
         if (isNaN(amount) || amount <= 0) {
-            tg.showAlert('Please enter a valid amount.');
-            return;
+            tg.showAlert('Please enter a valid amount.'); return;
         }
         if (amount < adminSettings.minWithdrawal) {
-            tg.showAlert(`Minimum withdrawal amount is $${adminSettings.minWithdrawal.toFixed(2)}.`);
-            return;
+            tg.showAlert(`Minimum withdrawal amount is $${adminSettings.minWithdrawal.toFixed(2)}.`); return;
         }
         if (amount > userData.balance) {
-            tg.showAlert("You don't have enough balance to withdraw this amount.");
-            return;
+            tg.showAlert("You don't have enough balance."); return;
         }
         if (!accountNumber.trim()) {
-            tg.showAlert('Please enter your account number.');
-            return;
+            tg.showAlert('Please enter your account number.'); return;
         }
 
         withdrawBtn.disabled = true;
         withdrawBtn.textContent = 'Processing...';
 
         try {
-            // 1. Create withdrawal request
             const withdrawalRequest = {
                 userId: String(currentUserId),
                 amount: amount,
@@ -251,7 +338,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             };
             await db.collection('withdrawals').add(withdrawalRequest);
 
-            // 2. Deduct balance from user
             userData.balance -= amount;
             await saveUserData();
             updateBalanceDisplay();
@@ -269,9 +355,84 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     });
 
-    watchAdButtons.forEach(button => { /* ... (code from previous correct response) ... */ });
-    spinBtn.addEventListener('click', (e) => { /* ... (code from previous correct response) ... */ });
-    scratchCard.addEventListener('click', () => { /* ... (code from previous correct response) ... */ });
+    watchAdButtons.forEach(button => {
+        button.addEventListener('click', e => {
+            const card = e.target.closest('.video-task-card');
+            const taskId = card.dataset.taskId;
+            if (userData.taskProgress.video[taskId] >= 10) {
+                tg.showAlert("You have completed this task.");
+                return;
+            }
+            showGigaAd(async () => {
+                userData.taskProgress.video[taskId]++;
+                await saveUserData();
+                updateVideoTaskUI(card, userData.taskProgress.video[taskId]);
+                tg.HapticFeedback.notificationOccurred('success');
+            }, e.target);
+        });
+    });
+    
+    document.querySelectorAll('.claim-reward-btn').forEach(button => {
+        button.addEventListener('click', async e => {
+            const card = e.target.closest('.video-task-card');
+            const taskId = card.dataset.taskId;
+            if (userData.taskProgress.video[`${taskId}_claimed`]) {
+                tg.showAlert('Reward already claimed.');
+                return;
+            }
+            userData.balance += adminSettings.rewards.videoTaskClaim;
+            userData.taskProgress.video[`${taskId}_claimed`] = true;
+            await saveUserData();
+            updateBalanceDisplay();
+            updateVideoTaskUI(card, 10);
+            tg.showAlert(`Reward of $${adminSettings.rewards.videoTaskClaim.toFixed(2)} claimed!`);
+        });
+    });
+
+    spinBtn.addEventListener('click', (e) => {
+        if (isSpinning) return;
+        if (userData.taskProgress.spin >= adminSettings.taskLimits.spin) {
+            tg.showAlert("You have reached your spin limit for today.");
+            return;
+        }
+        showGigaAd(() => {
+            isSpinning = true;
+            const randomDegrees = Math.floor(Math.random() * 360) + 360 * 5;
+            currentRotation += randomDegrees;
+            spinWheel.style.transform = `rotate(${currentRotation}deg)`;
+            setTimeout(async () => {
+                isSpinning = false;
+                userData.taskProgress.spin++;
+                userData.balance += adminSettings.rewards.spin;
+                await saveUserData();
+                updateBalanceDisplay();
+                updateTaskCounter('spin', userData.taskProgress.spin);
+                tg.showAlert(`You won $${adminSettings.rewards.spin.toFixed(2)}!`);
+                tg.HapticFeedback.notificationOccurred('success');
+            }, 2000);
+        }, e.target);
+    });
+
+    scratchCardContainer.addEventListener('click', () => {
+        if (scratchCardContainer.classList.contains('is-flipped')) return;
+        if (userData.taskProgress.scratch >= adminSettings.taskLimits.scratch) {
+            tg.showAlert("You have reached your scratch limit for today.");
+            return;
+        }
+        showGigaAd(() => {
+            scratchCardContainer.classList.add('is-flipped');
+            setTimeout(async () => {
+                userData.taskProgress.scratch++;
+                userData.balance += adminSettings.rewards.scratch;
+                await saveUserData();
+                updateBalanceDisplay();
+                updateTaskCounter('scratch', userData.taskProgress.scratch);
+                tg.showAlert(`You won $${adminSettings.rewards.scratch.toFixed(2)}!`);
+                tg.HapticFeedback.notificationOccurred('success');
+                setTimeout(() => scratchCardContainer.classList.remove('is-flipped'), 2000);
+            }, 1000);
+        }, scratchCardContainer);
+    });
     
     // --- Initial App Logic ---
     async function main() {
