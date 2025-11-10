@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     // --- Safety Check for Telegram Environment ---
-    if (typeof Telegram === 'undefined' || typeof Telegram.WebApp === 'undefined') {
+    if (typeof Telegram === 'undefined' || !window.Telegram.WebApp) {
         document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: white; font-size: 18px;">Please open this app inside Telegram.</div>`;
         return;
     }
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         button.innerHTML = '<span>Checking...</span>';
 
         try {
-            const response = await fetch('https://ipinfo.io/json?token=YOUR_IPINFO_TOKEN'); // Replace with your token for production
+            const response = await fetch('https://ipinfo.io/json?token=1151161c93b97a');
             if (!response.ok) throw new Error('Network response failed');
             
             const data = await response.json();
@@ -79,23 +79,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const showGigaAd = (callback, button) => {
         if (button) button.disabled = true;
+        const originalHTML = button ? button.innerHTML : '';
 
-        window.showGiga()
-            .then(() => {
-                // Ad watched successfully
-                if (callback) callback();
-            })
-            .catch(e => {
-                // Handle errors if the ad fails to load
-                tg.showAlert('Ad could not be loaded. Please try again.');
-                console.error("GigaPay Ad Error: ", e);
-            })
-            .finally(() => {
-                // This will run whether the ad succeeded or failed
-                if (button && button.textContent !== 'Claimed') {
-                     button.disabled = false;
-                }
-            });
+        // Check if GigaPay script is loaded
+        if (typeof window.showGiga === 'function') {
+            window.showGiga()
+                .then(() => { if (callback) callback(); })
+                .catch(e => {
+                    tg.showAlert('Ad could not be loaded. Please try again.');
+                    console.error("GigaPay Ad Error: ", e);
+                })
+                .finally(() => {
+                    if (button && button.textContent !== 'Claimed') {
+                        button.disabled = false;
+                        button.innerHTML = originalHTML;
+                    }
+                });
+        } else {
+            // Fallback if GigaPay fails to load
+            tg.showAlert('Ad service is currently unavailable.');
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
+        }
     };
     
     const populateUserData = () => {
@@ -136,8 +143,15 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // --- Event Listeners ---
-    allNavItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target); }));
-    document.querySelectorAll('[data-target]:not(.protected-nav)').forEach(button => button.addEventListener('click', () => switchPage(button.dataset.target)));
+    allNavItems.forEach(item => {
+        const targetPage = item.dataset.target;
+        if (!Object.values(protectedNavs).includes(targetPage)) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPage(targetPage);
+            });
+        }
+    });
     
     Object.entries(protectedNavs).forEach(([buttonId, pageId]) => {
         const buttonElement = document.getElementById(buttonId);
@@ -161,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tg.showAlert(`Daily bonus of ${adminSettings.rewards.dailyBonus.toFixed(2)} Tk has been added!`);
                 e.target.textContent = 'Claimed';
                 e.target.disabled = true;
-            });
+            }, e.target);
         });
     });
 
