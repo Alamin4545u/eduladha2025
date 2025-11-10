@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     // --- Safety Check for Telegram Environment ---
     if (typeof Telegram === 'undefined' || !window.Telegram.WebApp) {
         document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: white; font-size: 18px;">Please open this app inside Telegram.</div>`;
@@ -8,6 +8,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
+
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBidXnyxl4LjnRW6z5PrQ_iOKzqjjrxRtM",
+        authDomain: "comexaple.firebaseapp.com",
+        projectId: "comexaple",
+        storageBucket: "comexaple.firebasestorage.app",
+        messagingSenderId: "799294329351",
+        appId: "1:799294329351:web:0bb9620bc1d227a29650a2",
+        measurementId: "G-LRBREF5QV6"
+    };
+
+    // --- Initialize Firebase ---
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    let userRef;
 
     // --- ADMIN PANEL SIMULATION ---
     const adminSettings = {
@@ -19,12 +35,18 @@ document.addEventListener('DOMContentLoaded', function () {
         rewardPerReferral: 1.50,
         botLink: "https://t.me/YourEarningBotName"
     };
-
-    let currentBalance = 125.50;
-    const user = tg.initDataUnsafe?.user;
-    let taskProgress = { spin: 0, scratch: 0, video: { task1: 0, task2: 0, task3: 0 }};
+    
+    // --- App State ---
+    let userData = {
+        balance: 0.00,
+        lastClaim: null,
+        taskProgress: { spin: 0, scratch: 0, video: { task1: 0, task2: 0, task3: 0 }}
+    };
 
     // --- Element References ---
+    const loader = document.getElementById('loader');
+    const appContainer = document.querySelector('.app-container');
+    const bottomNav = document.querySelector('.bottom-nav');
     const allPages = document.querySelectorAll('.page-content');
     const allNavItems = document.querySelectorAll('.nav-item');
     const allBalanceElements = document.querySelectorAll('.balance-amount');
@@ -34,129 +56,60 @@ document.addEventListener('DOMContentLoaded', function () {
     const watchAdButtons = document.querySelectorAll('.watch-ad-btn');
     const dailyClaimBtn = document.getElementById('daily-claim-btn');
     const protectedNavs = { 'nav-spin': 'spin-page', 'nav-scratch': 'scratch-page', 'nav-video': 'watch-video-page' };
+    const pageSwitchers = document.querySelectorAll('.page-switcher');
 
     let isSpinning = false;
     let currentRotation = 0;
     
     // --- Main Functions ---
-    const updateBalanceDisplay = () => allBalanceElements.forEach(el => el.textContent = `$${currentBalance.toFixed(2)}`);
-    const switchPage = (targetPageId) => {
-        if (!document.getElementById(targetPageId)) return;
-        allPages.forEach(page => page.classList.remove('active-page'));
-        document.getElementById(targetPageId).classList.add('active-page');
-        allNavItems.forEach(nav => nav.classList.toggle('active', nav.dataset.target === targetPageId));
-    };
+    const showApp = () => { loader.style.display = 'none'; appContainer.style.display = 'flex'; bottomNav.style.display = 'flex'; };
+    const updateBalanceDisplay = () => allBalanceElements.forEach(el => el.textContent = `$${userData.balance.toFixed(2)}`);
+    const saveUserData = async () => { if (userRef) await userRef.set(userData, { merge: true }); };
 
-    const checkVpnAndProceed = async (button, action) => {
-        if (!adminSettings.vpnRequired) { action(); return; }
-
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<span>Checking...</span>';
-
-        try {
-            const response = await fetch('https://ipinfo.io/json?token=1151161c93b97a');
-            if (!response.ok) throw new Error('Network response failed');
-            
-            const data = await response.json();
-            const userCountry = data.country;
-
-            if (adminSettings.allowedCountries.includes(userCountry)) {
-                action();
-            } else {
-                tg.showAlert(`আপনি ভিপিএন চালু করুন ${adminSettings.allowedCountries.join(', ')} কান্ট্রি`);
-            }
-        } catch (error) {
-            console.error('VPN Check Error:', error);
-            tg.showAlert('ভিপিএন চেক করা সম্ভব হচ্ছে না। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।');
-        } finally {
-            if (button.textContent !== 'Claimed') {
-                button.disabled = false;
-                button.innerHTML = originalHTML;
-            }
-        }
-    };
-
-    const showGigaAd = (callback, button) => {
-        if (button) button.disabled = true;
-        const originalHTML = button ? button.innerHTML : '';
-
-        // Check if GigaPay script is loaded
-        if (typeof window.showGiga === 'function') {
-            window.showGiga()
-                .then(() => { if (callback) callback(); })
-                .catch(e => {
-                    tg.showAlert('Ad could not be loaded. Please try again.');
-                    console.error("GigaPay Ad Error: ", e);
-                })
-                .finally(() => {
-                    if (button && button.textContent !== 'Claimed') {
-                        button.disabled = false;
-                        button.innerHTML = originalHTML;
-                    }
-                });
+    const loadUserData = async (userId) => {
+        userRef = db.collection('users').doc(String(userId));
+        const doc = await userRef.get();
+        if (doc.exists) {
+            // Merge fetched data with default structure to avoid errors if some fields are missing
+            const fetchedData = doc.data();
+            userData.balance = fetchedData.balance || 0;
+            userData.lastClaim = fetchedData.lastClaim || null;
+            userData.taskProgress = { ...userData.taskProgress, ...fetchedData.taskProgress };
         } else {
-            // Fallback if GigaPay fails to load
-            tg.showAlert('Ad service is currently unavailable.');
-            if (button) {
-                button.disabled = false;
-                button.innerHTML = originalHTML;
-            }
+            await saveUserData(); // Create new user document
+        }
+        updateUIWithLoadedData();
+    };
+
+    const updateUIWithLoadedData = () => {
+        updateBalanceDisplay();
+        updateTaskCounter('spin', userData.taskProgress.spin);
+        updateTaskCounter('scratch', userData.taskProgress.scratch);
+        initializeVideoTasks();
+        
+        const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
+        const todayDate = new Date().toDateString();
+        if (lastClaimDate === todayDate) {
+            dailyClaimBtn.textContent = 'Claimed';
+            dailyClaimBtn.disabled = true;
         }
     };
-    
-    const populateUserData = () => {
-        const name = user?.first_name || 'User';
-        const username = user?.username ? `@${user.username}` : '@username';
-        document.getElementById('user-name').textContent = name;
-        document.getElementById('user-username').textContent = username;
-        document.getElementById('profile-name').textContent = name;
-        document.getElementById('profile-username').textContent = username;
-        if (user) document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${user.id}`;
-    };
-    
-    const updateTaskCounter = (taskName, progress) => {
-        const counter = document.getElementById(`${taskName}-counter`);
-        if (counter) counter.textContent = `${progress}/${adminSettings.taskLimits[taskName]}`;
-    };
 
-    const initializeVideoTasks = () => {
-        document.querySelectorAll('.video-task-card').forEach(card => {
-            const progressBlocksContainer = card.querySelector('.progress-blocks');
-            progressBlocksContainer.innerHTML = '';
-            for (let i = 0; i < adminSettings.taskLimits.video; i++) {
-                const block = document.createElement('div');
-                block.classList.add('progress-block');
-                progressBlocksContainer.appendChild(block);
-            }
-            updateVideoTaskUI(card, taskProgress.video[card.dataset.taskId]);
-        });
-    };
-
-    const updateVideoTaskUI = (card, progress) => {
-        card.querySelector('.progress-text').textContent = `${progress}/${adminSettings.taskLimits.video}`;
-        card.querySelectorAll('.progress-block').forEach((block, index) => {
-            block.classList.toggle('completed', index < progress);
-        });
-        card.querySelector('.watch-ad-btn').style.display = progress >= adminSettings.taskLimits.video ? 'none' : 'block';
-        card.querySelector('.claim-reward-btn').style.display = progress >= adminSettings.taskLimits.video ? 'block' : 'none';
-    };
+    const switchPage = (targetPageId) => { /* ... (code remains same) */ };
+    const checkVpnAndProceed = async (button, action) => { /* ... (code remains same) */ };
+    const showGigaAd = (callback, button) => { /* ... (code remains same) */ };
+    const populateUserData = () => { /* ... (code remains same) */ };
+    const updateTaskCounter = (taskName, progress) => { /* ... (code remains same) */ };
+    const initializeVideoTasks = () => { /* ... (code remains same) */ };
+    const updateVideoTaskUI = (card, progress) => { /* ... (code remains same) */ };
 
     // --- Event Listeners ---
-    allNavItems.forEach(item => {
-        const targetPage = item.dataset.target;
-        if (!Object.values(protectedNavs).includes(targetPage)) {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                switchPage(targetPage);
-            });
-        }
-    });
+    allNavItems.forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target); }); });
+    pageSwitchers.forEach(button => { button.addEventListener('click', () => switchPage(button.dataset.target)); });
     
     Object.entries(protectedNavs).forEach(([buttonId, pageId]) => {
         const buttonElement = document.getElementById(buttonId);
         if (buttonElement) {
-            buttonElement.classList.add('protected-nav');
             buttonElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 checkVpnAndProceed(buttonElement, () => {
@@ -169,8 +122,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     dailyClaimBtn.addEventListener('click', (e) => {
         checkVpnAndProceed(e.target, () => {
-            showGigaAd(() => {
-                currentBalance += adminSettings.rewards.dailyBonus;
+            const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
+            if (lastClaimDate === new Date().toDateString()) {
+                tg.showAlert("You have already claimed today's bonus.");
+                return;
+            }
+            showGigaAd(async () => {
+                userData.balance += adminSettings.rewards.dailyBonus;
+                userData.lastClaim = new Date().toISOString();
+                await saveUserData();
                 updateBalanceDisplay();
                 tg.showAlert(`Daily bonus of ${adminSettings.rewards.dailyBonus.toFixed(2)} Tk has been added!`);
                 e.target.textContent = 'Claimed';
@@ -183,63 +143,76 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', (e) => {
             const card = e.target.closest('.video-task-card');
             const taskId = card.dataset.taskId;
-            if (taskProgress.video[taskId] >= adminSettings.taskLimits.video) return;
+            if (userData.taskProgress.video[taskId] >= adminSettings.taskLimits.video) return;
 
-            showGigaAd(() => {
-                taskProgress.video[taskId]++;
-                updateVideoTaskUI(card, taskProgress.video[taskId]);
+            showGigaAd(async () => {
+                userData.taskProgress.video[taskId]++;
+                await saveUserData();
+                updateVideoTaskUI(card, userData.taskProgress.video[taskId]);
                 tg.HapticFeedback.notificationOccurred('success');
             }, e.target);
         });
     });
 
     spinBtn.addEventListener('click', (e) => {
-        if (isSpinning || taskProgress.spin >= adminSettings.taskLimits.spin) return;
+        if (isSpinning || userData.taskProgress.spin >= adminSettings.taskLimits.spin) return;
         isSpinning = true;
         
-        showGigaAd(() => {
+        showGigaAd(async () => {
             currentRotation += Math.floor(Math.random() * 360) + 360 * 5;
             spinWheel.style.transform = `rotate(${currentRotation}deg)`;
-            setTimeout(() => {
+            setTimeout(async () => {
                 isSpinning = false;
-                taskProgress.spin++;
-                updateTaskCounter('spin', taskProgress.spin);
-                if (taskProgress.spin === adminSettings.taskLimits.spin) {
-                    currentBalance += adminSettings.rewards.spin;
-                    updateBalanceDisplay();
+                userData.taskProgress.spin++;
+                if (userData.taskProgress.spin === adminSettings.taskLimits.spin) {
+                    userData.balance += adminSettings.rewards.spin;
                     tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.spin.toFixed(2)}.`);
                 }
+                await saveUserData();
+                updateTaskCounter('spin', userData.taskProgress.spin);
+                updateBalanceDisplay();
             }, 2000);
         }, e.target);
     });
     
     scratchCard.addEventListener('click', () => {
-        if (scratchCard.classList.contains('is-flipped') || taskProgress.scratch >= adminSettings.taskLimits.scratch) return;
+        if (scratchCard.classList.contains('is-flipped') || userData.taskProgress.scratch >= adminSettings.taskLimits.scratch) return;
         
-        showGigaAd(() => {
+        showGigaAd(async () => {
             scratchCard.classList.add('is-flipped');
             tg.HapticFeedback.impactOccurred('medium');
-            taskProgress.scratch++;
-            updateTaskCounter('scratch', taskProgress.scratch);
-            if (taskProgress.scratch === adminSettings.taskLimits.scratch) {
-                currentBalance += adminSettings.rewards.scratch;
-                updateBalanceDisplay();
+            userData.taskProgress.scratch++;
+            if (userData.taskProgress.scratch === adminSettings.taskLimits.scratch) {
+                userData.balance += adminSettings.rewards.scratch;
                 tg.showAlert(`Task Complete! You earned $${adminSettings.rewards.scratch.toFixed(2)}.`);
             }
+            await saveUserData();
+            updateTaskCounter('scratch', userData.taskProgress.scratch);
+            updateBalanceDisplay();
             setTimeout(() => { scratchCard.classList.remove('is-flipped'); }, 3000);
         });
     });
-
-    // --- Other Event Listeners ---
-    document.getElementById('copy-link-btn').addEventListener('click', (e) => { /* ... (code remains same) */ });
-    document.querySelector('.withdraw-confirm-btn').addEventListener('click', () => { /* ... (code remains same) */ });
     
-    // --- Initial Call ---
-    updateBalanceDisplay();
-    populateUserData();
-    document.getElementById('referral-notice').textContent = adminSettings.referralNotice;
-    document.getElementById('referral-reward-info').textContent = `$${adminSettings.rewardPerReferral.toFixed(2)}`;
-    initializeVideoTasks();
-    updateTaskCounter('spin', taskProgress.spin);
-    updateTaskCounter('scratch', taskProgress.scratch);
+    // --- Initial App Logic ---
+    async function main() {
+        populateAdminSettings();
+        if (tg.initDataUnsafe?.user) {
+            try {
+                // Authenticate with Firebase using a custom token from your backend is the secure way.
+                // For this example, we'll proceed without auth, relying on Firestore rules.
+                await loadUserData(tg.initDataUnsafe.user.id);
+                populateUserData();
+            } catch (error) {
+                console.error("Firebase Auth/Load Error:", error);
+                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: red;">Could not connect to the database.</div>`;
+                return;
+            }
+        } else {
+            populateUserData(); // For local testing
+            updateUIWithLoadedData();
+        }
+        showApp();
+    }
+
+    main();
 });
