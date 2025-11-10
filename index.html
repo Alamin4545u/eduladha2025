@@ -15,7 +15,6 @@
     </div>
 
     <div class="app-container" style="display: none;">
-        <!-- All Page Content Goes Here -->
         <!-- ===== Home Page ===== -->
         <div id="home-page" class="page-content active-page">
             <div class="home-header-fixed"><header class="app-header user-info-header"><div class="user-profile-info"><span id="user-name">User</span><span id="user-username">@username</span></div></header><section class="balance-card"><div class="balance-info"><p class="balance-label">Your Balance</p><h2 class="balance-amount">$0.00</h2></div><button class="btn-3d primary-btn page-switcher" data-target="wallet-page">Withdraw</button></section></div>
@@ -30,15 +29,61 @@
 
         <!-- ===== Tasks Page ===== -->
         <div id="tasks-page" class="page-content">
-            <!-- ... (content remains the same) -->
+            <header class="app-header"><h1>All Tasks</h1></header>
+            <div class="tasks-grid">
+                <div id="nav-spin" class="task-option-card"><svg class="task-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="14.31" y1="8" x2="20.05" y2="17.94"></line><line x1="9.69" y1="8" x2="21.17" y2="8"></line><line x1="7.38" y1="12" x2="13.12" y2="2.06"></line><line x1="9.69" y1="16" x2="3.95" y2="6.06"></line><line x1="14.31" y1="16" x2="2.83" y2="16"></line><line x1="16.62" y1="12" x2="10.88" y2="21.94"></line></svg><span>Spin</span></div>
+                <div id="nav-scratch" class="task-option-card"><svg class="task-icon" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg><span>Scratch Card</span></div>
+                <div id="nav-video" class="task-option-card"><svg class="task-icon" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg><span>Watch Video</span></div>
+            </div>
         </div>
 
-        <!-- Other pages ... -->
+        <!-- ===== Watch Video Page ===== -->
+        <div id="watch-video-page" class="page-content">
+            <header class="app-header"><h1>Watch & Earn</h1></header>
+            <main class="video-tasks-container">
+                <div class="video-task-card" data-task-id="task1"><div class="video-task-header"><h3>Task 1</h3><p class="progress-text">0/10</p></div><div class="progress-blocks"></div><button class="btn-3d task-btn watch-ad-btn">Watch Ad</button><button class="btn-3d claim-reward-btn" style="display: none;">Claim Reward</button></div>
+                <div class="video-task-card" data-task-id="task2"><div class="video-task-header"><h3>Task 2</h3><p class="progress-text">0/10</p></div><div class="progress-blocks"></div><button class="btn-3d task-btn watch-ad-btn">Watch Ad</button><button class="btn-3d claim-reward-btn" style="display: none;">Claim Reward</button></div>
+                <div class="video-task-card" data-task-id="task3"><div class="video-task-header"><h3>Task 3</h3><p class="progress-text">0/10</p></div><div class="progress-blocks"></div><button class="btn-3d task-btn watch-ad-btn">Watch Ad</button><button class="btn-3d claim-reward-btn" style="display: none;">Claim Reward</button></div>
+            </main>
+        </div>
+
+        <!-- ===== Spin Page ===== -->
+        <div id="spin-page" class="page-content">
+            <header class="app-header"><h1>Spin to Win</h1><p class="task-counter" id="spin-counter">0/10</p></header>
+            <div class="spin-wrapper"><div class="spinner-container"><div class="spinner-pointer"></div><div class="spinner-wheel-border"></div><div class="spinner-wheel"></div><div class="spinner-hub">GO</div></div></div>
+            <button id="spin-btn" class="btn-3d primary-btn spin-now-btn">Spin Now</button>
+        </div>
+
+        <!-- ===== Scratch Card Page ===== -->
+        <div id="scratch-page" class="page-content">
+            <header class="app-header"><h1>Scratch & Win</h1><p class="task-counter" id="scratch-counter">0/10</p></header>
+            <div class="scratch-card-container"><div class="scratch-card-inner"><div class="scratch-card-front"><h2>SCRATCH HERE</h2><p>Click to reveal prize!</p></div><div class="scratch-card-back"><h3>Congratulations!</h3><p>You Won</p><span class="prize-amount">$0.50</span></div></div></div>
+        </div>
+
+        <!-- ===== Referral & Profile Pages ===== -->
+        <div id="referral-page" class="page-content">
+             <header class="app-header"><h1>Refer & Earn</h1></header>
+             <div class="notice-box"><p id="referral-notice">Loading...</p></div>
+             <div class="referral-info-card"><p>You Earn</p><h3 id="referral-reward-info">$0</h3></div>
+             <div class="referral-link-section"><p>Your Unique Referral Link</p><div class="link-container"><input type="text" id="referral-link" value="Generating..." readonly><button id="copy-link-btn">Copy</button></div></div>
+        </div>
+        <div id="profile-page" class="page-content">
+             <header class="app-header"><h1>My Profile</h1></header>
+             <div class="profile-card">
+                 <div class="profile-item"><span class="profile-label">Name</span><span class="profile-value" id="profile-name">...</span></div>
+                 <div class="profile-item"><span class="profile-label">Username</span><span class="profile-value" id="profile-username">...</span></div>
+                 <div class="profile-item"><span class="profile-label">Balance</span><span class="profile-value balance-amount" id="profile-balance">$0.00</span></div>
+             </div>
+        </div>
     </div>
 
     <!-- Bottom Navigation Bar -->
     <nav class="bottom-nav" style="display: none;">
-        <!-- ... (content remains the same) -->
+        <a href="#" class="nav-item active" data-target="home-page"><svg class="nav-icon" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
+        <a href="#" class="nav-item" data-target="wallet-page"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg><span>Wallet</span></a>
+        <a href="#" class="nav-item nav-item-main" data-target="tasks-page"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><span>Tasks</span></a>
+        <a href="#" class="nav-item" data-target="referral-page"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Referral</span></a>
+        <a href="#" class="nav-item" data-target="profile-page"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a>
     </nav>
     
     <!-- Firebase SDKs -->
