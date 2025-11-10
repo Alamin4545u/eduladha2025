@@ -86,7 +86,6 @@ body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); co
 .prize-amount { font-size: 2.2em; font-weight: 700; }
 
 /* Referral & Profile Pages */
-.notice-box, .referral-info-card, .referral-link-section, .profile-card { /* Styles remain same */ }
 .notice-box { background: var(--notice-bg); padding: 15px; border-radius: 15px; margin: 15px 0 25px 0; text-align: center; }
 .referral-info-card { text-align: center; margin-bottom: 30px; }
 .referral-info-card p { margin: 0; opacity: 0.8; }
