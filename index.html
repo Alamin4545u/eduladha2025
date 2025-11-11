@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>এ্যাড দেখে টাকা ইনকাম করুন</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -11,16 +11,16 @@
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial; background: linear-gradient(to bottom, #121212, #1e1e1e); color: #fff; margin: 0; padding: 20px; text-align: center; }
+        body { font-family: Arial; background: linear-gradient(to bottom, #121212, #1e1e1e); color: #fff; margin: 0; padding: 20px; text-align: center; min-height: 100vh; }
         h1 { color: #4caf50; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .username { font-size: 18px; color: #ffd700; margin: 10px 0; }
         .balance { font-size: 32px; color: #4caf50; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; }
-        button { background: linear-gradient(to right, #4caf50, #388e3c); color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 50px; font-size: 18px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        button { background: linear-gradient(to right, #4caf50, #388e3c); color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 50px; font-size: 18px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: auto; max-width: 90%; }
         button:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         button:disabled { background: #555; }
         #withdrawForm { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(76,175,80,0.5); width: 90%; max-width: 400px; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #4caf50; background: #333; color: white; font-size: 16px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #4caf50; background: #333; color: white; font-size: 16px; box-sizing: border-box; }
         #history { max-height: 300px; overflow-y: auto; background: #1c1c1c; border-radius: 15px; padding: 15px; margin-top: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .history-item { background: #282828; padding: 15px; margin: 10px 0; border-radius: 10px; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
@@ -62,113 +62,102 @@
 
         Telegram.WebApp.ready();
         const tgUser = Telegram.WebApp.initDataUnsafe.user;
-        if (!tgUser) return document.body.innerHTML = "<h1>টেলিগ্রাম থেকে খুলুন!</h1>";
+        if (!tgUser) {
+            document.body.innerHTML = "<h1>টেলিগ্রাম থেকে খুলুন!</h1>";
+        } else {
+            const telegramId = tgUser.id.toString();
+            const username = tgUser.username || tgUser.first_name || 'ইউজার';
+            document.getElementById('username').innerText = username;
 
-        const telegramId = tgUser.id.toString();
-        const username = tgUser.username || tgUser.first_name || 'ইউজার';
-        document.getElementById('username').innerText = username; // Show username directly
+            let userDocRef;
+            let config = { pointsPerAd: 10, minWithdraw: 500 };
 
-        let userDocRef;
-        let config = { pointsPerAd: 10, minWithdraw: 500 };
+            async function loadConfig() {
+                try {
+                    const configDoc = await db.collection('config').doc('settings').get();
+                    if (configDoc.exists) config = configDoc.data();
+                    document.getElementById('watchAd').innerText = `<i class="fas fa-play"></i>এ্যাড দেখুন (${config.pointsPerAd} পয়েন্ট)`;
+                    document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} পয়েন্ট`;
+                } catch (e) { console.error('Config error:', e); alert('কনফিগ লোড ফেল: ' + e.message); }
+            }
+            loadConfig();
 
-        async function loadConfig() {
-            try {
-                const configDoc = await db.collection('config').doc('settings').get();
-                if (configDoc.exists) config = configDoc.data();
-                document.getElementById('watchAd').innerText = `<i class="fas fa-play"></i>এ্যাড দেখুন (${config.pointsPerAd} পয়েন্ট)`;
-                document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} পয়েন্ট`;
-            } catch (e) { console.error(e); alert('কনফিগ লোড ফেল'); }
-        }
-        loadConfig();
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            auth.signInAnonymously().catch(e => { console.error('Auth error:', e); alert('লগিন ফেল: ' + e.message); });
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) return alert('লগিন সমস্যা - Firebase Anonymous enable করুন');
+                userDocRef = db.collection('users').doc(user.uid);
+                try {
+                    const doc = await userDocRef.get();
+                    if (!doc.exists) {
+                        await userDocRef.set({ balance: 0, telegramId, username, createdAt: firebase.firestore.FieldValue.serverTimestamp(), lastAdWatched: null });
+                    }
+                    loadBalance();
+                    loadHistory();
+                    document.getElementById('watchAd').disabled = false;
+                } catch (e) { console.error('Data load error:', e); alert('ডেটা লোড ফেল: ' + e.message); }
+            });
 
-        // Auth with UID as Doc ID
-        auth.signInAnonymously().catch(e => alert('লগিন ফেল: ' + e.message));
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) return;
-            userDocRef = db.collection('users').doc(user.uid); // Use uid as doc ID
-            try {
-                const doc = await userDocRef.get();
-                if (!doc.exists) {
-                    await userDocRef.set({
-                        balance: 0,
-                        telegramId: telegramId,
-                        username: username,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastAdWatched: null
-                    });
-                }
-                loadBalance();
-                loadHistory();
+            // Load Balance
+            async function loadBalance() {
+                try {
+                    const snap = await userDocRef.get();
+                    document.getElementById('balance').innerText = snap.data().balance || 0;
+                } catch (e) { console.error('Balance error:', e); alert('ব্যালেন্স লোড ফেল: ' + e.message); }
+            }
+
+            // Watch Ad
+            document.getElementById('watchAd').onclick = async () => {
+                if (typeof window.showGiga === 'undefined') return alert('GigaPub SDK লোড হয়নি – নেট চেক করুন');
+                document.getElementById('watchAd').disabled = true;
+                try {
+                    const snap = await userDocRef.get();
+                    const last = snap.data().lastAdWatched;
+                    if (last && (Date.now() - last.toDate().getTime()) < 90000) return alert('৯০ সেকেন্ড অপেক্ষা করুন');
+                    await window.showGiga();
+                    await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(config.pointsPerAd), lastAdWatched: firebase.firestore.FieldValue.serverTimestamp() });
+                    loadBalance();
+                    alert(`অভিনন্দন! ${config.pointsPerAd} পয়েন্ট পেয়েছেন`);
+                } catch (e) { console.error('Ad error:', e); alert('এ্যাড ফেল: ' + e.message); }
                 document.getElementById('watchAd').disabled = false;
-            } catch (e) { console.error(e); alert('ডেটা লোড ফেল: ' + e.message); }
-        });
+            };
 
-        // Load Balance
-        async function loadBalance() {
-            try {
-                const snap = await userDocRef.get();
-                document.getElementById('balance').innerText = snap.data().balance || 0;
-            } catch (e) { console.error(e); alert('ব্যালেন্স লোড ফেল: ' + e.message); }
-        }
+            // Withdraw
+            const modal = document.getElementById('withdrawForm');
+            document.getElementById('withdraw').onclick = () => modal.style.display = 'block';
+            document.getElementById('closeModal').onclick = () => modal.style.display = 'none';
+            document.getElementById('submitWithdraw').onclick = async () => {
+                const amount = parseInt(document.getElementById('amount').value);
+                const details = document.getElementById('paymentDetails').value.trim();
+                if (amount < config.minWithdraw || !details) return alert('সঠিক তথ্য দিন');
+                try {
+                    const snap = await userDocRef.get();
+                    if (snap.data().balance < amount) return alert('পয়েন্ট কম');
+                    await db.collection('withdrawals').add({ userUid: auth.currentUser.uid, telegramId, amount, details, status: 'pending', requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(-amount) });
+                    alert('রিকোয়েস্ট সফল!');
+                    modal.style.display = 'none';
+                    loadBalance();
+                    loadHistory();
+                } catch (e) { console.error('Withdraw error:', e); alert('উইথড্র ফেল: ' + e.message); }
+            };
 
-        // Watch Ad
-        document.getElementById('watchAd').onclick = async () => {
-            if (typeof window.showGiga === 'undefined') return alert('GigaPub SDK লোড হয়নি – নেট/স্ক্রিপ্ট চেক করুন');
-            document.getElementById('watchAd').disabled = true;
-            try {
-                const snap = await userDocRef.get();
-                const last = snap.data().lastAdWatched;
-                if (last && (Date.now() - last.toDate().getTime()) < 90000) return alert('৯০ সেকেন্ড অপেক্ষা করুন');
-                await window.showGiga();
-                await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(config.pointsPerAd), lastAdWatched: firebase.firestore.FieldValue.serverTimestamp() });
-                loadBalance();
-                alert(`অভিনন্দন! ${config.pointsPerAd} পয়েন্ট পেয়েছেন`);
-            } catch (e) { console.error(e); alert('এ্যাড ফেল: ' + e.message); }
-            document.getElementById('watchAd').disabled = false;
-        };
-
-        // Withdraw
-        const modal = document.getElementById('withdrawForm');
-        document.getElementById('withdraw').onclick = () => modal.style.display = 'block';
-        document.getElementById('closeModal').onclick = () => modal.style.display = 'none';
-        document.getElementById('submitWithdraw').onclick = async () => {
-            const amount = parseInt(document.getElementById('amount').value);
-            const details = document.getElementById('paymentDetails').value.trim();
-            if (amount < config.minWithdraw || !details) return alert('সঠিক তথ্য দিন');
-            try {
-                const snap = await userDocRef.get();
-                if (snap.data().balance < amount) return alert('পয়েন্ট কম');
-                await db.collection('withdrawals').add({
-                    userUid: auth.currentUser.uid,
-                    telegramId: telegramId,
-                    amount,
-                    details,
-                    status: 'pending',
-                    requestedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(-amount) });
-                alert('রিকোয়েস্ট সফল!');
-                modal.style.display = 'none';
-                loadBalance();
-                loadHistory();
-            } catch (e) { console.error(e); alert('উইথড্র ফেল: ' + e.message); }
-        };
-
-        // History
-        async function loadHistory() {
-            const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = '<h2><i class="fas fa-history"></i>উইথড্র হিস্ট্রি</h2>';
-            try {
-                const snap = await db.collection('withdrawals').where('userUid', '==', auth.currentUser.uid).orderBy('requestedAt', 'desc').get();
-                if (snap.empty) historyDiv.innerHTML += '<p>কোনো হিস্ট্রি নেই</p>';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const item = document.createElement('div');
-                    item.className = 'history-item';
-                    item.innerHTML = `<span>পরিমাণ: ${d.amount}</span><span>নম্বর: ${d.details}</span><span>তারিখ: ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</span><span class="status-${d.status}">স্ট্যাটাস: ${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span>`;
-                    historyDiv.appendChild(item);
-                });
-            } catch (e) { console.error(e); alert('হিস্ট্রি লোড ফেল: ' + e.message); }
+            // History
+            async function loadHistory() {
+                const historyDiv = document.getElementById('history');
+                historyDiv.innerHTML = '<h2><i class="fas fa-history"></i>উইথড্র হিস্ট্রি</h2>';
+                try {
+                    const snap = await db.collection('withdrawals').where('userUid', '==', auth.currentUser.uid).orderBy('requestedAt', 'desc').get();
+                    if (snap.empty) historyDiv.innerHTML += '<p>কোনো হিস্ট্রি নেই</p>';
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const item = document.createElement('div');
+                        item.className = 'history-item';
+                        item.innerHTML = `<span>পরিমাণ: ${d.amount}</span><span>নম্বর: ${d.details}</span><span>তারিখ: ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</span><span class="status-${d.status}">স্ট্যাটাস: ${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span>`;
+                        historyDiv.appendChild(item);
+                    });
+                } catch (e) { console.error('History error:', e); alert('হিস্ট্রি লোড ফেল: ' + e.message); }
+            }
         }
     </script>
 </body>
