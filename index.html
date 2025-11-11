@@ -99,7 +99,7 @@
         @keyframes bannerSlideIn { to { opacity: 1; transform: translateX(0); } }
         .banner:hover { transform: scale(1.02) rotateY(5deg); }
 
-        /* Live Notice */
+        /* Live Notice (with scrolling animation) */
         .live-notice {
             margin: 20px;
             background: var(--card);
@@ -110,6 +110,16 @@
             font-style: italic;
             text-align: center;
             animation: fadeIn 0.5s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .live-notice span {
+            display: inline-block;
+            animation: scroll-left 15s linear infinite;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
         /* Action Buttons */
@@ -252,7 +262,7 @@
         <div class="banner-container" id="bannerContainer">
             <!-- Dynamic banners from config -->
         </div>
-        <div class="live-notice" id="liveNotice">লোড হচ্ছে...</div>
+        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
         <button class="action-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
     </div>
 
@@ -375,8 +385,15 @@
                 if (doc.exists) {
                     config = { ...config, ...doc.data() };
                     updatePointsDisplay();
-                    // Live Notice
-                    document.getElementById('liveNotice').innerText = config.liveNotice || 'কোনো নোটিস নেই';
+                    // Live Notice with scrolling
+                    const noticeSpan = document.getElementById('liveNotice').querySelector('span');
+                    noticeSpan.innerText = config.liveNotice || 'কোনো নোটিস নেই';
+                    // If text is short, no animation; if long, animate
+                    if (noticeSpan.scrollWidth > document.getElementById('liveNotice').clientWidth) {
+                        noticeSpan.style.animation = 'scroll-left 15s linear infinite';
+                    } else {
+                        noticeSpan.style.animation = 'none';
+                    }
                     // Banners
                     const container = document.getElementById('bannerContainer');
                     container.innerHTML = '';
