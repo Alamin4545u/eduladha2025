@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cryptomining - Premium 3D</title>
+    <title>Cryptomining - 3D Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -16,11 +16,12 @@
             --primary: #00ff88;
             --primary-glow: #00ff8833;
             --bg: #0a0a0a;
-            --glass: rgba(20, 20, 30, 0.6);
-            --glass-border: rgba(0, 255, 136, 0.3);
+            --glass: rgba(20, 20, 30, 0.7);
+            --glass-border: rgba(0, 255, 136, 0.4);
             --neon: #00ff88;
             --gold: #ffd700;
             --text: #fff;
+            --danger: #ff3366;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,118 +32,127 @@
             min-height: 100vh;
             overflow-x: hidden;
             padding-bottom: 90px;
-            perspective: 1200px;
+            perspective: 1500px;
             touch-action: manipulation;
         }
 
         /* 3D Glass Header */
         .home-header {
             background: var(--glass);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(18px);
             border-bottom: 1px solid var(--glass-border);
-            padding: 18px 20px;
+            padding: 20px;
             position: sticky;
             top: 0;
             z-index: 100;
             transform-style: preserve-3d;
-            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
-            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.25);
+            border-radius: 0 0 22px 22px;
         }
         .avatar {
-            width: 50px; height: 50px;
+            width: 54px; height: 54px;
             border-radius: 50%;
             background: linear-gradient(135deg, #9c27b0, #e91e63);
             color: white;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 20px var(--primary-glow);
-            transform: translateZ(20px);
+            box-shadow: 0 0 25px var(--primary-glow), inset 0 0 15px rgba(255,255,255,0.2);
+            transform: translateZ(25px);
         }
-        .user-info { flex: 1; margin-left: 12px; }
-        .user-name { font-size: 18px; font-weight: 700; text-shadow: 0 0 10px var(--neon); }
-        .user-username { font-size: 13px; color: #aaa; }
+        .user-info { flex: 1; margin-left: 14px; }
+        .user-name { font-size: 19px; font-weight: 700; text-shadow: 0 0 12px var(--neon); }
+        .user-username { font-size: 13px; color: #ccc; }
         .user-balance {
             text-align: right;
             font-weight: 700;
             color: var(--gold);
-            text-shadow: 0 0 15px var(--gold);
-            transform: translateZ(10px);
+            text-shadow: 0 0 18px var(--gold);
+            transform: translateZ(15px);
         }
-        .balance-label { font-size: 12px; color: #ccc; }
+        .balance-label { font-size: 13px; color: #ddd; }
 
-        /* 3D Banners */
-        .banner-container {
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            perspective: 1000px;
-        }
-        .banner {
-            width: 100%;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5),
-                        0 0 30px var(--primary-glow);
-            transform: rotateY(5deg) translateZ(30px);
-            transition: all 0.5s ease;
-            opacity: 0;
-            animation: bannerPop 0.8s ease-out forwards;
-        }
-        .banner:hover {
-            transform: rotateY(0) translateZ(50px) scale(1.03);
-            box-shadow: 0 20px 50px rgba(0, 255, 136, 0.4);
-        }
-        @keyframes bannerPop {
-            to { opacity: 1; transform: rotateY(0) translateZ(30px); }
-        }
-
-        /* Live Notice - Neon Scroll */
+        /* Live Notice */
         .live-notice {
             margin: 20px;
             background: var(--glass);
             padding: 16px;
-            border-radius: 16px;
+            border-radius: 18px;
             border: 1px solid var(--glass-border);
             color: var(--gold);
             font-weight: 600;
             text-align: center;
             overflow: hidden;
-            white-space: nowrap;
-            box-shadow: 0 0 20px var(--primary-glow);
-            transform: translateZ(15px);
+            box-shadow: 0 0 25px var(--primary-glow);
+            transform: translateZ(18px);
         }
         .live-notice span {
             display: inline-block;
-            animation: scroll-left 20s linear infinite;
-            text-shadow: 0 0 10px var(--gold);
+            animation: scroll-left 18s linear infinite;
+            text-shadow: 0 0 12px var(--gold);
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
-        /* 3D Reward Buttons */
+        /* Referral */
+        .referral-section {
+            margin: 20px;
+            background: var(--glass);
+            padding: 22px;
+            border-radius: 22px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            box-shadow: 0 12px 35px rgba(0, 255, 136, 0.22);
+            transform: translateZ(22px);
+        }
+        .referral-link {
+            background: #222;
+            color: var(--primary);
+            padding: 14px;
+            border-radius: 14px;
+            font-family: monospace;
+            margin: 12px 0;
+            word-break: break-all;
+            border: 1px dashed var(--primary);
+            font-size: 15px;
+        }
+        .copy-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Reward Buttons */
         .reward-buttons {
             display: flex;
             justify-content: space-around;
             margin: 25px 20px;
-            gap: 12px;
-            perspective: 1000px;
+            gap: 14px;
+            perspective: 1200px;
         }
         .reward-btn {
             flex: 1;
             background: linear-gradient(135deg, #00ff88, #00cc66);
-            color: black;
+            color: #000;
             border: none;
-            padding: 16px;
-            border-radius: 20px;
+            padding: 18px;
+            border-radius: 22px;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4),
-                        inset 0 -5px 15px rgba(0, 0, 0, 0.2);
-            transform: translateZ(20px);
-            transition: all 0.3s ease;
+            box-shadow: 0 12px 30px rgba(0, 255, 136, 0.45),
+                        inset 0 -6px 18px rgba(0, 0, 0, 0.25);
+            transform: translateZ(25px);
+            transition: all 0.4s ease;
             position: relative;
             overflow: hidden;
         }
@@ -151,39 +161,39 @@
             position: absolute;
             top: -50%; left: -50%;
             width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.3), transparent);
+            background: radial-gradient(circle, rgba(255,255,255,0.4), transparent);
             opacity: 0;
-            transition: 0.5s;
+            transition: 0.6s;
         }
         .reward-btn:hover::before { opacity: 1; }
         .reward-btn:hover {
-            transform: translateZ(30px) scale(1.05);
-            box-shadow: 0 15px 35px rgba(0, 255, 136, 0.6);
-        }
-        .reward-btn:disabled {
-            background: #444;
-            transform: translateZ(0);
-            box-shadow: none;
-            cursor: not-allowed;
+            transform: translateZ(35px) scale(1.06);
+            box-shadow: 0 18px 45px rgba(0, 255, 136, 0.6);
         }
 
-        /* 3D Spin Wheel */
+        /* ================== SPIN SCREEN - 3D PREMIUM ================== */
         .spin-screen {
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
             transform-style: preserve-3d;
         }
         .spin-limit {
             color: var(--gold);
-            font-size: 16px;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px var(--gold);
+            font-size: 18px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 15px var(--gold);
+            transform: translateZ(20px);
+        }
+        .wheel-container {
+            position: relative;
+            width: 320px; height: 320px;
+            margin: 0 auto 30px;
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
         .wheel {
-            width: 300px; height: 300px;
+            width: 100%; height: 100%;
             border-radius: 50%;
-            margin: 0 auto 25px;
-            position: relative;
             background: conic-gradient(
                 #ff0044 0deg 45deg,
                 #ff8800 45deg 90deg,
@@ -194,92 +204,153 @@
                 #800080 270deg 315deg,
                 #ff00ff 315deg 360deg
             );
-            box-shadow: 0 0 40px var(--neon), inset 0 0 60px rgba(0,0,0,0.5);
-            transform: translateZ(40px);
-            transition: transform 4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 
+                0 0 50px var(--neon),
+                inset 0 0 80px rgba(0,0,0,0.6),
+                0 20px 60px rgba(0,0,0,0.5);
+            transform: rotateX(15deg) translateZ(40px);
+            transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            position: relative;
         }
         .wheel::before {
             content: '';
             position: absolute;
-            top: -25px; left: 135px;
+            top: -30px; left: 50%;
+            transform: translateX(-50%);
             width: 0; height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-bottom: 30px solid var(--gold);
-            filter: drop-shadow(0 0 15px var(--gold));
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid var(--gold);
+            filter: drop-shadow(0 0 20px var(--gold));
+            z-index: 10;
         }
         .spin-wheel-btn {
             background: linear-gradient(135deg, #ffd700, #ffaa00);
             color: #000;
             border: none;
-            padding: 14px 40px;
+            padding: 16px 50px;
             border-radius: 50px;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 19px;
             cursor: pointer;
-            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5);
-            transform: translateZ(30px);
+            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5),
+                        inset 0 -8px 20px rgba(0,0,0,0.2);
+            transform: translateZ(35px);
+            transition: all 0.4s;
+        }
+        .spin-wheel-btn:hover {
+            transform: translateZ(45px) scale(1.08);
+            box-shadow: 0 20px 50px rgba(255, 215, 0, 0.6);
         }
 
-        /* 3D Scratch Card */
+        /* ================== SCRATCH CARD - 3D PREMIUM ================== */
         .scratch-screen {
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
         }
-        .scratch-limit { color: var(--gold); margin-bottom: 20px; }
+        .scratch-limit { color: var(--gold); margin-bottom: 25px; font-size: 18px; text-shadow: 0 0 15px var(--gold); }
+        .scratch-card-container {
+            perspective: 1000px;
+            margin: 0 auto 30px;
+            width: 320px;
+        }
         .scratch-card {
-            width: 300px; height: 200px;
-            margin: 0 auto 20px;
+            width: 320px; height: 210px;
             position: relative;
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.4);
-            transform: translateZ(30px);
-            background: linear-gradient(135deg, #333, #555);
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 40px var(--primary-glow),
+                inset 0 0 30px rgba(255,255,255,0.1);
+            transform: rotateY(8deg) translateZ(40px);
+            transition: transform 0.6s ease;
+        }
+        .scratch-card:hover {
+            transform: rotateY(0) translateZ(60px) scale(1.02);
         }
         .scratch-card canvas {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
             cursor: grab;
+            border-radius: 24px;
         }
         .scratch-reward {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 26px;
+            font-size: 32px;
             font-weight: bold;
             color: var(--gold);
-            text-shadow: 0 0 15px var(--gold);
+            text-shadow: 0 0 20px var(--gold), 0 0 40px #000;
             z-index: 1;
+            font-family: 'Arial Black', sans-serif;
         }
 
-        /* 3D Modal */
+        /* ================== WITHDRAW MODAL - 3D PREMIUM ================== */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(12px);
-            z-index: 2000;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            z-index: 3000;
             justify-content: center;
             align-items: center;
+            animation: fadeIn 0.5s;
         }
         .modal-content {
             background: var(--glass);
-            backdrop-filter: blur(20px);
-            padding: 30px;
-            border-radius: 24px;
+            backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 28px;
             width: 90%;
-            max-width: 400px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 60px rgba(0, 255, 136, 0.4);
-            transform: translateZ(50px);
-            animation: modalRise 0.5s ease-out;
+            max-width: 420px;
+            border: 1.5px solid var(--glass-border);
+            box-shadow: 
+                0 25px 70px rgba(0, 255, 136, 0.5),
+                inset 0 0 30px rgba(255,255,255,0.05);
+            transform: translateZ(60px);
+            animation: modalRise 0.6s ease-out;
+            position: relative;
         }
         @keyframes modalRise {
-            from { transform: translateZ(-100px) scale(0.8); opacity: 0; }
-            to { transform: translateZ(50px) scale(1); opacity: 1; }
+            from { transform: translateZ(-150px) scale(0.7); opacity: 0; }
+            to { transform: translateZ(60px) scale(1); opacity: 1; }
+        }
+        .modal input {
+            width: 100%;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+        }
+        .modal button {
+            width: 100%;
+            padding: 16px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.4s;
+        }
+        #submitWithdraw {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
+        }
+        #closeModal {
+            background: #ff3366;
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4);
         }
 
         /* Navigation */
@@ -290,61 +361,55 @@
             backdrop-filter: blur(20px);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
+            padding: 14px 0;
             border-top: 1px solid var(--glass-border);
             z-index: 1000;
-            box-shadow: 0 -10px 30px rgba(0, 255, 136, 0.2);
+            box-shadow: 0 -12px 35px rgba(0, 255, 136, 0.25);
         }
         .nav-item {
             color: #aaa;
-            font-size: 12px;
+            font-size: 13px;
             text-align: center;
-            padding: 10px;
-            border-radius: 16px;
-            transition: all 0.3s;
-            transform: translateZ(10px);
+            padding: 12px;
+            border-radius: 18px;
+            transition: all 0.4s;
+            transform: translateZ(12px);
         }
         .nav-item.active, .nav-item:hover {
             color: var(--primary);
             background: var(--primary-glow);
-            transform: translateZ(20px) scale(1.1);
+            transform: translateZ(25px) scale(1.12);
         }
-        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+        .nav-item i { font-size: 24px; display: block; margin-bottom: 6px; }
 
         /* Screens */
         .screen { display: none; padding: 15px; }
-        .screen.active { display: block; animation: fadeIn 0.6s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+        .screen.active { display: block; animation: fadeIn 0.7s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
 
-        /* Referral Section */
-        .referral-section {
+        /* Banners */
+        .banner-container {
             margin: 20px;
-            background: var(--glass);
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.2);
-            transform: translateZ(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            perspective: 1000px;
         }
-        .referral-link {
-            background: #222;
-            color: var(--primary);
-            padding: 12px;
-            border-radius: 12px;
-            font-family: monospace;
-            margin: 10px 0;
-            word-break: break-all;
-            border: 1px dashed var(--primary);
+        .banner {
+            width: 100%;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 35px var(--primary-glow);
+            transform: rotateY(6deg) translateZ(35px);
+            transition: all 0.6s ease;
+            opacity: 0;
+            animation: bannerPop 0.9s ease-out forwards;
         }
-        .copy-btn {
-            background: var(--primary);
-            color: black;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
+        .banner:hover {
+            transform: rotateY(0) translateZ(55px) scale(1.04);
+        }
+        @keyframes bannerPop {
+            to { opacity: 1; transform: rotateY(0) translateZ(35px); }
         }
     </style>
 </head>
@@ -368,9 +433,8 @@
 
         <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
 
-        <!-- Referral Section -->
         <div class="referral-section">
-            <h3 style="color:var(--gold); margin-bottom:10px;">রেফারেল করুন</h3>
+            <h3 style="color:var(--gold); margin-bottom:12px;">রেফারেল করুন</h3>
             <p style="font-size:14px; color:#ccc;">প্রতি রেফারেলে <strong style="color:var(--gold);">৳1</strong> পাবেন!</p>
             <div class="referral-link" id="referralLink">লোড হচ্ছে...</div>
             <button class="copy-btn" id="copyRef">কপি লিংক</button>
@@ -378,37 +442,42 @@
 
         <div class="reward-buttons">
             <button class="reward-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি (+<span id="dailyPoints">50</span>৳)</button>
-            <button class="reward-btn" id="spinBtn"><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>৳)</button>
-            <button class="reward-btn" id="scratchBtn"><i class="fas fa-ticket"></i> স্ক্র্যাচ (+<span id="scratchPoints">50</span>৳)</button>
+            <button class="reward-btn" id="spinBtn"><i class="fas fa-sync"></i> স্পিন</button>
+            <button class="reward-btn" id="scratchBtn"><i class="fas fa-ticket"></i> স্ক্র্যাচ</button>
         </div>
     </div>
 
-    <!-- Other Screens (Spin, Scratch, etc.) -->
+    <!-- SPIN SCREEN -->
     <div id="spin" class="screen spin-screen">
-        <h2 style="color:var(--primary); text-shadow:0 0 15px var(--primary);">স্পিন</h2>
+        <h2 style="color:var(--primary); text-shadow:0 0 18px var(--primary); margin-bottom:10px;">স্পিন করুন</h2>
         <p class="spin-limit" id="spinLimit">লোড হচ্ছে...</p>
-        <div class="wheel" id="wheel"></div>
+        <div class="wheel-container">
+            <div class="wheel" id="wheel"></div>
+        </div>
         <button class="spin-wheel-btn" id="spinWheelBtn">স্পিন করুন</button>
     </div>
 
+    <!-- SCRATCH SCREEN -->
     <div id="scratch" class="screen scratch-screen">
-        <h2 style="color:var(--primary); text-shadow:0 0 15px var(--primary);">স্ক্র্যাচ কার্ড</h2>
+        <h2 style="color:var(--primary); text-shadow:0 0 18px var(--primary); margin-bottom:10px;">স্ক্র্যাচ কার্ড</h2>
         <p class="scratch-limit" id="scratchLimit">লোড হচ্ছে...</p>
-        <div class="scratch-card">
-            <canvas id="scratchCanvas"></canvas>
-            <div class="scratch-reward" id="scratchReward">স্ক্র্যাচ করুন!</div>
+        <div class="scratch-card-container">
+            <div class="scratch-card">
+                <canvas id="scratchCanvas"></canvas>
+                <div class="scratch-reward" id="scratchReward">৳50</div>
+            </div>
         </div>
-        <button class="reward-btn claim-scratch" id="claimScratch">ক্লেইম</button>
+        <button class="reward-btn" id="claimScratch" style="width:80%; margin:0 auto; display:block;">ক্লেইম করুন</button>
     </div>
 
-    <!-- Withdraw Modal -->
+    <!-- WITHDRAW MODAL -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
-            <h2 style="color:var(--gold); text-align:center;"><i class="fas fa-coins"></i> উইথড্র</h2>
-            <input id="amount" type="number" placeholder="ন্যূনতম 500 ৳" style="margin:15px 0;">
+            <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;"><i class="fas fa-coins"></i> উইথড্র রিকোয়েস্ট</h2>
+            <input id="amount" type="number" placeholder="ন্যূনতম 500 ৳">
             <input id="paymentDetails" type="text" placeholder="bKash/Nagad/Rocket নম্বর">
-            <button class="reward-btn" id="submitWithdraw" style="width:100%; margin:15px 0;">সাবমিট</button>
-            <button class="reward-btn" style="background:#f44336; width:100%;" id="closeModal">বন্ধ</button>
+            <button id="submitWithdraw">সাবমিট করুন</button>
+            <button id="closeModal">বন্ধ করুন</button>
         </div>
     </div>
 
@@ -422,7 +491,7 @@
     </div>
 
     <script>
-        // Firebase
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
             authDomain: "mini-bot-735bf.firebaseapp.com",
@@ -442,52 +511,37 @@
         const telegramId = tgUser.id.toString();
         const fullName = `${tgUser.first_name} ${tgUser.last_name || ''}`.trim();
         const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        const photoUrl = tgUser.photo_url || 'https://via.placeholder.com/100';
 
         let userDocRef, config = {
-            pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50,
-            dailySpinLimit: 10, spinReward: 100, dailyScratchLimit: 10, scratchReward: 50,
-            liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: ''
+            dailyRewardPoints: 50, spinReward: 100, scratchReward: 50,
+            dailySpinLimit: 10, dailyScratchLimit: 10, minWithdraw: 500,
+            liveNotice: '', bannerUrls: []
         };
 
         // DOM
-        const screens = document.querySelectorAll('.screen');
-        const navItems = document.querySelectorAll('.nav-item');
-
-        // Set User Info
         document.getElementById('avatar').innerText = initials;
         document.getElementById('userName').innerText = fullName;
         document.getElementById('userUsername').innerText = `@${tgUser.username || 'user'}`;
 
         // Navigation
-        navItems.forEach(item => {
+        document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
-                const id = item.dataset.screen;
-                screens.forEach(s => s.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                navItems.forEach(n => n.classList.remove('active'));
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(item.dataset.screen).classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 item.classList.add('active');
-                if (id === 'spin') loadSpinLimit();
-                if (id === 'scratch') { loadScratchLimit(); initScratchCard(); }
+                if (item.dataset.screen === 'spin') loadSpinLimit();
+                if (item.dataset.screen === 'scratch') { loadScratchLimit(); initScratchCard(); }
             });
         });
 
-        // Load Config + Fast Load
+        // Load Config
         async function loadConfig() {
             const doc = await db.collection('config').doc('settings').get();
-            if (doc.exists) {
-                config = { ...config, ...doc.data() };
-                updatePointsDisplay();
-                loadBanners();
-                loadLiveNotice();
-            }
-        }
-
-        function updatePointsDisplay() {
-            document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
-            document.getElementById('spinPoints').innerText = config.spinReward;
-            document.getElementById('scratchPoints').innerText = config.scratchReward;
+            if (doc.exists) config = { ...config, ...doc.data() };
+            document.getElementById('dailyPoints').innerText = config dailyRewardPoints;
             document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} ৳`;
+            loadBanners(); loadLiveNotice();
         }
 
         function loadBanners() {
@@ -495,19 +549,17 @@
             container.innerHTML = '';
             config.bannerUrls.forEach((url, i) => {
                 const img = document.createElement('img');
-                img.src = url;
-                img.className = 'banner';
-                img.style.animationDelay = `${i * 0.2}s`;
+                img.src = url; img.className = 'banner';
+                img.style.animationDelay = `${i * 0.25}s`;
                 container.appendChild(img);
             });
         }
 
         function loadLiveNotice() {
-            const span = document.getElementById('liveNotice').querySelector('span');
-            span.innerText = config.liveNotice || 'কোনো নোটিস নেই';
+            document.getElementById('liveNotice').querySelector('span').innerText = config.liveNotice || 'কোনো নোটিস নেই';
         }
 
-        // Referral Link
+        // Referral
         function setupReferral() {
             const link = `https://t.me/CryptominingBot?start=${telegramId}`;
             document.getElementById('referralLink').innerText = link;
@@ -522,7 +574,6 @@
             auth.onAuthStateChanged(async user => {
                 if (!user) return;
                 userDocRef = db.collection('users').doc(user.uid);
-
                 const doc = await userDocRef.get();
                 if (!doc.exists) {
                     await userDocRef.set({
@@ -533,15 +584,10 @@
                         scratchCount: 0, lastScratch: null
                     });
                 }
-
-                // Realtime Balance
                 userDocRef.onSnapshot(snap => {
                     document.getElementById('balance').innerText = snap.data().balance || 0;
                 });
-
-                loadConfig();
-                setupReferral();
-                checkReferral();
+                loadConfig(); setupReferral(); checkReferral();
             });
         });
 
@@ -576,18 +622,19 @@
                 balance: firebase.firestore.FieldValue.increment(config.dailyRewardPoints),
                 lastDailyClaim: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert(`ডেইলি রিওয়ার্ড! +${config.dailyRewardPoints}৳`);
+            alert(`+${config.dailyRewardPoints}৳`);
         };
 
-        // Spin & Scratch (same logic with limits)
+        // Spin
         async function loadSpinLimit() {
             const snap = await userDocRef.get();
             const today = new Date().toDateString();
             let count = snap.data().spinCount || 0;
             const last = snap.data().lastSpin?.toDate().toDateString();
             if (last !== today) { count = 0; await userDocRef.update({ spinCount: 0 }); }
-            document.getElementById('spinLimit').innerText = `${config.dailySpinLimit - count} / ${config.dailySpinLimit} বাকি`;
-            return config.dailySpinLimit - count;
+            const remaining = config.dailySpinLimit - count;
+            document.getElementById('spinLimit').innerText = `${remaining} / ${config.dailySpinLimit} বাকি`;
+            return remaining;
         }
 
         document.getElementById('spinBtn').onclick = () => {
@@ -597,10 +644,11 @@
         };
 
         document.getElementById('spinWheelBtn').onclick = async () => {
-            if (await loadSpinLimit() <= 0) return alert('লিমিট শেষ');
+            if (await loadSpinLimit() <= 0) return alert('দৈনিক লিমিট শেষ');
             const wheel = document.getElementById('wheel');
-            wheel.style.transition = 'transform 4s ease-out';
-            wheel.style.transform = `rotate(${3600 + Math.random() * 360}deg)`;
+            wheel.style.transition = 'transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            const deg = 3600 + Math.floor(Math.random() * 360);
+            wheel.style.transform = `rotateX(15deg) rotate(${deg}deg) translateZ(40px)`;
             setTimeout(async () => {
                 try { await window.showGiga(); } catch {}
                 await userDocRef.update({
@@ -610,27 +658,31 @@
                 });
                 alert(`+${config.spinReward}৳`);
                 wheel.style.transition = 'none';
-                wheel.style.transform = 'rotate(0deg)';
-            }, 4000);
+                wheel.style.transform = 'rotateX(15deg) rotate(0deg) translateZ(40px)';
+            }, 4500);
         };
 
-        // Scratch Card
+        // Scratch
         async function loadScratchLimit() {
             const snap = await userDocRef.get();
             const today = new Date().toDateString();
             let count = snap.data().scratchCount || 0;
             const last = snap.data().lastScratch?.toDate().toDateString();
             if (last !== today) { count = 0; await userDocRef.update({ scratchCount: 0 }); }
-            document.getElementById('scratchLimit').innerText = `${config.dailyScratchLimit - count} / ${config.dailyScratchLimit} বাকি`;
-            return config.dailyScratchLimit - count;
+            const remaining = config.dailyScratchLimit - count;
+            document.getElementById('scratchLimit').innerText = `${remaining} / ${config.dailyScratchLimit} বাকি`;
+            return remaining;
         }
 
         function initScratchCard() {
             const canvas = document.getElementById('scratchCanvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 300; canvas.height = 200;
-            ctx.fillStyle = '#888'; ctx.fillRect(0, 0, 300, 200);
-            document.getElementById('scratchReward').innerText = `৳${config.scratchReward}`;
+            canvas.width = 320; canvas.height = 210;
+            ctx.fillStyle = '#999'; ctx.fillRect(0, 0, 320, 210);
+            ctx.font = 'bold 32px Arial';
+            ctx.fillStyle = '#ffd700';
+            ctx.textAlign = 'center';
+            ctx.fillText(`৳${config.scratchReward}`, 160, 110);
             let drawing = false;
             const draw = (e) => {
                 if (!drawing) return;
@@ -639,15 +691,12 @@
                 const y = (e.clientY || e.touches[0].clientY) - rect.top;
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.beginPath();
-                ctx.arc(x, y, 25, 0, Math.PI * 2);
+                ctx.arc(x, y, 30, 0, Math.PI * 2);
                 ctx.fill();
             };
-            canvas.addEventListener('mousedown', () => drawing = true);
-            canvas.addEventListener('mouseup', () => drawing = false);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('touchstart', () => drawing = true);
-            canvas.addEventListener('touchend', () => drawing = false);
-            canvas.addEventListener('touchmove', draw);
+            ['mousedown','touchstart'].forEach(ev => canvas.addEventListener(ev, () => drawing = true));
+            ['mouseup','touchend'].forEach(ev => canvas.addEventListener(ev, () => drawing = false));
+            ['mousemove','touchmove'].forEach(ev => canvas.addEventListener(ev, draw));
         }
 
         document.getElementById('scratchBtn').onclick = () => {
@@ -658,7 +707,7 @@
         };
 
         document.getElementById('claimScratch').onclick = async () => {
-            if (await loadScratchLimit() <= 0) return alert('লিমিট শেষ');
+            if (await loadScratchLimit() <= 0) return alert('দৈনিক লিমিট শেষ');
             try { await window.showGiga(); } catch {}
             await userDocRef.update({
                 balance: firebase.firestore.FieldValue.increment(config.scratchReward),
@@ -683,6 +732,11 @@
             await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(-amount) });
             alert('উইথড্র রিকোয়েস্ট সফল!');
             document.getElementById('withdrawModal').style.display = 'none';
+        };
+
+        // Open Withdraw from Wallet (Example)
+        document.querySelector('[data-screen="wallet"]').onclick = () => {
+            document.getElementById('withdrawModal').style.display = 'flex';
         };
     </script>
 </body>
