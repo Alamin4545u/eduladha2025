@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cryptomining</title>
+    <title>এ্যাড দেখে টাকা ইনকাম করুন</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -14,263 +14,271 @@
         :root {
             --primary: #4caf50;
             --primary-dark: #388e3c;
-            --bg: #0a0a0a;
-            --card: rgba(30, 30, 30, 0.85);
-            --glass: rgba(255, 255, 255, 0.08);
+            --bg: #0f0f0f;
+            --card: rgba(30, 30, 30, 0.7);
+            --glass: rgba(255, 255, 255, 0.05);
             --text: #fff;
             --gold: #ffd700;
-            --neon: #39ff14;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: var(--bg);
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
             padding-bottom: 80px;
             perspective: 1000px;
+            touch-action: manipulation; /* Helps with mobile touch */
         }
 
-        /* Header - Small Welcome */
-        .welcome {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            font-size: 14px;
-            color: var(--gold);
-            font-weight: 600;
+        /* Home Header (Only for Home) */
+        .home-header {
+            text-align: left;
+            padding: 15px 20px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(76, 175, 80, 0.3);
+            position: sticky;
+            top: 0;
             z-index: 100;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            animation: fadeInLeft 0.8s;
+            font-size: 16px;
+            color: var(--gold);
+            font-weight: 500;
         }
 
-        /* Banner Slider */
-        .banner-slider {
-            margin: 20px 15px 10px;
-            height: 140px;
-            border-radius: 18px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            transform-style: preserve-3d;
+        /* Banners */
+        .banner-container {
+            margin: 40px 20px 20px 20px; /* Increased top margin for username space */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        .slide {
+        .banner {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-            animation: zoomIn 8s infinite;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: all 0.4s;
+            opacity: 0;
+            transform: translateX(-50px); /* Slide in from left */
+            animation: bannerSlideIn 0.8s ease-out forwards;
         }
-        .slide.active { display: block; }
-        @keyframes zoomIn {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
+        .banner:nth-child(1) { animation-delay: 0.2s; }
+        .banner:nth-child(2) { animation-delay: 0.6s; }
+        @keyframes bannerSlideIn {
+            to { opacity: 1; transform: translateX(0); }
         }
+        .banner:hover { transform: scale(1.02) rotateY(5deg); }
 
-        /* Balance Card - Small */
+        /* Balance Card (Smaller) */
         .balance-card {
-            margin: 10px 20px;
+            margin: 15px 20px;
             background: var(--card);
             backdrop-filter: blur(15px);
             border-radius: 16px;
-            padding: 16px;
+            padding: 15px;
             text-align: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 15px rgba(57,255,20,0.1);
-            border: 1.5px solid rgba(57,255,20,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4), inset 0 0 15px rgba(76,175,80,0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
             transform-style: preserve-3d;
+            transition: all 0.4s;
+            max-width: 300px;
         }
+        .balance-card:hover { transform: translateY(-5px) rotateX(5deg); }
         .balance-label { font-size: 14px; color: #aaa; margin-bottom: 6px; }
         .balance-amount {
             font-size: 28px;
             font-weight: 700;
-            color: var(--neon);
-            text-shadow: 0 0 15px rgba(57,255,20,0.8);
+            color: var(--primary);
+            text-shadow: 0 0 12px rgba(76,175,80,0.7);
             animation: pulse 2s infinite;
         }
-        @keyframes pulse {
-            0%, 100% { text-shadow: 0 0 15px rgba(57,255,20,0.8); }
-            50% { text-shadow: 0 0 25px rgba(57,255,20,1); }
-        }
+        @keyframes pulse { 0%, 100% { text-shadow: 0 0 12px rgba(76,175,80,0.7); } 50% { text-shadow: 0 0 20px rgba(76,175,80,1); } }
 
-        /* Action Button */
+        /* Action Buttons */
         .action-btn {
             display: block;
-            width: 88%;
+            width: 90%;
             max-width: 400px;
-            margin: 14px auto;
-            padding: 15px;
+            margin: 15px auto;
+            padding: 16px;
             background: linear-gradient(45deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
             border-radius: 16px;
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 8px 18px rgba(76,175,80,0.4);
+            box-shadow: 0 8px 20px rgba(76,175,80,0.4);
             transition: all 0.3s;
             transform-style: preserve-3d;
         }
-        .action-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 25px rgba(76,175,80,0.6); }
-        .action-btn:disabled { background: #444; cursor: not-allowed; }
+        .action-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 12px 25px rgba(76,175,80,0.6); }
+        .action-btn:disabled { background: #444; cursor: not-allowed; transform: none; }
 
         /* Navigation */
         .nav {
             position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: rgba(15,15,15,0.95);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass);
             backdrop-filter: blur(15px);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
-            border-top: 1px solid rgba(57,255,20,0.2);
+            padding: 10px 0;
+            border-top: 1px solid rgba(76, 175, 80, 0.3);
             z-index: 1000;
         }
         .nav-item {
             text-align: center;
-            color: #888;
-            font-size: 11px;
+            color: #aaa;
+            font-size: 12px;
             transition: all 0.3s;
-            padding: 6px;
-            border-radius: 10px;
+            padding: 8px;
+            border-radius: 12px;
             width: 60px;
         }
         .nav-item.active, .nav-item:hover {
-            color: var(--neon);
-            background: rgba(57,255,20,0.15);
+            color: var(--primary);
+            background: rgba(76, 175, 80, 0.2);
             transform: scale(1.1);
         }
-        .nav-item i { font-size: 19px; display: block; margin-bottom: 3px; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
 
         /* Screens */
-        .screen { display: none; padding: 10px 15px; }
+        .screen { display: none; padding: 10px; }
         .screen.active { display: block; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
-        /* Task & Wallet */
-        .task-item, .wallet-item {
+        /* History */
+        .history-item {
             background: var(--card);
-            padding: 16px;
+            padding: 15px;
             margin: 12px 0;
             border-radius: 14px;
             border-left: 4px solid var(--primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: transform 0.3s;
         }
-        .task-item:hover, .wallet-item:hover { transform: translateX(5px); }
+        .history-item:hover { transform: translateX(5px); }
+        .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
 
         /* Modal */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.8);
             z-index: 2000;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
         }
         .modal-content {
             background: var(--card);
             backdrop-filter: blur(20px);
             padding: 25px;
-            border-radius: 18px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 380px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            border: 1.5px solid rgba(57,255,20,0.4);
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            transform-style: preserve-3d;
             animation: modalPop 0.4s;
         }
-        @keyframes modalPop {
-            from { transform: scale(0.85) rotateX(-10deg); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
+        @keyframes modalPop { from { transform: scale(0.8) rotateX(-10deg); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         input {
             width: 100%;
-            padding: 13px;
-            margin: 10px 0;
-            border-radius: 12px;
-            border: 1px solid rgba(57,255,20,0.5);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 15px;
-        }
-        .btn-close { background: linear-gradient(45deg, #f44336, #d32f2f); }
-
-        /* History */
-        .history-item {
-            background: var(--card);
             padding: 14px;
             margin: 10px 0;
             border-radius: 12px;
-            font-size: 14px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
         }
-        .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
+        .btn-close { background: linear-gradient(45deg, #f44336, #d32f2f); }
+
+        /* Task Screen */
+        .task-card {
+            background: var(--card);
+            padding: 18px;
+            margin: 15px 0;
+            border-radius: 16px;
+            text-align: left;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        /* Disable pull-to-refresh on home */
+        #home {
+            overscroll-behavior: none; /* Disables pull-to-refresh on mobile */
+        }
     </style>
 </head>
 <body>
 
-    <!-- Small Welcome -->
-    <div class="welcome">স্বাগতম, <span id="username">লোড হচ্ছে...</span></div>
-
-    <!-- Banner Slider -->
-    <div class="banner-slider" id="bannerSlider">
-        <img class="slide active" src="https://ibb.co.com/Kx0qhHPb" alt="Banner 1">
-        <img class="slide" src="https://i.ibb.co.com/gMF36YLT/360-F-490930345-3-To-ZEj1ij-Jol-Ii-C0-LAs-OSrjsx-Ci-HUhz-P.jpg" alt="Banner 2">
-    </div>
-
     <!-- Screens -->
     <div id="home" class="screen active">
-        <!-- Balance -->
+        <div class="home-header" id="homeUsername"></div>
+        <div class="banner-container">
+            <img class="banner" src="https://your-uploaded-url/money_earning_apps_banner.jpg" alt="20 Top Money-Earning Apps"> <!-- Replace with actual URL -->
+            <img class="banner" src="https://your-uploaded-url/refer_and_earn_banner.jpg" alt="Refer & Earn"> <!-- Replace with actual URL -->
+        </div>
         <div class="balance-card">
             <div class="balance-label">আপনার ব্যালেন্স</div>
             <div class="balance-amount">৳ <span id="balance">0</span></div>
         </div>
-        <!-- Daily Reward -->
-        <button class="action-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+৳ <span id="dailyReward">50</span>)</button>
+        <button class="action-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
     </div>
 
     <div id="wallet" class="screen">
-        <h2 style="text-align:center; margin:18px 0; color:var(--neon); font-size:20px;">ওয়ালেট</h2>
-        <div class="wallet-item">
-            <strong>বর্তমান ব্যালেন্স:</strong> ৳ <span id="balanceWallet">0</span>
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">ওয়ালেট</h2>
+        <div class="balance-card">
+            <div class="balance-label">মোট ব্যালেন্স</div>
+            <div class="balance-amount">৳ <span id="balanceWallet">0</span></div>
         </div>
         <button class="action-btn" id="withdrawBtn"><i class="fas fa-hand-holding-dollar"></i> উইথড্র করুন</button>
+        <p style="text-align:center; color:#aaa; margin-top:20px;">১ ৳ = ১ টাকা</p>
     </div>
 
     <div id="history" class="screen">
-        <h2 style="text-align:center; margin:18px 0; color:var(--neon); font-size:20px;">উইথড্র হিস্ট্রি</h2>
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">উইথড্র হিস্ট্রি</h2>
         <div id="historyList">কোনো হিস্ট্রি নেই</div>
     </div>
 
     <div id="task" class="screen">
-        <h2 style="text-align:center; margin:18px 0; color:var(--neon); font-size:20px;">টাস্ক</h2>
-        <div class="task-item">
-            <h3><i class="fas fa-play"></i> এ্যাড দেখুন</h3>
-            <p>প্রতিবার +৳ <span id="adReward">10</span></p>
-            <button class="action-btn" id="watchAd" style="width:100%; margin-top:10px;"><i class="fas fa-play"></i> এ্যাড দেখুন</button>
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
+        <button class="action-btn" id="watchAd"><i class="fas fa-play"></i> এ্যাড দেখুন (+<span id="adPoints">10</span>)</button>
+        <div class="task-card">
+            <h3><i class="fas fa-play"></i> প্রতিদিন এ্যাড দেখুন</h3>
+            <p>প্রতিবার এ্যাড দেখলে <span id="adPointsTask">10</span> ৳</p>
+        </div>
+        <div class="task-card">
+            <h3><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড</h3>
+            <p>প্রতিদিন ক্লেইম করে <span id="dailyPointsTask">50</span> ৳ পান</p>
         </div>
     </div>
 
     <div id="profile" class="screen">
-        <h2 style="text-align:center; margin:18px 0; color:var(--neon); font-size:20px;">প্রোফাইল</h2>
-        <div style="text-align:center; padding:20px;">
-            <img id="profileImg" src="" style="width:90px; height:90px; border-radius:50%; border:3px solid var(--primary); box-shadow:0 0 20px rgba(57,255,20,0.5);">
-            <p style="margin:15px 0; font-size:18px; color:var(--gold);" id="profileName"></p>
-            <p style="color:#aaa; font-size:14px;">Telegram ID: <span id="telegramId"></span></p>
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">প্রোফাইল</h2>
+        <div style="text-align:center;">
+            <img id="profileImgBig" class="profile-img" style="width:100px;height:100px;border-radius:50%;box-shadow:0 0 20px rgba(76,175,80,0.6);" src="" alt="">
+            <p style="margin:15px 0; font-size:18px;" id="profileName"></p>
+            <p style="color:#aaa;">Telegram ID: <span id="telegramId"></span></p>
         </div>
     </div>
 
     <!-- Withdraw Modal -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
-            <h2 style="color:var(--neon); text-align:center;"><i class="fas fa-exchange-alt"></i> উইথড্র রিকোয়েস্ট</h2>
-            <input id="amount" type="number" placeholder="ন্যূনতম ৳ 500">
+            <h2><i class="fas fa-exchange-alt"></i> উইথড্র রিকোয়েস্ট</h2>
+            <input id="amount" type="number" placeholder="ন্যূনতম 500 ৳">
             <input id="paymentDetails" type="text" placeholder="bKash/Nagad/Rocket নম্বর">
-            <button class="action-btn" id="submitWithdraw" style="width:100%; margin:10px 0;"><i class="fas fa-check"></i> সাবমিট</button>
-            <button class="action-btn btn-close" id="closeModal" style="width:100%;"><i class="fas fa-times"></i> বন্ধ</button>
+            <button class="action-btn" id="submitWithdraw" style="margin:10px auto; display:block; width:100%;"><i class="fas fa-check"></i> সাবমিট</button>
+            <button class="action-btn btn-close" id="closeModal" style="margin:10px auto; display:block; width:100%;"><i class="fas fa-times"></i> বন্ধ</button>
         </div>
     </div>
 
@@ -284,7 +292,7 @@
     </div>
 
     <script>
-        // Firebase
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
             authDomain: "mini-bot-735bf.firebaseapp.com",
@@ -307,31 +315,20 @@
 
         const telegramId = tgUser.id.toString();
         const username = tgUser.username || tgUser.first_name || 'ইউজার';
-        const photoUrl = tgUser.photo_url || 'https://via.placeholder.com/90';
+        const photoUrl = tgUser.photo_url || 'https://via.placeholder.com/100';
 
-        // DOM
+        // DOM Elements
         const screens = document.querySelectorAll('.screen');
         const navItems = document.querySelectorAll('.nav-item');
-        const slides = document.querySelectorAll('.slide');
-        let userDocRef, config = { adReward: 10, dailyReward: 50, minWithdraw: 500, dailyCooldown: 86400000 };
+        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000 };
+
+        // Set Home Username (only username, no 'স্বাগতম')
+        document.getElementById('homeUsername').innerText = username;
 
         // Set Profile
-        document.getElementById('username').innerText = username;
-        document.getElementById('profileImg').src = photoUrl;
+        document.getElementById('profileImgBig').src = photoUrl;
         document.getElementById('profileName').innerText = username;
         document.getElementById('telegramId').innerText = telegramId;
-
-        // Banner Slider
-        let currentSlide = 0;
-        function showSlide(n) {
-            slides.forEach(s => s.classList.remove('active'));
-            slides[n].classList.add('active');
-        }
-        setInterval(() => {
-            currentSlide = (currentSlide + 1) % slides.length;
-            showSlide(currentSlide);
-        }, 4000);
-        showSlide(0);
 
         // Navigation
         navItems.forEach(item => {
@@ -350,31 +347,35 @@
             try {
                 const doc = await db.collection('config').doc('settings').get();
                 if (doc.exists) config = { ...config, ...doc.data() };
-                updateUI();
+                updatePointsDisplay();
             } catch (e) { console.error(e); }
         }
 
-        function updateUI() {
-            document.getElementById('adReward').innerText = config.adReward;
-            document.getElementById('dailyReward').innerText = config.dailyReward;
-            document.getElementById('amount').placeholder = `ন্যূনতম ৳ ${config.minWithdraw}`;
+        function updatePointsDisplay() {
+            document.getElementById('adPoints').innerText = config.pointsPerAd;
+            document.getElementById('adPointsTask').innerText = config.pointsPerAd;
+            document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
+            document.getElementById('dailyPointsTask').innerText = config.dailyRewardPoints;
+            document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} ৳`;
         }
 
-        // Auth & Realtime
+        // Auth & Realtime Balance
         auth.signInAnonymously().then(() => {
             auth.onAuthStateChanged(async user => {
                 if (!user) return;
                 userDocRef = db.collection('users').doc(user.uid);
+
                 const doc = await userDocRef.get();
                 if (!doc.exists) {
                     await userDocRef.set({
                         balance: 0, telegramId, username,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastAd: null, lastDaily: null
+                        lastAdWatched: null,
+                        lastDailyClaim: null
                     });
                 }
 
-                // Realtime Balance (৳)
+                // Realtime Balance
                 userDocRef.onSnapshot(snap => {
                     const balance = snap.data().balance || 0;
                     document.getElementById('balance').innerText = balance;
@@ -387,48 +388,48 @@
             });
         });
 
-        // Watch Ad (Task Screen)
+        // Watch Ad (in Task)
         document.getElementById('watchAd').onclick = async () => {
             if (typeof window.showGiga === 'undefined') return alert('GigaPub লোড হয়নি');
             const btn = document.getElementById('watchAd'); btn.disabled = true;
             try {
                 const snap = await userDocRef.get();
-                const last = snap.data().lastAd;
+                const last = snap.data().lastAdWatched;
                 if (last && (Date.now() - last.toDate().getTime()) < 90000) {
                     alert('৯০ সেকেন্ড অপেক্ষা করুন'); btn.disabled = false; return;
                 }
                 await window.showGiga();
                 await userDocRef.update({
-                    balance: firebase.firestore.FieldValue.increment(config.adReward),
-                    lastAd: firebase.firestore.FieldValue.serverTimestamp()
+                    balance: firebase.firestore.FieldValue.increment(config.pointsPerAd),
+                    lastAdWatched: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert(`অভিনন্দন! ৳ ${config.adReward} পেয়েছেন`);
-            } catch (e) { alert('এ্যাড ফেল: ' + e.message); }
+                alert(`অভিনন্দন! ${config.pointsPerAd} ৳ পেয়েছেন`);
+            } catch (e) { alert('এ্যাড দেখতে সমস্যা: ' + e.message); }
             btn.disabled = false;
         };
 
-        // Daily Claim (Home)
+        // Daily Claim (in Home)
         document.getElementById('dailyClaim').onclick = async () => {
             const btn = document.getElementById('dailyClaim'); btn.disabled = true;
             try {
                 const snap = await userDocRef.get();
-                const last = snap.data().lastDaily;
-                if (last && (Date.now() - last.toDate().getTime()) < config.dailyCooldown) {
-                    const hrs = Math.ceil((config.dailyCooldown - (Date.now() - last.toDate().getTime())) / 3600000);
-                    alert(`আবার ক্লেইম করতে ${hrs} ঘণ্টা অপেক্ষা করুন`);
+                const last = snap.data().lastDailyClaim;
+                if (last && (Date.now() - last.toDate().getTime()) < config.dailyRewardCooldown) {
+                    const remaining = Math.ceil((config.dailyRewardCooldown - (Date.now() - last.toDate().getTime())) / 1000);
+                    alert(`আবার ক্লেইম করতে ${Math.floor(remaining/3600)} ঘণ্টা অপেক্ষা করুন`);
                     btn.disabled = false; return;
                 }
                 await window.showGiga();
                 await userDocRef.update({
-                    balance: firebase.firestore.FieldValue.increment(config.dailyReward),
-                    lastDaily: firebase.firestore.FieldValue.serverTimestamp()
+                    balance: firebase.firestore.FieldValue.increment(config.dailyRewardPoints),
+                    lastDailyClaim: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert(`ডেইলি রিওয়ার্ড! ৳ ${config.dailyReward} পেয়েছেন`);
+                alert(`ডেইলি রিওয়ার্ড! ${config.dailyRewardPoints} ৳ পেয়েছেন`);
             } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
             btn.disabled = false;
         };
 
-        // Withdraw
+        // Withdraw (in Wallet)
         const modal = document.getElementById('withdrawModal');
         document.getElementById('withdrawBtn').onclick = () => modal.style.display = 'flex';
         document.getElementById('closeModal').onclick = () => modal.style.display = 'none';
@@ -451,16 +452,16 @@
             } catch (e) { alert('উইথড্র ফেল: ' + e.message); }
         };
 
-        // History
+        // Load History
         async function loadHistory() {
             const container = document.getElementById('historyList');
-            container.innerHTML = '<p style="text-align:center; color:#666;">লোড হচ্ছে...</p>';
+            container.innerHTML = '<p>লোড হচ্ছে...</p>';
             try {
                 const snap = await db.collection('withdrawals')
                     .where('userUid', '==', auth.currentUser.uid)
                     .orderBy('requestedAt', 'desc').get();
                 if (snap.empty) {
-                    container.innerHTML = '<p style="text-align:center; color:#aaa;">কোনো হিস্ট্রি নেই</p>';
+                    container.innerHTML = '<p style="color:#aaa;text-align:center;">কোনো হিস্ট্রি নেই</p>';
                     return;
                 }
                 container.innerHTML = '';
@@ -477,7 +478,7 @@
                     container.appendChild(div);
                 });
             } catch (e) {
-                container.innerHTML = '<p style="color:red; text-align:center;">হিস্ট্রি লোড ফেল</p>';
+                container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড ফেল</p>';
             }
         }
     </script>
