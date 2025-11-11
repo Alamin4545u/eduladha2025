@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadUserData() {
         try {
             const docSnap = await userDocRef.get();
-            // এই লাইনটি সংশোধন করা হয়েছে: docSnap.exists() এর পরিবর্তে docSnap.exists ব্যবহার করা হয়েছে
+            // এই লাইনটিই মূল সমাধান: docSnap.exists() এর পরিবর্তে docSnap.exists হবে
             if (docSnap.exists) {
                 pointsDisplay.innerText = docSnap.data().points || 0;
             } else {
@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAdButton.disabled = false;
             });
     });
-
-    // ৭. পয়েন্ট উত্তোলনের অনুরোধ পাঠানোর লজিক
+    
+    // ৭. পয়েন্ট উত্তোলনের লজিক (আগের মতোই)
     withdrawButton.addEventListener('click', async () => {
         const currentPoints = parseInt(pointsDisplay.innerText, 10) || 0;
         if (currentPoints <= 0) {
@@ -106,31 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDisplay.innerText = "Submitting request...";
 
         try {
-            const requestId = `req_${userId}_${Date.now()}`;
-            await db.collection('withdrawal_requests').doc(requestId).set({
-                userId: userId,
-                username: tg.initDataUnsafe.user.username || '',
-                points: currentPoints,
-                status: 'pending',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            await userDocRef.update({
-                points: 0
-            });
-
-            pointsDisplay.innerText = 0;
-            alert("Your withdrawal request has been submitted successfully!");
-            messageDisplay.innerText = "Withdrawal request sent.";
-
-        } catch (error) {
-            console.error("Error submitting withdrawal request:", error);
-            messageDisplay.innerText = `Request failed: ${error.message}`;
-        } finally {
-            withdrawButton.disabled = false;
-        }
-    });
-});        try {
             const requestId = `req_${userId}_${Date.now()}`;
             await db.collection('withdrawal_requests').doc(requestId).set({
                 userId: userId,
