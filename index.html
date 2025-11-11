@@ -80,8 +80,8 @@
                 try {
                     const configDoc = await db.collection('config').doc('settings').get();
                     if (configDoc.exists) config = configDoc.data();
-                    document.getElementById('watchAd').innerText = `<i class="fas fa-play"></i>এ্যাড দেখুন (${config.pointsPerAd} পয়েন্ট)`;
-                    document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} পয়েন্ট`;
+                    document.getElementById('watchAd').innerHTML = '<i class="fas fa-play"></i>এ্যাড দেখুন (' + config.pointsPerAd + ' পয়েন্ট)'; // Fixed with innerHTML
+                    document.getElementById('amount').placeholder = 'ন্যূনতম ' + config.minWithdraw + ' পয়েন্ট';
                 } catch (e) { console.error('Config error:', e); alert('কনফিগ লোড ফেল: ' + e.message); }
             }
             loadConfig();
@@ -92,7 +92,7 @@
                 if (!user) {
                     console.error('No user authenticated');
                     alert('লগিন সমস্যা - Firebase Anonymous enable করুন');
-                    return; // Fixed illegal return
+                    return;
                 }
                 userDocRef = db.collection('users').doc(user.uid);
                 try {
@@ -164,7 +164,7 @@
                         item.innerHTML = `<span>পরিমাণ: ${d.amount}</span><span>নম্বর: ${d.details}</span><span>তারিখ: ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</span><span class="status-${d.status}">স্ট্যাটাস: ${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span>`;
                         historyDiv.appendChild(item);
                     });
-                } catch (e) { console.error('History error:', e); historyDiv.innerHTML += '<p>হিস্ট্রি লোড ফেল (index তৈরি করুন)</p>'; } // No alert, log to console
+                } catch (e) { console.error('History error:', e); historyDiv.innerHTML += '<p>হিস্ট্রি লোড ফেল (index তৈরি করুন)</p>'; }
             }
         }
     </script>
