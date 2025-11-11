@@ -11,18 +11,22 @@
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial; background: linear-gradient(to bottom, #121212, #1e1e1e); color: #fff; margin: 0; padding: 20px; text-align: center; min-height: 100vh; }
-        h1 { color: #4caf50; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        body { font-family: Arial; background: linear-gradient(to bottom, #121212, #1e1e1e); color: #fff; margin: 0; padding: 20px; text-align: center; min-height: 100vh; perspective: 1000px; /* 3D effect base */ }
+        h1 { color: #4caf50; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); animation: glow 2s infinite alternate; }
+        @keyframes glow { 0% { text-shadow: 0 0 10px #4caf50; } 100% { text-shadow: 0 0 20px #4caf50; } }
         .username { font-size: 18px; color: #ffd700; margin: 10px 0; }
-        .balance { font-size: 32px; color: #4caf50; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; }
-        button { background: linear-gradient(to right, #4caf50, #388e3c); color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 50px; font-size: 18px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: auto; max-width: 90%; }
-        button:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
+        .balance { font-size: 32px; color: #4caf50; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; box-shadow: 0 0 20px rgba(76,175,80,0.5); transition: transform 0.5s; transform-style: preserve-3d; }
+        .balance:hover { transform: rotateX(10deg) rotateY(10deg); }
+        button { background: linear-gradient(to right, #4caf50, #388e3c); color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 50px; font-size: 18px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: auto; max-width: 90%; transform-style: preserve-3d; }
+        button:hover { transform: rotateY(15deg) scale(1.05); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         button:disabled { background: #555; }
-        #withdrawForm { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(76,175,80,0.5); width: 90%; max-width: 400px; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        #withdrawForm { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotateX(0deg); background: #222; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(76,175,80,0.5); width: 90%; max-width: 400px; animation: fadeIn 0.5s; transform-style: preserve-3d; }
+        #withdrawForm:hover { transform: translate(-50%, -50%) rotateX(5deg); }
+        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -60%) rotateX(-10deg); } to { opacity: 1; transform: translate(-50%, -50%) rotateX(0deg); } }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #4caf50; background: #333; color: white; font-size: 16px; box-sizing: border-box; }
-        #history { max-height: 300px; overflow-y: auto; background: #1c1c1c; border-radius: 15px; padding: 15px; margin-top: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .history-item { background: #282828; padding: 15px; margin: 10px 0; border-radius: 10px; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #history { max-height: 300px; overflow-y: auto; background: #1c1c1c; border-radius: 15px; padding: 15px; margin-top: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transform-style: preserve-3d; }
+        .history-item { background: #282828; padding: 15px; margin: 10px 0; border-radius: 10px; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .history-item:hover { transform: rotateY(10deg); }
         .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
         i { margin-right: 10px; }
     </style>
@@ -85,7 +89,11 @@
             auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
             auth.signInAnonymously().catch(e => { console.error('Auth error:', e); alert('লগিন ফেল: ' + e.message); });
             auth.onAuthStateChanged(async (user) => {
-                if (!user) return alert('লগিন সমস্যা - Firebase Anonymous enable করুন');
+                if (!user) {
+                    console.error('No user authenticated');
+                    alert('লগিন সমস্যা - Firebase Anonymous enable করুন');
+                    return; // Fixed illegal return
+                }
                 userDocRef = db.collection('users').doc(user.uid);
                 try {
                     const doc = await userDocRef.get();
@@ -156,7 +164,7 @@
                         item.innerHTML = `<span>পরিমাণ: ${d.amount}</span><span>নম্বর: ${d.details}</span><span>তারিখ: ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</span><span class="status-${d.status}">স্ট্যাটাস: ${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span>`;
                         historyDiv.appendChild(item);
                     });
-                } catch (e) { console.error('History error:', e); alert('হিস্ট্রি লোড ফেল: ' + e.message); }
+                } catch (e) { console.error('History error:', e); historyDiv.innerHTML += '<p>হিস্ট্রি লোড ফেল (index তৈরি করুন)</p>'; } // No alert, log to console
             }
         }
     </script>
