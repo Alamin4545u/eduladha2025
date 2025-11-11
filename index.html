@@ -122,26 +122,118 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Action Buttons */
-        .action-btn {
-            display: block;
-            width: 90%;
-            max-width: 400px;
-            margin: 15px auto;
-            padding: 16px;
+        /* Reward Buttons Row */
+        .reward-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+            gap: 10px;
+        }
+        .reward-btn {
+            flex: 1;
             background: linear-gradient(45deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
-            border-radius: 16px;
-            font-size: 18px;
+            padding: 12px;
+            border-radius: 30px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(76,175,80,0.4);
+            box-shadow: 0 4px 10px rgba(76,175,80,0.4);
             transition: all 0.3s;
-            transform-style: preserve-3d;
+            text-align: center;
         }
-        .action-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 12px 25px rgba(76,175,80,0.6); }
-        .action-btn:disabled { background: #444; cursor: not-allowed; transform: none; }
+        .reward-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 15px rgba(76,175,80,0.6); }
+        .reward-btn:disabled { background: #444; cursor: not-allowed; }
+
+        /* Spin Wheel Modal */
+        .spin-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff0000 0deg 45deg,
+                #ff7f00 45deg 90deg,
+                #ffff00 90deg 135deg,
+                #00ff00 135deg 180deg,
+                #00ffff 180deg 225deg,
+                #0000ff 225deg 270deg,
+                #4b0082 270deg 315deg,
+                #9400d3 315deg 360deg
+            );
+            position: relative;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+            transition: transform 4s ease-out;
+        }
+        .wheel::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 140px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid red;
+        }
+        .spin-btn {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: gold;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Scratch Card Modal */
+        .scratch-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .scratch-card {
+            width: 300px;
+            height: 200px;
+            background: #ccc;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        .scratch-card canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .scratch-reward {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: gold;
+            text-align: center;
+        }
 
         /* Navigation */
         .nav {
@@ -263,7 +355,11 @@
             <!-- Dynamic banners from config -->
         </div>
         <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
-        <button class="action-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
+        <div class="reward-buttons">
+            <button class="reward-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
+            <button class="reward-btn" id="spinBtn"><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
+            <button class="reward-btn" id="scratchBtn"><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
+        </div>
     </div>
 
     <div id="wallet" class="screen">
@@ -314,6 +410,23 @@
         </div>
     </div>
 
+    <!-- Spin Modal -->
+    <div class="spin-modal" id="spinModal">
+        <div class="wheel" id="wheel"></div>
+        <button class="spin-btn" id="spinWheelBtn">স্পিন</button>
+        <button class="action-btn btn-close" onclick="closeModal('spinModal')" style="margin-top:20px;">বন্ধ</button>
+    </div>
+
+    <!-- Scratch Modal -->
+    <div class="scratch-modal" id="scratchModal">
+        <div class="scratch-card">
+            <canvas id="scratchCanvas"></canvas>
+            <div class="scratch-reward" id="scratchReward">Scratch to reveal</div>
+        </div>
+        <button class="action-btn" id="claimScratch" style="margin-top:20px;">ক্লেইম</button>
+        <button class="action-btn btn-close" onclick="closeModal('scratchModal')" style="margin-top:10px;">বন্ধ</button>
+    </div>
+
     <!-- Navigation -->
     <div class="nav">
         <div class="nav-item active" data-screen="home"><i class="fas fa-home"></i> হোম</div>
@@ -354,7 +467,7 @@
         // DOM Elements
         const screens = document.querySelectorAll('.screen');
         const navItems = document.querySelectorAll('.nav-item');
-        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, liveNotice: '', bannerUrls: [] };
+        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50, liveNotice: '', bannerUrls: [] };
 
         // Set Home Header
         document.getElementById('avatar').innerText = initials;
@@ -405,6 +518,10 @@
                         img.style.animationDelay = `${0.2 * (index + 1)}s`;
                         container.appendChild(img);
                     });
+                    // Update button texts with config
+                    document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
+                    document.getElementById('spinPoints').innerText = config.spinReward;
+                    document.getElementById('scratchPoints').innerText = config.scratchReward;
                 }
             } catch (e) { console.error(e); }
         }
@@ -412,7 +529,6 @@
         function updatePointsDisplay() {
             document.getElementById('adPoints').innerText = config.pointsPerAd;
             document.getElementById('adPointsTask').innerText = config.pointsPerAd;
-            document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
             document.getElementById('dailyPointsTask').innerText = config.dailyRewardPoints;
             document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} ৳`;
         }
@@ -429,7 +545,11 @@
                         balance: 0, telegramId, username: fullName,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         lastAdWatched: null,
-                        lastDailyClaim: null
+                        lastDailyClaim: null,
+                        lastSpin: null,
+                        spinCount: 0,
+                        lastScratch: null,
+                        scratchCount: 0
                     });
                 }
 
@@ -443,8 +563,15 @@
                 loadConfig();
                 document.getElementById('watchAd').disabled = false;
                 document.getElementById('dailyClaim').disabled = false;
+                document.getElementById('spinBtn').disabled = false;
+                document.getElementById('scratchBtn').disabled = false;
             });
         });
+
+        // Close Modal Function
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
 
         // Watch Ad (in Task)
         document.getElementById('watchAd').onclick = async () => {
@@ -485,6 +612,111 @@
                 alert(`ডেইলি রিওয়ার্ড! ${config.dailyRewardPoints} ৳ পেয়েছেন`);
             } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
             btn.disabled = false;
+        };
+
+        // Spin Button
+        document.getElementById('spinBtn').onclick = async () => {
+            const snap = await userDocRef.get();
+            const today = new Date().toDateString();
+            let spinCount = snap.data().spinCount || 0;
+            const lastSpin = snap.data().lastSpin ? snap.data().lastSpin.toDate().toDateString() : '';
+            if (lastSpin !== today) {
+                spinCount = 0;
+            }
+            if (spinCount >= config.dailySpinLimit) {
+                alert('আজকের স্পিন লিমিট শেষ!');
+                return;
+            }
+            document.getElementById('spinModal').style.display = 'flex';
+        };
+
+        // Spin Wheel
+        document.getElementById('spinWheelBtn').onclick = async () => {
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = 'transform 4s ease-out';
+            wheel.style.transform = `rotate(${360 * 5 + Math.random() * 360}deg)`;
+            setTimeout(async () => {
+                try {
+                    await window.showGiga();
+                    await userDocRef.update({
+                        balance: firebase.firestore.FieldValue.increment(config.spinReward),
+                        lastSpin: firebase.firestore.FieldValue.serverTimestamp(),
+                        spinCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                    alert(`স্পিন রিওয়ার্ড! ${config.spinReward} ৳ পেয়েছেন`);
+                    closeModal('spinModal');
+                    wheel.style.transition = 'none';
+                    wheel.style.transform = 'rotate(0deg)';
+                } catch (e) { alert('স্পিন ফেল: ' + e.message); }
+            }, 4000);
+        };
+
+        // Scratch Button
+        document.getElementById('scratchBtn').onclick = async () => {
+            const snap = await userDocRef.get();
+            const today = new Date().toDateString();
+            let scratchCount = snap.data().scratchCount || 0;
+            const lastScratch = snap.data().lastScratch ? snap.data().lastScratch.toDate().toDateString() : '';
+            if (lastScratch !== today) {
+                scratchCount = 0;
+            }
+            if (scratchCount >= config.dailyScratchLimit) {
+                alert('আজকের স্ক্র্যাচ লিমিট শেষ!');
+                return;
+            }
+            document.getElementById('scratchModal').style.display = 'flex';
+            initScratchCard();
+        };
+
+        // Init Scratch Card
+        function initScratchCard() {
+            const canvas = document.getElementById('scratchCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 200;
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(0, 0, 300, 200);
+            document.getElementById('scratchReward').innerText = `${config.scratchReward} ৳`;
+            let isDrawing = false;
+            canvas.addEventListener('mousedown', () => isDrawing = true);
+            canvas.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(e.offsetX, e.offsetY, 20, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+            // For mobile touch
+            canvas.addEventListener('touchstart', () => isDrawing = true);
+            canvas.addEventListener('touchend', () => isDrawing = false);
+            canvas.addEventListener('touchmove', (e) => {
+                if (isDrawing) {
+                    const touch = e.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    const x = touch.clientX - rect.left;
+                    const y = touch.clientY - rect.top;
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 20, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Claim Scratch
+        document.getElementById('claimScratch').onclick = async () => {
+            try {
+                await window.showGiga();
+                await userDocRef.update({
+                    balance: firebase.firestore.FieldValue.increment(config.scratchReward),
+                    lastScratch: firebase.firestore.FieldValue.serverTimestamp(),
+                    scratchCount: firebase.firestore.FieldValue.increment(1)
+                });
+                alert(`স্ক্র্যাচ রিওয়ার্ড! ${config.scratchReward} ৳ পেয়েছেন`);
+                closeModal('scratchModal');
+            } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
         };
 
         // Withdraw (in Wallet)
