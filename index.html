@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>এ্যাড দেখে টাকা ইনকাম করুন</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://ad.gigapub.tech/script?id=4203"></script>
+    <script src="https://montage-ads.com/sdk.js"></script> <!-- Montage Ads SDK, replace if different -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4caf50;
+            --primary-dark: #388e3c;
+            --bg: #0f0f0f;
+            --card: rgba(30, 30, 30, 0.7);
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #fff;
+            --gold: #ffd700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 80px;
+            perspective: 1000px;
+            touch-action: manipulation; /* Helps with mobile touch */
+        }
+
+        /* Home Header */
+        .home-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(76, 175, 80, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #9c27b0; /* Purple like in image */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .user-username {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .user-balance {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            text-align: right;
+        }
+        .balance-label { font-size: 12px; color: #aaa; }
+
+        /* Banners */
+        .banner-container {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .banner {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: all 0.4s;
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: bannerSlideIn 0.8s ease-out forwards;
+        }
+        .banner:nth-child(1) { animation-delay: 0.2s; }
+        .banner:nth-child(2) { animation-delay: 0.6s; }
+        @keyframes bannerSlideIn { to { opacity: 1; transform: translateX(0); } }
+        .banner:hover { transform: scale(1.02) rotateY(5deg); }
+
+        /* Live Notice (with scrolling animation) */
+        .live-notice {
+            margin: 20px;
+            background: var(--card);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            color: #ffd700;
+            font-style: italic;
+            text-align: center;
+            animation: fadeIn 0.5s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .live-notice span {
+            display: inline-block;
+            animation: scroll-left 15s linear infinite;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Reward Buttons Row */
+        .reward-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+            gap: 10px;
+        }
+        .reward-btn {
+            flex: 1;
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(76,175,80,0.4);
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .reward-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 15px rgba(76,175,80,0.6); }
+        .reward-btn:disabled { background: #444; cursor: not-allowed; }
+
+        /* Spin Screen */
+        .spin-screen {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+        .spin-screen.active { display: block; }
+        .spin-limit {
+            margin-bottom: 20px;
+            color: #aaa;
+        }
+        .wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff0000 0deg 45deg,
+                #ff7f00 45deg 90deg,
+                #ffff00 90deg 135deg,
+                #00ff00 135deg 180deg,
+                #00ffff 180deg 225deg,
+                #0000ff 225deg 270deg,
+                #4b0082 270deg 315deg,
+                #9400d3 315deg 360deg
+            );
+            position: relative;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+            transition: transform 4s ease-out;
+            margin: 0 auto;
+        }
+        .wheel::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 140px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid red;
+        }
+        .spin-wheel-btn {
+            margin-top: 20px;
+            background: gold;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Scratch Screen */
+        .scratch-screen {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+        .scratch-screen.active { display: block; }
+        .scratch-limit {
+            margin-bottom: 20px;
+            color: #aaa;
+        }
+        .scratch-card {
+            width: 300px;
+            height: 200px;
+            background: #ccc;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+            margin: 0 auto;
+        }
+        .scratch-card canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .scratch-reward {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: gold;
+            text-align: center;
+        }
+        .claim-scratch {
+            margin-top: 20px;
+        }
+
+        /* Wallet Screen */
+        .wallet-header {
+            background: linear-gradient(45deg, #2196f3, #673ab7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            text-align: left;
+            position: relative;
+        }
+        .wallet-header h3 { margin: 0; }
+        .wallet-header p { margin: 5px 0 0; }
+        .wallet-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+        }
+        .payment-method {
+            background: white;
+            color: black;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .payment-logo {
+            width: 40px;
+            margin-right: 10px;
+        }
+        .payment-info {
+            flex: 1;
+        }
+        .payment-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* Task Screen */
+        .task-list {
+            margin: 20px;
+        }
+        .task-item {
+            background: var(--card);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .task-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid rgba(76, 175, 80, 0.3);
+            z-index: 1000;
+        }
+        .nav-item {
+            text-align: center;
+            color: #aaa;
+            font-size: 12px;
+            transition: all 0.3s;
+            padding: 8px;
+            border-radius: 12px;
+            width: 60px;
+        }
+        .nav-item.active, .nav-item:hover {
+            color: var(--primary);
+            background: rgba(76, 175, 80, 0.2);
+            transform: scale(1.1);
+        }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        /* Screens */
+        .screen { display: none; padding: 10px; }
+        .screen.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+        /* History */
+        .history-item {
+            background: var(--card);
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 14px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+        .history-item:hover { transform: translateX(5px); }
+        .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            transform-style: preserve-3d;
+            animation: modalPop 0.4s;
+        }
+        @keyframes modalPop { from { transform: scale(0.8) rotateX(-10deg); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+        }
+        .btn-close { background: linear-gradient(45deg, #f44336, #d32f2f); }
+    </style>
+</head>
+<body>
+
+    <!-- Screens -->
+    <div id="home" class="screen active">
+        <div class="home-header">
+            <div class="avatar" id="avatar"></div>
+            <div class="user-info">
+                <div class="user-name" id="userName"></div>
+                <div class="user-username" id="userUsername"></div>
+            </div>
+            <div class="user-balance">
+                <div class="balance-label">আপনার ব্যালেন্স</div>
+                ৳ <span id="balance">0</span>
+            </div>
+        </div>
+        <div class="banner-container" id="bannerContainer">
+            <!-- Dynamic banners from config -->
+        </div>
+        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
+        <div class="reward-buttons">
+            <button class="reward-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
+            <button class="reward-btn" id="spinBtn"><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
+            <button class="reward-btn" id="scratchBtn"><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
+        </div>
+    </div>
+
+    <div id="wallet" class="screen">
+        <div class="wallet-header">
+            <h3>উইথড্র</h3>
+            <p>আপনি যেকোনো সময় আপনার আর্নিং উইথড্র করতে পারেন</p>
+            <i class="fas fa-money-bill-wave wallet-icon"></i>
+        </div>
+        <div id="paymentMethodsList">
+            <!-- Dynamic payment methods -->
+        </div>
+        <p style="text-align:center; color:#aaa; margin-top:20px;">১ ৳ = ১ টাকা</p>
+    </div>
+
+    <div id="history" class="screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">উইথড্র হিস্ট্রি</h2>
+        <div id="historyList">কোনো হিস্ট্রি নেই</div>
+    </div>
+
+    <div id="task" class="screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
+        <div class="task-list" id="taskList">
+            <!-- Dynamic tasks -->
+        </div>
+    </div>
+
+    <div id="profile" class="screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">প্রোফাইল</h2>
+        <div style="text-align:center;">
+            <img id="profileImgBig" class="profile-img" style="width:100px;height:100px;border-radius:50%;box-shadow:0 0 20px rgba(76,175,80,0.6);" src="" alt="">
+            <p style="margin:15px 0; font-size:18px;" id="profileName"></p>
+            <p style="color:#aaa;">Telegram ID: <span id="telegramId"></span></p>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-exchange-alt"></i> উইথড্র রিকোয়েস্ট</h2>
+            <input id="amount" type="number" placeholder="ন্যূনতম 500 ৳">
+            <input id="paymentDetails" type="text" placeholder="bKash/Nagad/Rocket নম্বর">
+            <button class="action-btn" id="submitWithdraw" style="margin:10px auto; display:block; width:100%;"><i class="fas fa-check"></i> সাবমিট</button>
+            <button class="action-btn btn-close" id="closeModal" style="margin:10px auto; display:block; width:100%;"><i class="fas fa-times"></i> বন্ধ</button>
+        </div>
+    </div>
+
+    <!-- Spin Screen -->
+    <div id="spin" class="screen spin-screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">স্পিন</h2>
+        <p class="spin-limit" id="spinLimit">লোড হচ্ছে...</p>
+        <div class="wheel" id="wheel"></div>
+        <button class="spin-wheel-btn" id="spinWheelBtn">স্পিন</button>
+    </div>
+
+    <!-- Scratch Screen -->
+    <div id="scratch" class="screen scratch-screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">স্ক্র্যাচ কার্ড</h2>
+        <p class="scratch-limit" id="scratchLimit">লোড হচ্ছে...</p>
+        <div class="scratch-card">
+            <canvas id="scratchCanvas"></canvas>
+            <div class="scratch-reward" id="scratchReward">Scratch to reveal</div>
+        </div>
+        <button class="action-btn claim-scratch" id="claimScratch">ক্লেইম</button>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <div class="nav-item active" data-screen="home"><i class="fas fa-home"></i> হোম</div>
+        <div class="nav-item" data-screen="wallet"><i class="fas fa-wallet"></i> ওয়ালেট</div>
+        <div class="nav-item" data-screen="history"><i class="fas fa-history"></i> হিস্ট্রি</div>
+        <div class="nav-item" data-screen="task"><i class="fas fa-tasks"></i> টাস্ক</div>
+        <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i> প্রোফাইল</div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
+            authDomain: "mini-bot-735bf.firebaseapp.com",
+            projectId: "mini-bot-735bf",
+            storageBucket: "mini-bot-735bf.firebasestorage.app",
+            messagingSenderId: "1056580233393",
+            appId: "1:1056580233393:web:058609b1ca944020755a90"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Telegram
+        Telegram.WebApp.ready();
+        const tgUser = Telegram.WebApp.initDataUnsafe.user;
+        if (!tgUser) {
+            document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:50px;'>টেলিগ্রাম থেকে খুলুন!</h1>";
+            throw new Error("Not in Telegram");
+        }
+
+        const telegramId = tgUser.id.toString();
+        const username = tgUser.username || tgUser.first_name || 'ইউজার';
+        const fullName = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+        const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        const photoUrl = tgUser.photo_url || 'https://via.placeholder.com/100';
+
+        // DOM Elements
+        const screens = document.querySelectorAll('.screen');
+        const navItems = document.querySelectorAll('.nav-item');
+        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: '', dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50 };
+
+        // Set Home Header
+        document.getElementById('avatar').innerText = initials;
+        document.getElementById('userName').innerText = fullName;
+        document.getElementById('userUsername').innerText = `@${username}`;
+
+        // Set Profile
+        document.getElementById('profileImgBig').src = photoUrl;
+        document.getElementById('profileName').innerText = username;
+        document.getElementById('telegramId').innerText = telegramId;
+
+        // Navigation
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const screenId = item.dataset.screen;
+                screens.forEach(s => s.classList.remove('active'));
+                document.getElementById(screenId).classList.add('active');
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                if (screenId === 'history') loadHistory();
+                if (screenId === 'task') loadTasks();
+                if (screenId === 'wallet') loadPaymentMethods();
+                if (screenId === 'spin') loadSpinLimit();
+                if (screenId === 'scratch') { loadScratchLimit(); initScratchCard(); }
+            });
+        });
+
+        // Load Config (with live notice and banners)
+        async function loadConfig() {
+            try {
+                const doc = await db.collection('config').doc('settings').get();
+                if (doc.exists) {
+                    config = { ...config, ...doc.data() };
+                    updatePointsDisplay();
+                    // Live Notice with scrolling
+                    const noticeSpan = document.getElementById('liveNotice').querySelector('span');
+                    noticeSpan.innerText = config.liveNotice || 'কোনো নোটিস নেই';
+                    // If text is short, no animation; if long, animate
+                    if (noticeSpan.scrollWidth > document.getElementById('liveNotice').clientWidth) {
+                        noticeSpan.style.animation = 'scroll-left 15s linear infinite';
+                    } else {
+                        noticeSpan.style.animation = 'none';
+                    }
+                    // Banners
+                    const container = document.getElementById('bannerContainer');
+                    container.innerHTML = '';
+                    config.bannerUrls.forEach((url, index) => {
+                        const img = document.createElement('img');
+                        img.className = 'banner';
+                        img.src = url;
+                        img.alt = `Banner ${index + 1}`;
+                        img.style.animationDelay = `${0.2 * (index + 1)}s`;
+                        container.appendChild(img);
+                    });
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updatePointsDisplay() {
+            document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
+            document.getElementById('spinPoints').innerText = config.spinReward;
+            document.getElementById('scratchPoints').innerText = config.scratchReward;
+            document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} ৳`;
+        }
+
+        // Auth & Realtime Balance
+        auth.signInAnonymously().then(() => {
+            auth.onAuthStateChanged(async user => {
+                if (!user) return;
+                userDocRef = db.collection('users').doc(user.uid);
+
+                const doc = await userDocRef.get();
+                if (!doc.exists) {
+                    await userDocRef.set({
+                        balance: 0, telegramId, username: fullName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastAdWatched: null,
+                        lastDailyClaim: null,
+                        lastSpin: null,
+                        spinCount: 0,
+                        lastScratch: null,
+                        scratchCount: 0
+                    });
+                }
+
+                // Realtime Balance
+                userDocRef.onSnapshot(snap => {
+                    const balance = snap.data().balance || 0;
+                    document.getElementById('balance').innerText = balance;
+                });
+
+                loadConfig();
+            });
+        });
+
+        // Load Payment Methods
+        async function loadPaymentMethods() {
+            const container = document.getElementById('paymentMethodsList');
+            container.innerHTML = '';
+            try {
+                const snap = await db.collection('paymentMethods').get();
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'payment-method';
+                    div.innerHTML = `
+                        <img class="payment-logo" src="${d.logoUrl}" alt="${d.name}">
+                        <div class="payment-info">
+                            <h4>${d.name}</h4>
+                            <p>লিমিট: ${d.min} - ${d.max} BDT</p>
+                        </div>
+                        <button class="payment-btn" onclick="openWithdraw('${doc.id}')">উইথড্র</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // Open Withdraw for Method
+        let currentMethodId = null;
+        function openWithdraw(methodId) {
+            currentMethodId = methodId;
+            const modal = document.getElementById('withdrawModal');
+            modal.style.display = 'flex';
+        }
+
+        // Load Tasks
+        async function loadTasks() {
+            const container = document.getElementById('taskList');
+            container.innerHTML = '';
+            try {
+                const snap = await db.collection('tasks').get();
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'task-item';
+                    div.innerHTML = `
+                        <h3>${d.name}</h3>
+                        <p>${d.description}</p>
+                        <p>পয়েন্ট: ${d.points} ৳</p>
+                        <p>লিমিট: ${d.limit} /দিন</p>
+                        <button class="task-btn" onclick="completeTask('${doc.id}', '${d.adNetwork}')">কমপ্লিট</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // Complete Task
+        async function completeTask(taskId, adNetwork) {
+            try {
+                if (adNetwork === 'gigapub') {
+                    await window.showGiga();
+                } else if (adNetwork === 'montage') {
+                    // Montage Ads call, assuming SDK has showAd function
+                    montage.showAd(config.montageAppId, config.montageAdId);
+                }
+                const taskSnap = await db.collection('tasks').doc(taskId).get();
+                const points = taskSnap.data().points;
+                await userDocRef.update({
+                    balance: firebase.firestore.FieldValue.increment(points)
+                });
+                alert(`টাস্ক কমপ্লিট! ${points} ৳ পেয়েছেন`);
+            } catch (e) { alert('টাস্ক ফেল: ' + e.message); }
+        }
+
+        // Load Spin Limit
+        async function loadSpinLimit() {
+            const snap = await userDocRef.get();
+            const today = new Date().toDateString();
+            let spinCount = snap.data().spinCount || 0;
+            const lastSpin = snap.data().lastSpin ? snap.data().lastSpin.toDate().toDateString() : '';
+            if (lastSpin !== today) {
+                spinCount = 0;
+                await userDocRef.update({ spinCount: 0 });
+            }
+            document.getElementById('spinLimit').innerText = `${config.dailySpinLimit - spinCount} / ${config.dailySpinLimit} স্পিন বাকি`;
+            return config.dailySpinLimit - spinCount;
+        }
+
+        // Load Scratch Limit
+        async function loadScratchLimit() {
+            const snap = await userDocRef.get();
+            const today = new Date().toDateString();
+            let scratchCount = snap.data().scratchCount || 0;
+            const lastScratch = snap.data().lastScratch ? snap.data().lastScratch.toDate().toDateString() : '';
+            if (lastScratch !== today) {
+                scratchCount = 0;
+                await userDocRef.update({ scratchCount: 0 });
+            }
+            document.getElementById('scratchLimit').innerText = `${config.dailyScratchLimit - scratchCount} / ${config.dailyScratchLimit} স্ক্র্যাচ বাকি`;
+            return config.dailyScratchLimit - scratchCount;
+        }
+
+        // Spin Wheel
+        document.getElementById('spinWheelBtn').onclick = async () => {
+            const remaining = await loadSpinLimit();
+            if (remaining <= 0) {
+                alert('আজকের স্পিন লিমিট শেষ!');
+                return;
+            }
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = 'transform 4s ease-out';
+            wheel.style.transform = `rotate(${360 * 5 + Math.random() * 360}deg)`;
+            setTimeout(async () => {
+                try {
+                    await window.showGiga();
+                    await userDocRef.update({
+                        balance: firebase.firestore.FieldValue.increment(config.spinReward),
+                        lastSpin: firebase.firestore.FieldValue.serverTimestamp(),
+                        spinCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                    alert(`স্পিন রিওয়ার্ড! ${config.spinReward} ৳ পেয়েছেন`);
+                    loadSpinLimit();
+                    wheel.style.transition = 'none';
+                    wheel.style.transform = 'rotate(0deg)';
+                } catch (e) { alert('স্পিন ফেল: ' + e.message); }
+            }, 4000);
+        };
+
+        // Init Scratch Card
+        function initScratchCard() {
+            const canvas = document.getElementById('scratchCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 200;
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(0, 0, 300, 200);
+            document.getElementById('scratchReward').innerText = `কনগ্র্যাটস! ${config.scratchReward} ৳`;
+            let isDrawing = false;
+            canvas.addEventListener('mousedown', () => isDrawing = true);
+            canvas.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(e.offsetX, e.offsetY, 20, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+            // For mobile touch
+            canvas.addEventListener('touchstart', () => isDrawing = true);
+            canvas.addEventListener('touchend', () => isDrawing = false);
+            canvas.addEventListener('touchmove', (e) => {
+                if (isDrawing) {
+                    const touch = e.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    const x = touch.clientX - rect.left;
+                    const y = touch.clientY - rect.top;
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 20, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Claim Scratch
+        document.getElementById('claimScratch').onclick = async () => {
+            const remaining = await loadScratchLimit();
+            if (remaining <= 0) {
+                alert('আজকের স্ক্র্যাচ লিমিট শেষ!');
+                return;
+            }
+            try {
+                await window.showGiga();
+                await userDocRef.update({
+                    balance: firebase.firestore.FieldValue.increment(config.scratchReward),
+                    lastScratch: firebase.firestore.FieldValue.serverTimestamp(),
+                    scratchCount: firebase.firestore.FieldValue.increment(1)
+                });
+                alert(`স্ক্র্যাচ রিওয়ার্ড! ${config.scratchReward} ৳ পেয়েছেন`);
+                loadScratchLimit();
+            } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
+        };
+
+        // Claim Daily Reward
+        async function claimDaily() {
+            try {
+                const now = Date.now();
+                const snap = await userDocRef.get();
+                const last = snap.data().lastDailyClaim ? snap.data().lastDailyClaim.toMillis() : 0;
+                if (now - last < config.dailyRewardCooldown) {
+                    alert('24 ঘণ্টা পর আবার ক্লেইম করুন');
+                    return;
+                }
+                await userDocRef.update({
+                    balance: firebase.firestore.FieldValue.increment(config.dailyRewardPoints),
+                    lastDailyClaim: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert(`ডেইলি রিওয়ার্ড! ${config.dailyRewardPoints} ৳ পেয়েছেন`);
+            } catch (e) { alert('ডেইলি ক্লেইম ফেল: ' + e.message); }
+        }
+
+        // Withdraw
+        const modal = document.getElementById('withdrawModal');
+        document.getElementById('closeModal').onclick = () => modal.style.display = 'none';
+        document.getElementById('submitWithdraw').onclick = async () => {
+            const amount = parseInt(document.getElementById('amount').value);
+            const details = document.getElementById('paymentDetails').value.trim();
+            if (amount < config.minWithdraw || !details) return alert('সঠিক তথ্য দিন');
+            try {
+                const snap = await userDocRef.get();
+                if (snap.data().balance < amount) return alert('ব্যালেন্স কম');
+                await db.collection('withdrawals').add({
+                    userUid: auth.currentUser.uid, telegramId, amount, details,
+                    status: 'pending', requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(-amount) });
+                alert('উইথড্র রিকোয়েস্ট সফল!');
+                modal.style.display = 'none';
+                document.getElementById('amount').value = '';
+                document.getElementById('paymentDetails').value = '';
+            } catch (e) { alert('উইথড্র ফেল: ' + e.message); }
+        };
+
+        // Load History
+        async function loadHistory() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '<p>লোড হচ্ছে...</p>';
+            try {
+                const snap = await db.collection('withdrawals')
+                    .where('userUid', '==', auth.currentUser.uid)
+                    .orderBy('requestedAt', 'desc').get();
+                if (snap.empty) {
+                    container.innerHTML = '<p style="color:#aaa;text-align:center;">কোনো হিস্ট্রি নেই</p>';
+                    return;
+                }
+                container.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `
+                        <div><strong>পরিমাণ:</strong> ৳ ${d.amount}</div>
+                        <div><strong>নম্বর:</strong> ${d.details}</div>
+                        <div><strong>তারিখ:</strong> ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</div>
+                        <div><strong>স্ট্যাটাস:</strong> <span class="status-${d.status}">${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span></div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) {
+                container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড ফেল</p>';
+            }
+        }
+
+        // Add event listeners for homepage buttons
+        document.getElementById('dailyClaim').addEventListener('click', claimDaily);
+        document.getElementById('spinBtn').addEventListener('click', () => {
+            screens.forEach(s => s.classList.remove('active'));
+            document.getElementById('spin').classList.add('active');
+            loadSpinLimit();
+        });
+        document.getElementById('scratchBtn').addEventListener('click', () => {
+            screens.forEach(s => s.classList.remove('active'));
+            document.getElementById('scratch').classList.add('active');
+            loadScratchLimit();
+            initScratchCard();
+        });
+    </script>
+</body>
+</html>
