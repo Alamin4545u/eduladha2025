@@ -45,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadUserData() {
         try {
             const docSnap = await userDocRef.get();
-            if (docSnap.exists()) {
+            // এই লাইনটি সংশোধন করা হয়েছে: docSnap.exists() এর পরিবর্তে docSnap.exists ব্যবহার করা হয়েছে
+            if (docSnap.exists) {
                 pointsDisplay.innerText = docSnap.data().points || 0;
             } else {
                 await userDocRef.set({ points: 0, userId: userId, username: tg.initDataUnsafe.user.username || '' });
@@ -53,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Error loading user data:", error);
-            // এখানে এরর মেসেজটি স্ক্রিনে দেখানো হবে
             messageDisplay.innerText = `Error loading data: ${error.message}`;
         }
     }
@@ -67,25 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(async () => {
                 messageDisplay.innerText = "Ad successful! Adding point...";
                 try {
-                    // Firestore transaction ব্যবহার করে পয়েন্ট আপডেট করুন
+                    const currentPoints = parseInt(pointsDisplay.innerText, 10) || 0;
+                    
                     await userDocRef.update({
                         points: firebase.firestore.FieldValue.increment(1)
                     });
                     
-                    // UI তে নতুন পয়েন্ট দেখান
-                    const currentPoints = parseInt(pointsDisplay.innerText);
                     pointsDisplay.innerText = currentPoints + 1;
                     messageDisplay.innerText = "Congratulations! You earned 1 point.";
 
                 } catch (error) {
                     console.error("Error updating points:", error);
-                    // পয়েন্ট যোগ করতে ব্যর্থ হলে এরর মেসেজ দেখানো হবে
                     messageDisplay.innerText = `Error saving point: ${error.message}`;
                 }
             })
             .catch(e => {
                 console.error("Ad error:", e);
-                // অ্যাড দেখাতে ব্যর্থ হলে এরর মেসেজ দেখানো হবে
                 messageDisplay.innerText = `Failed to show ad. Please try again.`;
             })
             .finally(() => {
@@ -95,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ৭. পয়েন্ট উত্তোলনের অনুরোধ পাঠানোর লজিক
     withdrawButton.addEventListener('click', async () => {
-        const currentPoints = parseInt(pointsDisplay.innerText);
+        const currentPoints = parseInt(pointsDisplay.innerText, 10) || 0;
         if (currentPoints <= 0) {
             alert("You do not have any points to withdraw.");
             return;
@@ -109,6 +106,31 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDisplay.innerText = "Submitting request...";
 
         try {
+            const requestId = `req_${userId}_${Date.now()}`;
+            await db.collection('withdrawal_requests').doc(requestId).set({
+                userId: userId,
+                username: tg.initDataUnsafe.user.username || '',
+                points: currentPoints,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            await userDocRef.update({
+                points: 0
+            });
+
+            pointsDisplay.innerText = 0;
+            alert("Your withdrawal request has been submitted successfully!");
+            messageDisplay.innerText = "Withdrawal request sent.";
+
+        } catch (error) {
+            console.error("Error submitting withdrawal request:", error);
+            messageDisplay.innerText = `Request failed: ${error.message}`;
+        } finally {
+            withdrawButton.disabled = false;
+        }
+    });
+});        try {
             const requestId = `req_${userId}_${Date.now()}`;
             await db.collection('withdrawal_requests').doc(requestId).set({
                 userId: userId,
