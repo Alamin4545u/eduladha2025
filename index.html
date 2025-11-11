@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
+    <script src="https://montage-ads.com/sdk.js"></script> <!-- Montage Ads SDK, replace if different -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -146,16 +147,16 @@
         .reward-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 15px rgba(76,175,80,0.6); }
         .reward-btn:disabled { background: #444; cursor: not-allowed; }
 
-        /* Spin Wheel Modal */
-        .spin-modal {
+        /* Spin Screen */
+        .spin-screen {
             display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            padding: 20px;
+            text-align: center;
+        }
+        .spin-screen.active { display: block; }
+        .spin-limit {
+            margin-bottom: 20px;
+            color: #aaa;
         }
         .wheel {
             width: 300px;
@@ -174,6 +175,7 @@
             position: relative;
             box-shadow: 0 0 20px rgba(255,255,255,0.5);
             transition: transform 4s ease-out;
+            margin: 0 auto;
         }
         .wheel::before {
             content: '';
@@ -186,10 +188,8 @@
             border-right: 10px solid transparent;
             border-bottom: 20px solid red;
         }
-        .spin-btn {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+        .spin-wheel-btn {
+            margin-top: 20px;
             background: gold;
             color: black;
             border: none;
@@ -199,17 +199,13 @@
             cursor: pointer;
         }
 
-        /* Scratch Card Modal */
-        .scratch-modal {
+        /* Scratch Screen */
+        .scratch-screen {
             display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            padding: 20px;
+            text-align: center;
         }
+        .scratch-screen.active { display: block; }
         .scratch-card {
             width: 300px;
             height: 200px;
@@ -217,6 +213,7 @@
             position: relative;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(255,255,255,0.5);
+            margin: 0 auto;
         }
         .scratch-card canvas {
             position: absolute;
@@ -233,6 +230,76 @@
             font-size: 24px;
             color: gold;
             text-align: center;
+        }
+        .claim-scratch {
+            margin-top: 20px;
+        }
+
+        /* Wallet Screen */
+        .wallet-header {
+            background: linear-gradient(45deg, #2196f3, #673ab7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            text-align: left;
+            position: relative;
+        }
+        .wallet-header h3 { margin: 0; }
+        .wallet-header p { margin: 5px 0 0; }
+        .wallet-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+        }
+        .payment-method {
+            background: white;
+            color: black;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .payment-logo {
+            width: 40px;
+            margin-right: 10px;
+        }
+        .payment-info {
+            flex: 1;
+        }
+        .payment-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* Task Screen */
+        .task-list {
+            margin: 20px;
+        }
+        .task-item {
+            background: var(--card);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .task-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
         }
 
         /* Navigation */
@@ -318,22 +385,6 @@
             font-size: 16px;
         }
         .btn-close { background: linear-gradient(45deg, #f44336, #d32f2f); }
-
-        /* Task Screen */
-        .task-card {
-            background: var(--card);
-            padding: 18px;
-            margin: 15px 0;
-            border-radius: 16px;
-            text-align: left;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-            border: 1px solid rgba(76, 175, 80, 0.2);
-        }
-
-        /* Disable pull-to-refresh on home */
-        #home {
-            overscroll-behavior: none; /* Disables pull-to-refresh on mobile */
-        }
     </style>
 </head>
 <body>
@@ -363,12 +414,14 @@
     </div>
 
     <div id="wallet" class="screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">ওয়ালেট</h2>
-        <div class="balance-card">
-            <div class="balance-label">মোট ব্যালেন্স</div>
-            <div class="balance-amount">৳ <span id="balanceWallet">0</span></div>
+        <div class="wallet-header">
+            <h3>উইথড্র</h3>
+            <p>আপনি যেকোনো সময় আপনার আর্নিং উইথড্র করতে পারেন</p>
+            <i class="fas fa-money-bill-wave wallet-icon"></i>
         </div>
-        <button class="action-btn" id="withdrawBtn"><i class="fas fa-hand-holding-dollar"></i> উইথড্র করুন</button>
+        <div id="paymentMethodsList">
+            <!-- Dynamic payment methods -->
+        </div>
         <p style="text-align:center; color:#aaa; margin-top:20px;">১ ৳ = ১ টাকা</p>
     </div>
 
@@ -379,14 +432,8 @@
 
     <div id="task" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
-        <button class="action-btn" id="watchAd"><i class="fas fa-play"></i> এ্যাড দেখুন (+<span id="adPoints">10</span>)</button>
-        <div class="task-card">
-            <h3><i class="fas fa-play"></i> প্রতিদিন এ্যাড দেখুন</h3>
-            <p>প্রতিবার এ্যাড দেখলে <span id="adPointsTask">10</span> ৳</p>
-        </div>
-        <div class="task-card">
-            <h3><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড</h3>
-            <p>প্রতিদিন ক্লেইম করে <span id="dailyPointsTask">50</span> ৳ পান</p>
+        <div class="task-list" id="taskList">
+            <!-- Dynamic tasks -->
         </div>
     </div>
 
@@ -410,21 +457,22 @@
         </div>
     </div>
 
-    <!-- Spin Modal -->
-    <div class="spin-modal" id="spinModal">
+    <!-- Spin Screen -->
+    <div id="spin" class="screen spin-screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">স্পিন</h2>
+        <p class="spin-limit" id="spinLimit">লোড হচ্ছে...</p>
         <div class="wheel" id="wheel"></div>
-        <button class="spin-btn" id="spinWheelBtn">স্পিন</button>
-        <button class="action-btn btn-close" onclick="closeModal('spinModal')" style="margin-top:20px;">বন্ধ</button>
+        <button class="spin-wheel-btn" id="spinWheelBtn">স্পিন</button>
     </div>
 
-    <!-- Scratch Modal -->
-    <div class="scratch-modal" id="scratchModal">
+    <!-- Scratch Screen -->
+    <div id="scratch" class="screen scratch-screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">স্ক্র্যাচ কার্ড</h2>
         <div class="scratch-card">
             <canvas id="scratchCanvas"></canvas>
             <div class="scratch-reward" id="scratchReward">Scratch to reveal</div>
         </div>
-        <button class="action-btn" id="claimScratch" style="margin-top:20px;">ক্লেইম</button>
-        <button class="action-btn btn-close" onclick="closeModal('scratchModal')" style="margin-top:10px;">বন্ধ</button>
+        <button class="action-btn claim-scratch" id="claimScratch">ক্লেইম</button>
     </div>
 
     <!-- Navigation -->
@@ -467,7 +515,7 @@
         // DOM Elements
         const screens = document.querySelectorAll('.screen');
         const navItems = document.querySelectorAll('.nav-item');
-        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50, liveNotice: '', bannerUrls: [] };
+        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: '', dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50 };
 
         // Set Home Header
         document.getElementById('avatar').innerText = initials;
@@ -488,6 +536,10 @@
                 navItems.forEach(n => n.classList.remove('active'));
                 item.classList.add('active');
                 if (screenId === 'history') loadHistory();
+                if (screenId === 'task') loadTasks();
+                if (screenId === 'wallet') loadPaymentMethods();
+                if (screenId === 'spin') loadSpinLimit();
+                if (screenId === 'scratch') initScratchCard();
             });
         });
 
@@ -518,10 +570,6 @@
                         img.style.animationDelay = `${0.2 * (index + 1)}s`;
                         container.appendChild(img);
                     });
-                    // Update button texts with config
-                    document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
-                    document.getElementById('spinPoints').innerText = config.spinReward;
-                    document.getElementById('scratchPoints').innerText = config.scratchReward;
                 }
             } catch (e) { console.error(e); }
         }
@@ -529,7 +577,10 @@
         function updatePointsDisplay() {
             document.getElementById('adPoints').innerText = config.pointsPerAd;
             document.getElementById('adPointsTask').innerText = config.pointsPerAd;
+            document.getElementById('dailyPoints').innerText = config.dailyRewardPoints;
             document.getElementById('dailyPointsTask').innerText = config.dailyRewardPoints;
+            document.getElementById('spinPoints').innerText = config.spinReward;
+            document.getElementById('scratchPoints').innerText = config.scratchReward;
             document.getElementById('amount').placeholder = `ন্যূনতম ${config.minWithdraw} ৳`;
         }
 
@@ -562,60 +613,81 @@
 
                 loadConfig();
                 document.getElementById('watchAd').disabled = false;
-                document.getElementById('dailyClaim').disabled = false;
-                document.getElementById('spinBtn').disabled = false;
-                document.getElementById('scratchBtn').disabled = false;
             });
         });
 
-        // Close Modal Function
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
+        // Load Payment Methods
+        async function loadPaymentMethods() {
+            const container = document.getElementById('paymentMethodsList');
+            container.innerHTML = '';
+            try {
+                const snap = await db.collection('paymentMethods').get();
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'payment-method';
+                    div.innerHTML = `
+                        <img class="payment-logo" src="${d.logoUrl}" alt="${d.name}">
+                        <div class="payment-info">
+                            <h4>${d.name}</h4>
+                            <p>লিমিট: ${d.min} - ${d.max} BDT</p>
+                        </div>
+                        <button class="payment-btn" onclick="openWithdraw('${doc.id}')">উইথড্র</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { console.error(e); }
         }
 
-        // Watch Ad (in Task)
-        document.getElementById('watchAd').onclick = async () => {
-            if (typeof window.showGiga === 'undefined') return alert('GigaPub লোড হয়নি');
-            const btn = document.getElementById('watchAd'); btn.disabled = true;
-            try {
-                const snap = await userDocRef.get();
-                const last = snap.data().lastAdWatched;
-                if (last && (Date.now() - last.toDate().getTime()) < 90000) {
-                    alert('৯০ সেকেন্ড অপেক্ষা করুন'); btn.disabled = false; return;
-                }
-                await window.showGiga();
-                await userDocRef.update({
-                    balance: firebase.firestore.FieldValue.increment(config.pointsPerAd),
-                    lastAdWatched: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert(`অভিনন্দন! ${config.pointsPerAd} ৳ পেয়েছেন`);
-            } catch (e) { alert('এ্যাড দেখতে সমস্যা: ' + e.message); }
-            btn.disabled = false;
-        };
+        // Open Withdraw for Method
+        function openWithdraw(methodId) {
+            const modal = document.getElementById('withdrawModal');
+            modal.style.display = 'flex';
+            // Store methodId if needed
+        }
 
-        // Daily Claim (in Home)
-        document.getElementById('dailyClaim').onclick = async () => {
-            const btn = document.getElementById('dailyClaim'); btn.disabled = true;
+        // Load Tasks
+        async function loadTasks() {
+            const container = document.getElementById('taskList');
+            container.innerHTML = '';
             try {
-                const snap = await userDocRef.get();
-                const last = snap.data().lastDailyClaim;
-                if (last && (Date.now() - last.toDate().getTime()) < config.dailyRewardCooldown) {
-                    const remaining = Math.ceil((config.dailyRewardCooldown - (Date.now() - last.toDate().getTime())) / 1000);
-                    alert(`আবার ক্লেইম করতে ${Math.floor(remaining/3600)} ঘণ্টা অপেক্ষা করুন`);
-                    btn.disabled = false; return;
-                }
-                await window.showGiga();
-                await userDocRef.update({
-                    balance: firebase.firestore.FieldValue.increment(config.dailyRewardPoints),
-                    lastDailyClaim: firebase.firestore.FieldValue.serverTimestamp()
+                const snap = await db.collection('tasks').get();
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'task-item';
+                    div.innerHTML = `
+                        <h3>${d.name}</h3>
+                        <p>${d.description}</p>
+                        <p>পয়েন্ট: ${d.points} ৳</p>
+                        <p>লিমিট: ${d.limit} /দিন</p>
+                        <button class="task-btn" onclick="completeTask('${doc.id}', '${d.adNetwork}')">কমপ্লিট</button>
+                    `;
+                    container.appendChild(div);
                 });
-                alert(`ডেইলি রিওয়ার্ড! ${config.dailyRewardPoints} ৳ পেয়েছেন`);
-            } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
-            btn.disabled = false;
-        };
+            } catch (e) { console.error(e); }
+        }
 
-        // Spin Button
-        document.getElementById('spinBtn').onclick = async () => {
+        // Complete Task
+        async function completeTask(taskId, adNetwork) {
+            try {
+                if (adNetwork === 'gigapub') {
+                    await window.showGiga();
+                } else if (adNetwork === 'montage') {
+                    // Montage Ads call, assuming SDK has showAd function
+                    montage.showAd(config.montageAppId, config.montageAdId);
+                }
+                const taskSnap = await db.collection('tasks').doc(taskId).get();
+                const points = taskSnap.data().points;
+                await userDocRef.update({
+                    balance: firebase.firestore.FieldValue.increment(points)
+                });
+                alert(`টাস্ক কমপ্লিট! ${points} ৳ পেয়েছেন`);
+            } catch (e) { alert('টাস্ক ফেল: ' + e.message); }
+        }
+
+        // Load Spin Limit
+        async function loadSpinLimit() {
             const snap = await userDocRef.get();
             const today = new Date().toDateString();
             let spinCount = snap.data().spinCount || 0;
@@ -623,12 +695,8 @@
             if (lastSpin !== today) {
                 spinCount = 0;
             }
-            if (spinCount >= config.dailySpinLimit) {
-                alert('আজকের স্পিন লিমিট শেষ!');
-                return;
-            }
-            document.getElementById('spinModal').style.display = 'flex';
-        };
+            document.getElementById('spinLimit').innerText = `${spinCount}/${config.dailySpinLimit} স্পিন বাকি`;
+        }
 
         // Spin Wheel
         document.getElementById('spinWheelBtn').onclick = async () => {
@@ -644,28 +712,11 @@
                         spinCount: firebase.firestore.FieldValue.increment(1)
                     });
                     alert(`স্পিন রিওয়ার্ড! ${config.spinReward} ৳ পেয়েছেন`);
-                    closeModal('spinModal');
+                    loadSpinLimit();
                     wheel.style.transition = 'none';
                     wheel.style.transform = 'rotate(0deg)';
                 } catch (e) { alert('স্পিন ফেল: ' + e.message); }
             }, 4000);
-        };
-
-        // Scratch Button
-        document.getElementById('scratchBtn').onclick = async () => {
-            const snap = await userDocRef.get();
-            const today = new Date().toDateString();
-            let scratchCount = snap.data().scratchCount || 0;
-            const lastScratch = snap.data().lastScratch ? snap.data().lastScratch.toDate().toDateString() : '';
-            if (lastScratch !== today) {
-                scratchCount = 0;
-            }
-            if (scratchCount >= config.dailyScratchLimit) {
-                alert('আজকের স্ক্র্যাচ লিমিট শেষ!');
-                return;
-            }
-            document.getElementById('scratchModal').style.display = 'flex';
-            initScratchCard();
         };
 
         // Init Scratch Card
@@ -676,7 +727,7 @@
             canvas.height = 200;
             ctx.fillStyle = '#ccc';
             ctx.fillRect(0, 0, 300, 200);
-            document.getElementById('scratchReward').innerText = `${config.scratchReward} ৳`;
+            document.getElementById('scratchReward').innerText = `কনগ্র্যাটস! ${config.scratchReward} ৳`;
             let isDrawing = false;
             canvas.addEventListener('mousedown', () => isDrawing = true);
             canvas.addEventListener('mouseup', () => isDrawing = false);
@@ -715,7 +766,6 @@
                     scratchCount: firebase.firestore.FieldValue.increment(1)
                 });
                 alert(`স্ক্র্যাচ রিওয়ার্ড! ${config.scratchReward} ৳ পেয়েছেন`);
-                closeModal('scratchModal');
             } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
         };
 
