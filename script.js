@@ -49,9 +49,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (doc.exists) {
             const fetchedData = doc.data();
             userData = { ...userData, ...fetchedData, taskProgress: { ...userData.taskProgress, ...fetchedData.taskProgress } };
+            
+            // যদি ব্যবহারকারী পুরোনো হয় এবং তার authUid না থাকে, তাহলে যোগ করে দাও
+            if (!fetchedData.authUid) {
+                userData.authUid = firebaseUser.uid;
+                await saveUserData(); // ডাটাবেস আপডেট করো
+            }
         } else {
             if (tg.initDataUnsafe?.user) userData.telegramId = tg.initDataUnsafe.user.id;
-            // এই গুরুত্বপূর্ণ লাইনটি যোগ করা হয়েছে
             userData.authUid = firebaseUser.uid; 
             await saveUserData();
         }
@@ -84,9 +89,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('profile-username').textContent = username;
         if (user) document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${user.id}`;
     };
-
-    // --- Event Listeners and other functions would go here as before ---
-    // (Rest of the file is the same as the debugging version)
 
     // --- Main Execution Logic ---
     async function main() {
