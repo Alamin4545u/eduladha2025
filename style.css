@@ -88,3 +88,71 @@ header h1 {
     font-size: 14px;
     min-height: 20px;
 }
+/* আগের কোডের নিচে এই কোড যোগ করুন */
+
+.btn-tertiary {
+    background-color: #555;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#history-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+#history-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.history-item {
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-item-info p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.history-item-info .points {
+    font-weight: bold;
+    font-size: 18px;
+    color: #000;
+}
+
+.history-item-info .date {
+    font-size: 12px;
+    color: #666;
+}
+
+.history-item .status {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+.status-pending {
+    background-color: #ffc107; /* হলুদ */
+    color: #333;
+}
+
+.status-approved {
+    background-color: #28a745; /* সবুজ */
+}
+
+.status-rejected {
+    background-color: #dc3545; /* লাল */
+}
