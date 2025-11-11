@@ -1,52 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Telegram Mini App</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>এ্যাড দেখে টাকা ইনকাম করুন</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://giga.pub/sdk.js"></script>
+    <style>
+        body { font-family: 'Kalpurush', Arial; background: #0e0e0e; color: white; padding: 20px; text-align: center; }
+        button { background: #25d366; color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 12px; font-size: 18px; }
+        .balance { font-size: 28px; font-weight: bold; color: #00ff00; }
+        .loading { color: #ff9800; }
+    </style>
 </head>
 <body>
+    <h1>এ্যাড দেখে টাকা ইনকাম করুন</h1>
+    <p>ব্যালেন্স: <span id="balance" class="balance">লোড হচ্ছে...</span></p>
+    <button id="watchAd" disabled>এ্যাড দেখুন (১০ পয়েন্ট)</button>
+    <button id="withdraw">উইথড্র করুন</button>
 
-    <!-- মূল অ্যাপ কন্টেইনার -->
-    <div id="main-container" class="container">
-        <header>
-            <h1>My Awesome App</h1>
-        </header>
-        <main>
-            <div class="card">
-                <h2>Your Balance</h2>
-                <p><span id="points">0</span> Points</p>
-            </div>
-            <div class="user-info">
-                <p id="user-id">Loading user...</p>
-            </div>
-            <div class="actions">
-                <button id="show-ad-btn" class="btn" disabled>Show Ad & Earn Point</button>
-                <button id="withdraw-btn" class="btn btn-secondary" disabled>Request Withdrawal</button>
-                <button id="history-btn" class="btn btn-tertiary" disabled>Withdrawal History</button>
-            </div>
-            <p id="message"></p>
-        </main>
+    <div id="withdrawForm" style="display:none;margin:20px;">
+        <input id="amount" type="number" placeholder="ন্যূনতম ৫০০ পয়েন্ট" min="500">
+        <input id="paymentDetails" type="text" placeholder="bKash/Nagad/Rocket নম্বর">
+        <button id="submitWithdraw">উইথড্র রিকোয়েস্ট করুন</button>
     </div>
 
-    <!-- হিস্ট্রি কন্টেইনার (শুরুতে লুকানো থাকবে) -->
-    <div id="history-container" class="container hidden">
-        <header>
-            <h1>Withdrawal History</h1>
-        </header>
-        <main id="history-list"></main>
-        <footer>
-            <button id="close-history-btn" class="btn">Close</button>
-        </footer>
-    </div>
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
+  authDomain: "mini-bot-735bf.firebaseapp.com",
+  projectId: "mini-bot-735bf",
+  storageBucket: "mini-bot-735bf.firebasestorage.app",
+  messagingSenderId: "1056580233393",
+  appId: "1:1056580233393:web:058609b1ca944020755a90",
+  measurementId: "G-L50J7R33WZ"
+};
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-    <!-- সকল প্রয়োজনীয় স্ক্রিপ্ট -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="script.js"></script>
+        Telegram.WebApp.ready();
+        const tgUser = Telegram.WebApp.initDataUnsafe.user;
+        if (!tgUser) {
+            document.body.innerHTML = "<h1>শুধু টেলিগ্রাম থেকে খুলুন!</h1>";
+            throw new Error("Not in Telegram");
+        }
 
+        const telegramId = tgUser.id.toString();
+
+        let userDocRef;
+
+        // Login with Telegram ID (Super Secure)
+        auth.signInAnonymously().then(() => {
+            return auth.currentUser.updateProfile({ displayName: telegramId });
+        }).catch(console.error);
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) return;
+            userDocRef = db.collection('users').doc(telegramId);
+
+            const doc = await userDocRef.get();
+            if (!doc.exists) {
+                await userDocRef.set({
+                    balance: 0,
+                    telegramId: telegramId,
+                    username: tgUser.username || tgUser.first_name,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastAdWatched: null
+                });
+            }
+            loadBalance();
+            document.getElementById('watchAd').disabled = false;
+        });
+
+        // Load Balance
+        async function loadBalance() {
+            const snap = await userDocRef.get();
+            const bal = snap.data().balance || 0;
+            document.getElementById('balance').innerText = bal + " পয়েন্ট";
+        }
+
+        // Watch Ad (Anti-Cheat + Rate Limit)
+        document.getElementById('watchAd').onclick = async () => {
+            const snap = await userDocRef.get();
+            const last = snap.data().lastAdWatched;
+            if (last && (Date.now() - last.toDate()) < 90*1000) {
+                alert("৯০ সেকেন্ড অপেক্ষা করুন!");
+                return;
+            }
+
+            document.getElementById('watchAd').disabled = true;
+            document.getElementById('watchAd').textContent = "এ্যাড লোড হচ্ছে...";
+
+            GigaPub.showRewardedVideo(async (success) => {
+                if (success) {
+                    await userDocRef.update({
+                        balance: firebase.firestore.FieldValue.increment(10),
+                        lastAdWatched: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    loadBalance();
+                    alert("অভিনন্দন! ১০ পয়েন্ট পেয়েছেন");
+                } else {
+                    alert("এ্যাড পুরোটা দেখতে হবে!");
+                }
+                document.getElementById('watchAd').disabled = false;
+                document.getElementById('watchAd').textContent = "এ্যাড দেখুন (১০ পয়েন্ট)";
+            });
+        };
+
+        // Withdraw
+        document.getElementById('withdraw').onclick = () => {
+            document.getElementById('withdrawForm').style.display = 'block';
+        };
+
+        document.getElementById('submitWithdraw').onclick = async () => {
+            const amount = parseInt(document.getElementById('amount').value);
+            const details = document.getElementById('paymentDetails').value.trim();
+
+            if (!amount || amount < 500) return alert("ন্যূনতম ৫০০ পয়েন্ট");
+            if (!details || details.length < 11) return alert("সঠিক নম্বর দিন");
+
+            const snap = await userDocRef.get();
+            if (snap.data().balance < amount) return alert("পয়েন্ট যথেষ্ট নেই");
+
+            // This will be blocked by security rules if not enough balance
+            await db.collection('withdrawals').add({
+                userId: telegramId,
+                amount: amount,
+                details: details,
+                status: 'pending',
+                requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert("উইথড্র রিকোয়েস্ট সফল হয়েছে! ২৪-৪৮ ঘণ্টার মধ্যে পেমেন্ট পাবেন");
+            document.getElementById('withdrawForm').style.display = 'none';
+        };
+    </script>
 </body>
 </html>
