@@ -4,74 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Telegram Mini App</title>
-    <!-- আপনার সিএসএস ফাইল লিঙ্ক করা হয়েছে -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- =================================== -->
-    <!--      মূল অ্যাপের কন্টেইনার          -->
-    <!-- =================================== -->
+    <!-- মূল অ্যাপ কন্টেইনার (শুরুতে এটি দেখা যাবে) -->
     <div id="main-container" class="container">
         <header>
             <h1>My Awesome App</h1>
         </header>
         
         <main>
-            <!-- পয়েন্ট দেখানোর কার্ড -->
             <div class="card">
                 <h2>Your Balance</h2>
                 <p><span id="points">0</span> Points</p>
             </div>
 
-            <!-- ব্যবহারকারীর আইডি দেখানোর জন্য -->
             <div class="user-info">
                 <p id="user-id">Loading user...</p>
             </div>
 
-            <!-- সমস্ত বাটন এখানে রাখা হয়েছে -->
             <div class="actions">
                 <button id="show-ad-btn" class="btn">Show Ad & Earn Point</button>
                 <button id="withdraw-btn" class="btn btn-secondary">Request Withdrawal</button>
                 <button id="history-btn" class="btn btn-tertiary">Withdrawal History</button>
             </div>
             
-            <!-- মেসেজ দেখানোর জন্য -->
             <p id="message"></p>
         </main>
     </div>
 
-    <!-- =================================== -->
-    <!--  উইথড্রয়াল হিস্ট্রি দেখানোর সেকশন   -->
-    <!-- (শুরুতে এটি লুকানো থাকবে) -->
-    <!-- =================================== -->
+    <!-- হিস্ট্রি কন্টেইনার (শুরুতে এটি লুকানো থাকবে) -->
     <div id="history-container" class="container hidden">
         <header>
             <h1>Withdrawal History</h1>
         </header>
         <main id="history-list">
-            <!-- হিস্ট্রির আইটেমগুলো এখানে জাভাস্ক্রিপ্ট দিয়ে যোগ করা হবে -->
+            <!-- হিস্ট্রি এখানে লোড হবে -->
         </main>
         <footer>
             <button id="close-history-btn" class="btn">Close</button>
         </footer>
     </div>
 
-
-    <!-- =================================== -->
-    <!--      প্রয়োজনীয় স্ক্রিপ্ট ট্যাগসমূহ        -->
-    <!-- =================================== -->
-    <!-- টেলিগ্রাম ওয়েব অ্যাপের জন্য -->
+    <!-- সকল স্ক্রিপ্ট -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- আপনার দেওয়া Gigapub অ্যাডের জন্য -->
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
-
-    <!-- Firebase SDK-এর জন্য -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <!-- আপনার নিজের কাস্টম জাভাস্ক্রিপ্ট ফাইল -->
     <script src="script.js"></script>
 
 </body>
