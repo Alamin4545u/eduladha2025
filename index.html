@@ -8,40 +8,34 @@
 </head>
 <body>
 
-    <!-- মূল অ্যাপ কন্টেইনার (শুরুতে এটি দেখা যাবে) -->
+    <!-- মূল অ্যাপ কন্টেইনার -->
     <div id="main-container" class="container">
         <header>
             <h1>My Awesome App</h1>
         </header>
-        
         <main>
             <div class="card">
                 <h2>Your Balance</h2>
                 <p><span id="points">0</span> Points</p>
             </div>
-
             <div class="user-info">
                 <p id="user-id">Loading user...</p>
             </div>
-
             <div class="actions">
-                <button id="show-ad-btn" class="btn">Show Ad & Earn Point</button>
-                <button id="withdraw-btn" class="btn btn-secondary">Request Withdrawal</button>
-                <button id="history-btn" class="btn btn-tertiary">Withdrawal History</button>
+                <button id="show-ad-btn" class="btn" disabled>Show Ad & Earn Point</button>
+                <button id="withdraw-btn" class="btn btn-secondary" disabled>Request Withdrawal</button>
+                <button id="history-btn" class="btn btn-tertiary" disabled>Withdrawal History</button>
             </div>
-            
             <p id="message"></p>
         </main>
     </div>
 
-    <!-- হিস্ট্রি কন্টেইনার (শুরুতে এটি লুকানো থাকবে) -->
+    <!-- হিস্ট্রি কন্টেইনার -->
     <div id="history-container" class="container hidden">
         <header>
             <h1>Withdrawal History</h1>
         </header>
-        <main id="history-list">
-            <!-- হিস্ট্রি এখানে লোড হবে -->
-        </main>
+        <main id="history-list"></main>
         <footer>
             <button id="close-history-btn" class="btn">Close</button>
         </footer>
