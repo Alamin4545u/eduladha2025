@@ -132,7 +132,11 @@
             text-align: center;
         }
         .reward-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 15px rgba(76,175,80,0.6); }
-        .reward-btn:disabled { background: #444; cursor: not-allowed; }
+        .reward-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
 
         /* ==================== 3D SPIN SCREEN ==================== */
         .spin-screen {
@@ -178,8 +182,8 @@
                 0 0 60px rgba(255,215,0,0.3);
             transform-style: preserve-3d;
             transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-            border: 10px solid;
-            border-image: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700) 1;
+            border: none; /* Border removed */
+            filter: drop-shadow(0 0 20px var(--gold)); /* 3D Glow added */
         }
         .wheel::before {
             content: '';
@@ -486,6 +490,7 @@
             padding: 8px;
             border-radius: 12px;
             width: 60px;
+            cursor: pointer;
         }
         .nav-item.active, .nav-item:hover {
             color: var(--primary);
@@ -531,9 +536,9 @@
         </div>
         <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
         <div class="reward-buttons">
-            <button class="reward-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
-            <button class="reward-btn" id="spinBtn"><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
-            <button class="reward-btn" id="scratchBtn"><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
+            <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
+            <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
+            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
         </div>
     </div>
 
@@ -558,6 +563,16 @@
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
         <div class="task-list" id="taskList">
             <!-- Dynamic tasks -->
+        </div>
+    </div>
+
+    <div id="refer" class="screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">বন্ধুদের রেফার করুন</h2>
+        <div style="padding: 20px; text-align: center; max-width: 400px; margin: auto;">
+            <i class="fas fa-users" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
+            <p style="color: #ccc; margin-bottom: 20px;">আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন। আপনার বন্ধু আপনার লিঙ্কে ক্লিক করে অ্যাপে আসলেই আপনি পুরস্কার পাবেন!</p>
+            <input type="text" id="referralLink" readonly style="margin-top: 20px; text-align: center; background-color: rgba(255,255,255,0.05); cursor: pointer;">
+            <button id="copyReferralLink" class="action-btn" style="background:linear-gradient(45deg,#2196f3,#673ab7);"><i class="fas fa-copy"></i> লিঙ্ক কপি করুন</button>
         </div>
     </div>
 
@@ -615,6 +630,7 @@
         <div class="nav-item" data-screen="wallet"><i class="fas fa-wallet"></i> ওয়ালেট</div>
         <div class="nav-item" data-screen="history"><i class="fas fa-history"></i> হিস্ট্রি</div>
         <div class="nav-item" data-screen="task"><i class="fas fa-tasks"></i> টাস্ক</div>
+        <div class="nav-item" data-screen="refer"><i class="fas fa-user-friends"></i> রেফার</div>
         <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i> প্রোফাইল</div>
     </div>
 
@@ -649,7 +665,16 @@
         // DOM Elements
         const screens = document.querySelectorAll('.screen');
         const navItems = document.querySelectorAll('.nav-item');
-        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: '', dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50 };
+        let userDocRef;
+        let config = { 
+            pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, 
+            liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: '', 
+            dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50,
+            vpnEnabled: true, referReward: 1, botUrl: 'https://t.me/YourBot/YourApp'
+        };
+        
+        let isTaskCountry = false;
+        const ALLOWED_COUNTRIES = ['US', 'UK', 'CA'];
 
         // Set Home Header
         document.getElementById('avatar').innerText = initials;
@@ -674,6 +699,7 @@
                 if (screenId === 'wallet') loadPaymentMethods();
                 if (screenId === 'spin') loadSpinLimit();
                 if (screenId === 'scratch') { loadScratchLimit(); initScratchCard(); }
+                if (screenId === 'refer') setupReferralUI();
             });
         });
 
@@ -702,7 +728,115 @@
                         container.appendChild(img);
                     });
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Config load error: ", e); }
+        }
+
+        // VPN & Country Check
+        async function performIpCheck() {
+            if (!config.vpnEnabled) {
+                console.log("VPN check disabled by admin.");
+                isTaskCountry = true;
+                return;
+            }
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (!response.ok) throw new Error(`IP API request failed with status ${response.status}`);
+                const data = await response.json();
+
+                if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
+                    document.body.innerHTML = `
+                        <div style='color:red; text-align:center; margin-top:50px; padding: 20px; height: 100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;'>
+                            <i class="fas fa-shield-alt" style="font-size: 60px; margin-bottom: 20px;"></i>
+                            <h1>VPN/Proxy ডিটেক্টেড</h1>
+                            <p>অ্যাপ ব্যবহার করতে আপনার VPN/Proxy বন্ধ করুন।</p>
+                        </div>`;
+                    throw new Error("VPN detected");
+                }
+                
+                if (ALLOWED_COUNTRIES.includes(data.country_code)) {
+                    isTaskCountry = true;
+                } else {
+                    isTaskCountry = false;
+                }
+
+            } catch (error) {
+                console.error("IP Check Error:", error);
+                isTaskCountry = false; // Disable tasks on error for security
+                if (error.message !== "VPN detected") {
+                     alert("আপনার লোকেশন যাচাই করা যায়নি। কিছু ফিচার বন্ধ থাকতে পারে।");
+                }
+            } finally {
+                updateTaskButtonsState();
+            }
+        }
+
+        function updateTaskButtonsState() {
+            const buttons = [
+                document.getElementById('dailyClaim'),
+                document.getElementById('spinBtn'),
+                document.getElementById('scratchBtn')
+            ];
+            if (isTaskCountry) {
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.title = "";
+                });
+            } else {
+                buttons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.title = "এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।";
+                });
+            }
+        }
+
+        // Handle Referral for new users
+        async function handleReferral(newUserDocRef) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const startParam = urlParams.get('start');
+            if (!startParam || !startParam.startsWith('REF_')) return;
+
+            const referrerId = startParam.split('REF_')[1];
+            if (!referrerId || referrerId === telegramId) return;
+
+            const usersRef = db.collection('users');
+            const query = usersRef.where('telegramId', '==', referrerId).limit(1);
+            const snapshot = await query.get();
+
+            if (!snapshot.empty) {
+                const referrerDoc = snapshot.docs[0];
+                await referrerDoc.ref.update({
+                    balance: firebase.firestore.FieldValue.increment(config.referReward)
+                });
+                await newUserDocRef.update({ referredBy: referrerId });
+                console.log(`User ${telegramId} referred by ${referrerId}. Reward of ${config.referReward} given.`);
+            } else {
+                console.log(`Referrer with ID ${referrerId} not found.`);
+            }
+        }
+
+        function setupReferralUI() {
+            const referralLink = `${config.botUrl}?start=REF_${telegramId}`;
+            const linkInput = document.getElementById('referralLink');
+            if(linkInput) linkInput.value = referralLink;
+            
+            const rewardAmount = document.getElementById('referRewardAmount');
+            if(rewardAmount) rewardAmount.innerText = config.referReward;
+
+            const copyButton = document.getElementById('copyReferralLink');
+            if (copyButton) {
+                copyButton.onclick = () => {
+                    linkInput.select();
+                    linkInput.setSelectionRange(0, 99999); // For mobile devices
+                    navigator.clipboard.writeText(linkInput.value).then(() => {
+                        alert('রেফারেল লিঙ্ক কপি করা হয়েছে!');
+                    }, () => {
+                        alert('কপি করতে ব্যর্থ!');
+                    });
+                };
+            }
+            if(linkInput){
+                 linkInput.onclick = () => copyButton.click();
+            }
         }
 
         function updatePointsDisplay() {
@@ -714,33 +848,36 @@
         }
 
         // Auth & Realtime Balance
-        auth.signInAnonymously().then(() => {
-            auth.onAuthStateChanged(async user => {
-                if (!user) return;
-                userDocRef = db.collection('users').doc(user.uid);
+        auth.signInAnonymously().catch(err => console.error("Anonymous sign-in failed:", err))
+            .then(() => {
+                auth.onAuthStateChanged(async user => {
+                    if (!user) return;
+                    userDocRef = db.collection('users').doc(user.uid);
 
-                const doc = await userDocRef.get();
-                if (!doc.exists) {
-                    await userDocRef.set({
-                        balance: 0, telegramId, username: fullName,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastAdWatched: null,
-                        lastDailyClaim: null,
-                        lastSpin: null,
-                        spinCount: 0,
-                        lastScratch: null,
-                        scratchCount: 0
-                    });
-                }
+                    await loadConfig();
+                    await performIpCheck();
 
-                userDocRef.onSnapshot(snap => {
-                    const balance = snap.data().balance || 0;
-                    document.getElementById('balance').innerText = balance;
+                    const doc = await userDocRef.get();
+                    if (!doc.exists) {
+                        await userDocRef.set({
+                            balance: 0, telegramId, username: fullName,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastDailyClaim: null, lastSpin: null, spinCount: 0,
+                            lastScratch: null, scratchCount: 0, referredBy: null
+                        });
+                        await handleReferral(userDocRef);
+                    }
+
+                    userDocRef.onSnapshot(snap => {
+                        if (snap.exists) {
+                            const balance = snap.data().balance || 0;
+                            document.getElementById('balance').innerText = balance;
+                        }
+                    }, err => console.error("Snapshot listener error:", err));
+                    
+                    setupReferralUI();
                 });
-
-                loadConfig();
             });
-        });
 
         // Load Payment Methods
         async function loadPaymentMethods() {
@@ -786,7 +923,7 @@
                         <p>${d.description}</p>
                         <p>পয়েন্ট: ${d.points} ৳</p>
                         <p>লিমিট: ${d.limit} /দিন</p>
-                        <button class="task-btn" onclick="completeTask('${doc.id}', '${d.adNetwork}')">কমপ্লিট</button>
+                        <button class="task-btn" onclick="completeTask('${doc.id}', '${d.adNetwork}')" ${!isTaskCountry ? 'disabled title="শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।"' : ''}>কমপ্লিট</button>
                     `;
                     container.appendChild(div);
                 });
@@ -794,6 +931,7 @@
         }
 
         async function completeTask(taskId, adNetwork) {
+            if (!isTaskCountry) return alert('এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।');
             try {
                 if (adNetwork === 'gigapub') await window.showGiga();
                 else if (adNetwork === 'montage') montage.showAd(config.montageAppId, config.montageAdId);
@@ -804,7 +942,7 @@
             } catch (e) { alert('টাস্ক ফেল: ' + e.message); }
         }
 
-        // Spin Limit
+        // Spin Logic
         async function loadSpinLimit() {
             const snap = await userDocRef.get();
             const today = new Date().toDateString();
@@ -818,8 +956,8 @@
             return config.dailySpinLimit - spinCount;
         }
 
-        // Spin Wheel
         document.getElementById('spinWheelBtn').onclick = async () => {
+            if (!isTaskCountry) return alert('এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।');
             const remaining = await loadSpinLimit();
             if (remaining <= 0) return alert('আজকের স্পিন লিমিট শেষ!');
             const wheel = document.getElementById('wheel');
@@ -842,7 +980,7 @@
             }, 4000);
         };
 
-        // Scratch Card
+        // Scratch Card Logic
         let scratched = false;
         function initScratchCard() {
             const canvas = document.getElementById('scratchCanvas');
@@ -887,7 +1025,6 @@
             }
         }
 
-        // Scratch Limit
         async function loadScratchLimit() {
             const snap = await userDocRef.get();
             const today = new Date().toDateString();
@@ -902,6 +1039,7 @@
         }
 
         document.getElementById('claimScratch').onclick = async () => {
+            if (!isTaskCountry) return alert('এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।');
             if (!scratched) return alert('প্রথমে স্ক্র্যাচ করুন!');
             const remaining = await loadScratchLimit();
             if (remaining <= 0) return alert('আজকের স্ক্র্যাচ লিমিট শেষ!');
@@ -920,12 +1058,16 @@
 
         // Daily Claim
         async function claimDaily() {
+            if (!isTaskCountry) return alert('এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।');
             try {
                 const now = Date.now();
                 const snap = await userDocRef.get();
                 const last = snap.data().lastDailyClaim ? snap.data().lastDailyClaim.toMillis() : 0;
                 if (now - last < config.dailyRewardCooldown) {
-                    alert('24 ঘণ্টা পর আবার ক্লেইম করুন');
+                    const remaining = config.dailyRewardCooldown - (now - last);
+                    const hours = Math.floor(remaining / 3600000);
+                    const minutes = Math.floor((remaining % 3600000) / 60000);
+                    alert(`${hours} ঘন্টা ${minutes} মিনিট পর আবার ক্লেইম করুন`);
                     return;
                 }
                 await userDocRef.update({
@@ -941,16 +1083,16 @@
         document.getElementById('submitWithdraw').onclick = async () => {
             const amount = parseInt(document.getElementById('amount').value);
             const details = document.getElementById('paymentDetails').value.trim();
-            if (amount < config.minWithdraw || !details) return alert('সঠিক তথ্য দিন');
+            if (isNaN(amount) || amount < config.minWithdraw || !details) return alert('সঠিক তথ্য দিন');
             try {
                 const snap = await userDocRef.get();
-                if (snap.data().balance < amount) return alert('ব্যালেন্স কম');
+                if (snap.data().balance < amount) return alert('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই');
                 await db.collection('withdrawals').add({
-                    userUid: auth.currentUser.uid, telegramId, amount, details,
+                    userUid: auth.currentUser.uid, telegramId, username: fullName, amount, details,
                     status: 'pending', requestedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(-amount) });
-                alert('উইথড্র রিকোয়েস্ট সফল!');
+                alert('উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!');
                 document.getElementById('withdrawModal').style.display = 'none';
                 document.getElementById('amount').value = '';
                 document.getElementById('paymentDetails').value = '';
@@ -983,20 +1125,24 @@
                     container.appendChild(div);
                 });
             } catch (e) {
-                container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড ফেল</p>';
+                container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড করতে সমস্যা হচ্ছে</p>';
             }
         }
 
         // Event Listeners
         document.getElementById('dailyClaim').addEventListener('click', claimDaily);
         document.getElementById('spinBtn').addEventListener('click', () => {
+            if (document.getElementById('spinBtn').disabled) return;
             screens.forEach(s => s.classList.remove('active'));
             document.getElementById('spin').classList.add('active');
+            navItems.forEach(n => n.classList.remove('active'));
             loadSpinLimit();
         });
         document.getElementById('scratchBtn').addEventListener('click', () => {
+            if (document.getElementById('scratchBtn').disabled) return;
             screens.forEach(s => s.classList.remove('active'));
             document.getElementById('scratch').classList.add('active');
+            navItems.forEach(n => n.classList.remove('active'));
             loadScratchLimit();
             initScratchCard();
         });
