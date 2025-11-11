@@ -1,4 +1,4 @@
-// This runs only when the DOM is fully parsed, which is safer.
+// This function runs when the entire HTML page and all scripts are fully loaded.
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
@@ -46,19 +46,16 @@ async function initializeApp() {
         const userId = tg.initDataUnsafe?.user?.id.toString();
         if (!userId) throw new Error("Could not get Telegram User ID.");
         userRef = db.collection('users').doc(userId);
-        const doc = await userRef.get();
-        if (doc.exists) {
-            userData = { ...userData, ...doc.data() };
-            if (!doc.data().authUid) {
-                userData.authUid = firebaseUser.uid;
-                await saveUserData();
-            }
-        } else {
-            userData.authUid = firebaseUser.uid;
-            await saveUserData();
-        }
 
-        // 7. Setup UI and Event Listeners (THIS IS THE CRITICAL PART)
+        // First, create the document with essential info if it doesn't exist
+        // This solves the permission-denied error for new users
+        await userRef.set({ authUid: firebaseUser.uid }, { merge: true });
+
+        // Now, get the full document
+        const doc = await userRef.get();
+        userData = { ...userData, ...doc.data() };
+        
+        // 7. Setup UI and ATTACH ALL EVENT LISTENERS
         setupUIAndListeners();
 
         // 8. Show the App
@@ -77,26 +74,12 @@ async function initializeApp() {
         const allPages = document.querySelectorAll('.page-content');
         const allNavItems = document.querySelectorAll('.nav-item');
         const pageSwitchers = document.querySelectorAll('.page-switcher');
-        const allBalanceElements = document.querySelectorAll('.balance-amount');
         const dailyClaimBtn = document.getElementById('daily-claim-btn');
         const withdrawConfirmBtn = document.getElementById('withdraw-confirm-btn');
         const copyLinkBtn = document.getElementById('copy-link-btn');
 
         // Update UI with initial data
-        const user = tg.initDataUnsafe.user;
-        document.getElementById('user-name').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-        document.getElementById('user-username').textContent = `@${user.username || 'N/A'}`;
-        document.getElementById('profile-name').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-        document.getElementById('profile-username').textContent = `@${user.username || 'N/A'}`;
-        document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${tg.initDataUnsafe?.user?.id.toString()}`;
-        document.getElementById('referral-reward-info').textContent = `$${adminSettings.rewards.rewardPerReferral.toFixed(2)}`;
-        updateBalanceDisplay();
-
-        const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
-        if (lastClaimDate === new Date().toDateString()) {
-            dailyClaimBtn.textContent = 'Claimed';
-            dailyClaimBtn.disabled = true;
-        }
+        updateUI();
 
         // --- Attach ALL event listeners ---
         allNavItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target, allPages, allNavItems); }));
@@ -107,7 +90,34 @@ async function initializeApp() {
         copyLinkBtn.addEventListener('click', handleCopyLink);
     }
     
-    // --- Event Handler Functions ---
+    function updateUI() {
+        // User Info
+        const user = tg.initDataUnsafe.user;
+        const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+        const username = `@${user.username || 'N/A'}`;
+        document.getElementById('user-name').textContent = name;
+        document.getElementById('user-username').textContent = username;
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-username').textContent = username;
+        
+        // Referral Info
+        document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${user.id}`;
+        document.getElementById('referral-reward-info').textContent = `$${adminSettings.rewards.rewardPerReferral.toFixed(2)}`;
+        
+        // Balance
+        updateBalanceDisplay();
+        
+        // Daily Claim Button
+        const dailyClaimBtn = document.getElementById('daily-claim-btn');
+        const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
+        if (lastClaimDate === new Date().toDateString()) {
+            dailyClaimBtn.textContent = 'Claimed';
+            dailyClaimBtn.disabled = true;
+        } else {
+            dailyClaimBtn.textContent = 'Claim';
+            dailyClaimBtn.disabled = false;
+        }
+    }
 
     function switchPage(targetPageId, allPages, allNavItems) {
         if (!document.getElementById(targetPageId)) return;
@@ -124,7 +134,7 @@ async function initializeApp() {
             });
         } else {
             console.log("GigaPub ad function not found, skipping ad.");
-            onAdComplete();
+            onAdComplete(); // Ensure the reward is given even if ad script fails
         }
     }
 
@@ -136,10 +146,8 @@ async function initializeApp() {
             userData.balance += adminSettings.rewards.dailyBonus;
             userData.lastClaim = new Date().toISOString();
             await saveUserData();
-            updateBalanceDisplay();
-            tg.showAlert(`Congratulations! $${adminSettings.rewards.dailyBonus.toFixed(2)} added.`);
-            dailyClaimBtn.textContent = 'Claimed';
-            dailyClaimBtn.disabled = true;
+            updateUI(); // Update everything on screen
+            tg.showAlert(`Congratulations! $${adminSettings.rewards.dailyBonus.toFixed(2)} added to your balance.`);
         });
     }
 
@@ -154,15 +162,14 @@ async function initializeApp() {
 
         userData.balance -= amount;
         await saveUserData();
-        updateBalanceDisplay();
+        updateUI(); // Update everything on screen
         tg.showAlert("Withdrawal request submitted successfully!");
         amountInput.value = '';
         accountInput.value = '';
     }
 
     function handleCopyLink() {
-        const linkInput = document.getElementById('referral-link');
-        navigator.clipboard.writeText(linkInput.value)
+        navigator.clipboard.writeText(document.getElementById('referral-link').value)
             .then(() => {
                 tg.HapticFeedback.notificationOccurred('success');
                 tg.showAlert("Link Copied!");
