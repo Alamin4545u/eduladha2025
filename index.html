@@ -33,9 +33,10 @@
             touch-action: manipulation; /* Helps with mobile touch */
         }
 
-        /* Home Header (Only for Home) */
+        /* Home Header */
         .home-header {
-            text-align: left;
+            display: flex;
+            align-items: center;
             padding: 15px 20px;
             background: var(--glass);
             backdrop-filter: blur(12px);
@@ -43,14 +44,43 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            font-size: 16px;
-            color: var(--gold);
-            font-weight: 500;
         }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #9c27b0; /* Purple like in image */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .user-username {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .user-balance {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            text-align: right;
+        }
+        .balance-label { font-size: 12px; color: #aaa; }
 
         /* Banners */
         .banner-container {
-            margin: 40px 20px 20px 20px; /* Increased top margin for username space */
+            margin: 20px;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -61,40 +91,26 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.4);
             transition: all 0.4s;
             opacity: 0;
-            transform: translateX(-50px); /* Slide in from left */
+            transform: translateX(-50px);
             animation: bannerSlideIn 0.8s ease-out forwards;
         }
         .banner:nth-child(1) { animation-delay: 0.2s; }
         .banner:nth-child(2) { animation-delay: 0.6s; }
-        @keyframes bannerSlideIn {
-            to { opacity: 1; transform: translateX(0); }
-        }
+        @keyframes bannerSlideIn { to { opacity: 1; transform: translateX(0); } }
         .banner:hover { transform: scale(1.02) rotateY(5deg); }
 
-        /* Balance Card (Smaller) */
-        .balance-card {
-            margin: 15px 20px;
+        /* Live Notice */
+        .live-notice {
+            margin: 20px;
             background: var(--card);
-            backdrop-filter: blur(15px);
-            border-radius: 16px;
             padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            color: #ffd700;
+            font-style: italic;
             text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4), inset 0 0 15px rgba(76,175,80,0.1);
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            transform-style: preserve-3d;
-            transition: all 0.4s;
-            max-width: 300px;
+            animation: fadeIn 0.5s;
         }
-        .balance-card:hover { transform: translateY(-5px) rotateX(5deg); }
-        .balance-label { font-size: 14px; color: #aaa; margin-bottom: 6px; }
-        .balance-amount {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-            text-shadow: 0 0 12px rgba(76,175,80,0.7);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0%, 100% { text-shadow: 0 0 12px rgba(76,175,80,0.7); } 50% { text-shadow: 0 0 20px rgba(76,175,80,1); } }
 
         /* Action Buttons */
         .action-btn {
@@ -222,15 +238,21 @@
 
     <!-- Screens -->
     <div id="home" class="screen active">
-        <div class="home-header" id="homeUsername"></div>
-        <div class="banner-container">
-            <img class="banner" src="https://your-uploaded-url/money_earning_apps_banner.jpg" alt="20 Top Money-Earning Apps"> <!-- Replace with actual URL -->
-            <img class="banner" src="https://your-uploaded-url/refer_and_earn_banner.jpg" alt="Refer & Earn"> <!-- Replace with actual URL -->
+        <div class="home-header">
+            <div class="avatar" id="avatar"></div>
+            <div class="user-info">
+                <div class="user-name" id="userName"></div>
+                <div class="user-username" id="userUsername"></div>
+            </div>
+            <div class="user-balance">
+                <div class="balance-label">আপনার ব্যালেন্স</div>
+                ৳ <span id="balance">0</span>
+            </div>
         </div>
-        <div class="balance-card">
-            <div class="balance-label">আপনার ব্যালেন্স</div>
-            <div class="balance-amount">৳ <span id="balance">0</span></div>
+        <div class="banner-container" id="bannerContainer">
+            <!-- Dynamic banners from config -->
         </div>
+        <div class="live-notice" id="liveNotice">লোড হচ্ছে...</div>
         <button class="action-btn" id="dailyClaim"><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
     </div>
 
@@ -315,15 +337,19 @@
 
         const telegramId = tgUser.id.toString();
         const username = tgUser.username || tgUser.first_name || 'ইউজার';
+        const fullName = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+        const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         const photoUrl = tgUser.photo_url || 'https://via.placeholder.com/100';
 
         // DOM Elements
         const screens = document.querySelectorAll('.screen');
         const navItems = document.querySelectorAll('.nav-item');
-        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000 };
+        let userDocRef, config = { pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, liveNotice: '', bannerUrls: [] };
 
-        // Set Home Username (only username, no 'স্বাগতম')
-        document.getElementById('homeUsername').innerText = username;
+        // Set Home Header
+        document.getElementById('avatar').innerText = initials;
+        document.getElementById('userName').innerText = fullName;
+        document.getElementById('userUsername').innerText = `@${username}`;
 
         // Set Profile
         document.getElementById('profileImgBig').src = photoUrl;
@@ -342,12 +368,27 @@
             });
         });
 
-        // Load Config
+        // Load Config (with live notice and banners)
         async function loadConfig() {
             try {
                 const doc = await db.collection('config').doc('settings').get();
-                if (doc.exists) config = { ...config, ...doc.data() };
-                updatePointsDisplay();
+                if (doc.exists) {
+                    config = { ...config, ...doc.data() };
+                    updatePointsDisplay();
+                    // Live Notice
+                    document.getElementById('liveNotice').innerText = config.liveNotice || 'কোনো নোটিস নেই';
+                    // Banners
+                    const container = document.getElementById('bannerContainer');
+                    container.innerHTML = '';
+                    config.bannerUrls.forEach((url, index) => {
+                        const img = document.createElement('img');
+                        img.className = 'banner';
+                        img.src = url;
+                        img.alt = `Banner ${index + 1}`;
+                        img.style.animationDelay = `${0.2 * (index + 1)}s`;
+                        container.appendChild(img);
+                    });
+                }
             } catch (e) { console.error(e); }
         }
 
@@ -368,7 +409,7 @@
                 const doc = await userDocRef.get();
                 if (!doc.exists) {
                     await userDocRef.set({
-                        balance: 0, telegramId, username,
+                        balance: 0, telegramId, username: fullName,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         lastAdWatched: null,
                         lastDailyClaim: null
