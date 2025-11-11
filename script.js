@@ -1,186 +1,135 @@
-// This function runs when the entire HTML page and all scripts are fully loaded.
-document.addEventListener('DOMContentLoaded', initializeApp);
-
-async function initializeApp() {
-    // 1. Safety Check and Telegram App Initialization
-    if (typeof Telegram === 'undefined' || !window.Telegram.WebApp) {
-        document.body.innerHTML = '<h1>Error</h1><p>This application must be opened inside Telegram.</p>';
-        return;
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    // ১. টেলিগ্রাম ওয়েব অ্যাপ ইনিশিয়ালাইজ করুন
     const tg = window.Telegram.WebApp;
     tg.ready();
-    tg.expand();
+    tg.expand(); // অ্যাপটি সম্পূর্ণ স্ক্রিনে দেখানোর জন্য
 
-    // 2. Firebase Configuration
+    // ২. HTML থেকে Element গুলো নিন
+    const pointsDisplay = document.getElementById('points');
+    const userIdDisplay = document.getElementById('user-id');
+    const showAdButton = document.getElementById('show-ad-btn');
+    const withdrawButton = document.getElementById('withdraw-btn');
+    const messageDisplay = document.getElementById('message');
+
+    // ৩. আপনার দেওয়া Firebase কনফিগারেশন
     const firebaseConfig = {
-      apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
-      authDomain: "mini-bot-735bf.firebaseapp.com",
-      projectId: "mini-bot-735bf",
-      storageBucket: "mini-bot-735bf.firebasestorage.app",
-      messagingSenderId: "1056580233393",
-      appId: "1:1056580233393:web:058609b1ca944020755a90",
+        apiKey: "AIzaSyDtp3b0fdEvcjAPvmdupd00qDCbucyFIc0",
+        authDomain: "mini-bot-735bf.firebaseapp.com",
+        projectId: "mini-bot-735bf",
+        storageBucket: "mini-bot-735bf.firebasestorage.app",
+        messagingSenderId: "1056580233393",
+        appId: "1:1056580233393:web:058609b1ca944020755a90",
+        measurementId: "G-L50J7R33WZ"
     };
 
-    // 3. Global Variables and Settings
-    let db, auth, userRef;
-    const adminSettings = {
-        rewards: { dailyBonus: 1.00, rewardPerReferral: 1.50 },
-        botLink: "https://t.me/Bkash_earn_free_TkBot"
-    };
-    let userData = { balance: 0.00, lastClaim: null };
-
-    // 4. Element References
-    const loader = document.getElementById('loader');
-    const appContainer = document.querySelector('.app-container');
-    const bottomNav = document.querySelector('.bottom-nav');
-
-    try {
-        // 5. Initialize Firebase and Authenticate User
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        auth = firebase.auth();
-        const { user: firebaseUser } = await auth.signInAnonymously();
-        if (!firebaseUser) throw new Error("Authentication failed.");
-
-        // 6. Load or Create User Data
-        const userId = tg.initDataUnsafe?.user?.id.toString();
-        if (!userId) throw new Error("Could not get Telegram User ID.");
-        userRef = db.collection('users').doc(userId);
-
-        // First, create the document with essential info if it doesn't exist
-        // This solves the permission-denied error for new users
-        await userRef.set({ authUid: firebaseUser.uid }, { merge: true });
-
-        // Now, get the full document
-        const doc = await userRef.get();
-        userData = { ...userData, ...doc.data() };
-        
-        // 7. Setup UI and ATTACH ALL EVENT LISTENERS
-        setupUIAndListeners();
-
-        // 8. Show the App
-        loader.style.display = 'none';
-        appContainer.style.display = 'flex';
-        bottomNav.style.display = 'flex';
-
-    } catch (error) {
-        console.error("App initialization failed:", error);
-        loader.innerHTML = `<div style="color:red; padding:20px; text-align:center;">Failed to load. Error: ${error.message}</div>`;
-    }
-
-    // --- All functions are defined here for clarity ---
-
-    function setupUIAndListeners() {
-        const allPages = document.querySelectorAll('.page-content');
-        const allNavItems = document.querySelectorAll('.nav-item');
-        const pageSwitchers = document.querySelectorAll('.page-switcher');
-        const dailyClaimBtn = document.getElementById('daily-claim-btn');
-        const withdrawConfirmBtn = document.getElementById('withdraw-confirm-btn');
-        const copyLinkBtn = document.getElementById('copy-link-btn');
-
-        // Update UI with initial data
-        updateUI();
-
-        // --- Attach ALL event listeners ---
-        allNavItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchPage(item.dataset.target, allPages, allNavItems); }));
-        pageSwitchers.forEach(button => button.addEventListener('click', (e) => { e.preventDefault(); switchPage(button.dataset.target, allPages, allNavItems); }));
-
-        dailyClaimBtn.addEventListener('click', handleDailyClaim);
-        withdrawConfirmBtn.addEventListener('click', handleWithdraw);
-        copyLinkBtn.addEventListener('click', handleCopyLink);
-    }
+    // ৪. Firebase অ্যাপ ইনিশিয়ালাইজ করুন
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
     
-    function updateUI() {
-        // User Info
-        const user = tg.initDataUnsafe.user;
-        const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-        const username = `@${user.username || 'N/A'}`;
-        document.getElementById('user-name').textContent = name;
-        document.getElementById('user-username').textContent = username;
-        document.getElementById('profile-name').textContent = name;
-        document.getElementById('profile-username').textContent = username;
-        
-        // Referral Info
-        document.getElementById('referral-link').value = `${adminSettings.botLink}?start=${user.id}`;
-        document.getElementById('referral-reward-info').textContent = `$${adminSettings.rewards.rewardPerReferral.toFixed(2)}`;
-        
-        // Balance
-        updateBalanceDisplay();
-        
-        // Daily Claim Button
-        const dailyClaimBtn = document.getElementById('daily-claim-btn');
-        const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim).toDateString() : null;
-        if (lastClaimDate === new Date().toDateString()) {
-            dailyClaimBtn.textContent = 'Claimed';
-            dailyClaimBtn.disabled = true;
-        } else {
-            dailyClaimBtn.textContent = 'Claim';
-            dailyClaimBtn.disabled = false;
+    let userId = null;
+    let userDocRef = null;
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id;
+        userIdDisplay.innerText = `User ID: ${userId}`;
+        userDocRef = db.collection('users').doc(String(userId));
+        loadUserData();
+    } else {
+        messageDisplay.innerText = "Could not verify user. Please open via Telegram.";
+        showAdButton.disabled = true;
+        withdrawButton.disabled = true;
+        return;
+    }
+
+    // ৫. Firebase থেকে ব্যবহারকারীর ডেটা লোড করার ফাংশন
+    async function loadUserData() {
+        try {
+            const docSnap = await userDocRef.get();
+            if (docSnap.exists()) {
+                pointsDisplay.innerText = docSnap.data().points || 0;
+            } else {
+                // নতুন ব্যবহারকারী হলে ডেটাবেসে এন্ট্রি তৈরি করুন
+                await userDocRef.set({ points: 0, userId: userId, username: tg.initDataUnsafe.user.username || '' });
+                pointsDisplay.innerText = 0;
+            }
+        } catch (error) {
+            console.error("Error loading user data:", error);
+            messageDisplay.innerText = "Error loading your data.";
         }
     }
 
-    function switchPage(targetPageId, allPages, allNavItems) {
-        if (!document.getElementById(targetPageId)) return;
-        allPages.forEach(page => page.classList.remove('active-page'));
-        document.getElementById(targetPageId).classList.add('active-page');
-        allNavItems.forEach(nav => nav.classList.toggle('active', nav.dataset.target === targetPageId));
-    }
+    // ৬. অ্যাড দেখানো এবং পয়েন্ট যোগ করার লজিক
+    showAdButton.addEventListener('click', () => {
+        messageDisplay.innerText = "Loading ad...";
+        showAdButton.disabled = true;
 
-    function showGigaAd(onAdComplete) {
-        if (typeof gigapay_ad_run === 'function') {
-            gigapay_ad_run(onAdComplete, () => {
-                tg.showAlert("Ad failed to load, but you still received the reward!");
-                onAdComplete();
+        window.showGiga()
+            .then(async () => {
+                messageDisplay.innerText = "Congratulations! You earned 1 point.";
+                
+                // Firestore transaction ব্যবহার করে পয়েন্ট আপডেট করুন
+                await userDocRef.update({
+                    points: firebase.firestore.FieldValue.increment(1)
+                });
+                
+                // UI তে নতুন পয়েন্ট দেখান
+                const currentPoints = parseInt(pointsDisplay.innerText);
+                pointsDisplay.innerText = currentPoints + 1;
+            })
+            .catch(e => {
+                console.error("Ad error:", e);
+                messageDisplay.innerText = "Failed to show ad. Please try again.";
+            })
+            .finally(() => {
+                showAdButton.disabled = false; // বাটন আবার সক্রিয় করুন
             });
-        } else {
-            console.log("GigaPub ad function not found, skipping ad.");
-            onAdComplete(); // Ensure the reward is given even if ad script fails
+    });
+
+    // ৭. পয়েন্ট উত্তোলনের অনুরোধ পাঠানোর লজিক
+    withdrawButton.addEventListener('click', async () => {
+        const pointsToWithdraw = prompt("How many points do you want to withdraw?", "50");
+        if (!pointsToWithdraw || isNaN(pointsToWithdraw) || Number(pointsToWithdraw) <= 0) {
+            alert("Please enter a valid number.");
+            return;
         }
-    }
 
-    async function handleDailyClaim() {
-        const dailyClaimBtn = document.getElementById('daily-claim-btn');
-        if (dailyClaimBtn.disabled) return;
-        
-        showGigaAd(async () => {
-            userData.balance += adminSettings.rewards.dailyBonus;
-            userData.lastClaim = new Date().toISOString();
-            await saveUserData();
-            updateUI(); // Update everything on screen
-            tg.showAlert(`Congratulations! $${adminSettings.rewards.dailyBonus.toFixed(2)} added to your balance.`);
-        });
-    }
+        const currentPoints = parseInt(pointsDisplay.innerText);
+        const amount = Number(pointsToWithdraw);
 
-    async function handleWithdraw() {
-        const amountInput = document.getElementById('amount');
-        const accountInput = document.getElementById('account-number');
-        const amount = parseFloat(amountInput.value);
+        if (amount > currentPoints) {
+            alert("You do not have enough points to withdraw.");
+            return;
+        }
 
-        if (isNaN(amount) || amount <= 0) return tg.showAlert("Please enter a valid amount.");
-        if (amount > userData.balance) return tg.showAlert("Insufficient balance.");
-        if (!accountInput.value.trim()) return tg.showAlert("Please enter your account number.");
+        withdrawButton.disabled = true;
+        messageDisplay.innerText = "Submitting request...";
 
-        userData.balance -= amount;
-        await saveUserData();
-        updateUI(); // Update everything on screen
-        tg.showAlert("Withdrawal request submitted successfully!");
-        amountInput.value = '';
-        accountInput.value = '';
-    }
-
-    function handleCopyLink() {
-        navigator.clipboard.writeText(document.getElementById('referral-link').value)
-            .then(() => {
-                tg.HapticFeedback.notificationOccurred('success');
-                tg.showAlert("Link Copied!");
+        try {
+            // Firestore-এ 'withdrawal_requests' নামে একটি নতুন কালেকশনে অনুরোধটি জমা দিন
+            const requestId = `req_${userId}_${Date.now()}`;
+            await db.collection('withdrawal_requests').doc(requestId).set({
+                userId: userId,
+                username: tg.initDataUnsafe.user.username || '',
+                points: amount,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
-    }
-    
-    function updateBalanceDisplay() {
-        document.querySelectorAll('.balance-amount').forEach(el => el.textContent = `$${userData.balance.toFixed(2)}`);
-    }
 
-    async function saveUserData() {
-        if (userRef) await userRef.set(userData, { merge: true });
-    }
-}
+            // ব্যবহারকারীর অ্যাকাউন্ট থেকে পয়েন্ট কেটে নিন
+            await userDocRef.update({
+                points: firebase.firestore.FieldValue.increment(-amount)
+            });
+
+            // UI আপডেট করুন
+            pointsDisplay.innerText = currentPoints - amount;
+            alert("Your withdrawal request has been submitted successfully!");
+            messageDisplay.innerText = "Withdrawal request sent.";
+
+        } catch (error) {
+            console.error("Error submitting withdrawal request:", error);
+            messageDisplay.innerText = "Failed to submit request. Try again.";
+        } finally {
+            withdrawButton.disabled = false;
+        }
+    });
+});
