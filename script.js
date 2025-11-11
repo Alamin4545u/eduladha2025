@@ -1,14 +1,15 @@
-// সম্পূর্ণ কোডটি একটি Main ফাংশনের মধ্যে রাখা হয়েছে যাতে কোনো গ্লোবাল ভ্যারিয়েবল সমস্যা না করে
-function main() {
+document.addEventListener('DOMContentLoaded', function () {
     // ১. টেলিগ্রাম অবজেক্টটি লোড করুন
     const tg = window.Telegram.WebApp;
     if (!tg) {
-        document.body.innerHTML = "Error: Telegram context not found. Please open in Telegram.";
-        console.error("Telegram WebApp is not available.");
+        document.body.innerHTML = "<h1>Error: Please open this app inside Telegram.</h1>";
+        console.error("Telegram context not found.");
         return;
     }
 
-    // ২. HTML থেকে সব Element গুলো একবারে নিয়ে নিন
+    tg.ready();
+
+    // ২. সকল HTML Elements গুলোকে একটি অবজেক্টে রাখুন
     const elements = {
         pointsDisplay: document.getElementById('points'),
         userIdDisplay: document.getElementById('user-id'),
@@ -33,11 +34,11 @@ function main() {
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
+
     let userId = null;
     let userDocRef = null;
 
-    // ৪. অ্যাপ ইনিশিয়ালাইজ করার মূল ফাংশন
+    // ৪. অ্যাপ শুরু করার প্রধান ফাংশন
     function initializeApp() {
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id;
@@ -51,39 +52,28 @@ function main() {
             
             loadUserData();
         } else {
-            elements.userIdDisplay.innerText = "User ID not found. Please relaunch the app.";
-            console.error("User data is not available from Telegram after initialization.");
+            elements.userIdDisplay.innerText = "User ID not found. Please relaunch from Telegram.";
+            console.error("User data is not available from Telegram.");
         }
     }
 
-    // ৫. ফায়ারবেস থেকে ডেটা লোড
+    // ৫. ফায়ারবেস থেকে ডেটা লোড করার ফাংশন
     async function loadUserData() {
         try {
-            const docSnap = await userDocRef.get();
-            if (docSnap.exists) {
-                elements.pointsDisplay.innerText = docSnap.data().points || 0;
+            const doc = await userDocRef.get();
+            if (doc.exists) {
+                elements.pointsDisplay.innerText = doc.data().points || 0;
             } else {
-                await userDocRef.set({ points: 0, userId: userId, username: tg.initDataUnsafe.user.username || 'N/A' });
+                await userDocRef.set({ points: 0, userId, username: tg.initDataUnsafe.user.username || 'N/A' });
                 elements.pointsDisplay.innerText = 0;
             }
-        } catch (error) {
-            console.error("Error loading user data:", error);
-            elements.messageDisplay.innerText = `Error loading data.`;
+        } catch (e) {
+            elements.messageDisplay.innerText = "Error loading data.";
+            console.error("Firebase Error:", e);
         }
     }
 
-    // ৬. সকল ইভেন্ট লিসেনার এখানে যোগ করা হয়েছে
-    function addEventListeners() {
-        elements.showAdButton.addEventListener('click', onShowAdClick);
-        elements.withdrawButton.addEventListener('click', onWithdrawClick);
-        elements.historyButton.addEventListener('click', onHistoryClick);
-        elements.closeHistoryButton.addEventListener('click', () => {
-            elements.historyContainer.classList.add('hidden');
-            elements.mainContainer.classList.remove('hidden');
-        });
-    }
-
-    // ৭. বাটন ক্লিকের ফাংশনগুলো
+    // ৬. বাটন ক্লিকের ফাংশনগুলো
     function onShowAdClick() {
         elements.messageDisplay.innerText = "Loading ad...";
         elements.showAdButton.disabled = true;
@@ -107,18 +97,17 @@ function main() {
         elements.messageDisplay.innerText = "Submitting request...";
         try {
             await db.collection('withdrawal_requests').add({
-                userId: userId,
-                username: tg.initDataUnsafe.user.username || 'N/A',
-                points: currentPoints,
-                status: 'pending',
+                userId, username: tg.initDataUnsafe.user.username || 'N/A',
+                points: currentPoints, status: 'pending',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
             await userDocRef.update({ points: 0 });
             elements.pointsDisplay.innerText = 0;
             alert("Withdrawal request submitted!");
             elements.messageDisplay.innerText = "Request sent.";
-        } catch (error) {
+        } catch (e) {
             elements.messageDisplay.innerText = `Request failed.`;
+            console.error("Withdrawal Error:", e);
         } finally {
             elements.withdrawButton.disabled = false;
         }
@@ -129,69 +118,37 @@ function main() {
         elements.historyContainer.classList.remove('hidden');
         elements.historyList.innerHTML = '<p>Loading history...</p>';
         try {
-            const query = await db.collection('withdrawal_requests')
-                .where('userId', '==', userId)
-                .orderBy('timestamp', 'desc').get();
-            
+            const query = await db.collection('withdrawal_requests').where('userId', '==', userId).orderBy('timestamp', 'desc').get();
+            elements.historyList.innerHTML = '';
             if (query.empty) {
                 elements.historyList.innerHTML = '<p>No history found.</p>';
                 return;
             }
-            elements.historyList.innerHTML = '';
             query.forEach(doc => {
                 const data = doc.data();
                 const date = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A';
-                const status = data.status || 'pending';
                 const item = document.createElement('div');
                 item.className = 'history-item';
-                item.innerHTML = `<div class="history-item-info"><p class="points">${data.points} Points</p><p class="date">${date}</p></div><span class="status status-${status.toLowerCase()}">${status.toUpperCase()}</span>`;
+                item.innerHTML = `<div class="history-item-info"><p class="points">${data.points} Points</p><p class="date">${date}</p></div><span class="status status-${data.status.toLowerCase()}">${data.status.toUpperCase()}</span>`;
                 elements.historyList.appendChild(item);
             });
-        } catch (error) {
+        } catch (e) {
             elements.historyList.innerHTML = `<p>Error fetching history.</p>`;
+            console.error("History Error:", e);
         }
     }
 
-    // ৮. অ্যাপ শুরু করার মূল ধাপ
+    // ৭. সকল Event Listeners যোগ করুন
+    elements.showAdButton.addEventListener('click', onShowAdClick);
+    elements.withdrawButton.addEventListener('click', onWithdrawClick);
+    elements.historyButton.addEventListener('click', onHistoryClick);
+    elements.closeHistoryButton.addEventListener('click', () => {
+        elements.historyContainer.classList.add('hidden');
+        elements.mainContainer.classList.remove('hidden');
+    });
+
+    // ৮. অ্যাপ চালু করুন
     tg.expand();
-    addEventListeners();
-    tg.ready(initializeApp); // টেলিগ্রাম প্রস্তুত হলেই অ্যাপ ইনিশিয়ালাইজ হবে
-}
-
-// ডকুমেন্ট লোড হয়ে গেলে মেইন ফাংশনটি রান হবে
-document.addEventListener('DOMContentLoaded', main);        try {
-            const querySnapshot = await db.collection('withdrawal_requests')
-                .where('userId', '==', userId)
-                .orderBy('timestamp', 'desc')
-                .get();
-            
-            if (querySnapshot.empty) {
-                historyList.innerHTML = '<p>No withdrawal history found.</p>';
-                return;
-            }
-            historyList.innerHTML = '';
-            querySnapshot.forEach(doc => {
-                const data = doc.data();
-                const date = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A';
-                const status = data.status || 'pending';
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.innerHTML = `
-                    <div class="history-item-info">
-                        <p class="points">${data.points} Points</p>
-                        <p class="date">${date}</p>
-                    </div>
-                    <span class="status status-${status.toLowerCase()}">${status.toUpperCase()}</span>`;
-                historyList.appendChild(item);
-            });
-        } catch (error) {
-            console.error("Error fetching history:", error);
-            historyList.innerHTML = `<p>Error fetching history: ${error.message}</p>`;
-        }
-    });
-
-    closeHistoryButton.addEventListener('click', () => {
-        historyContainer.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-    });
+    // টেলিগ্রামের initData লোড হওয়ার জন্য একটি সংক্ষিপ্ত সময় অপেক্ষা করুন। এটি race condition এড়াতে সাহায্য করে।
+    setTimeout(initializeApp, 150); 
 });
