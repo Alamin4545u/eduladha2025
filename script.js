@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ১. টেলিগ্রাম ওয়েব অ্যাপ ইনিশিয়ালাইজ করুন
     const tg = window.Telegram.WebApp;
     tg.ready();
-    tg.expand(); // অ্যাপটি সম্পূর্ণ স্ক্রিনে দেখানোর জন্য
+    tg.expand();
 
     // ২. HTML থেকে Element গুলো নিন
     const pointsDisplay = document.getElementById('points');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userDocRef = db.collection('users').doc(String(userId));
         loadUserData();
     } else {
-        messageDisplay.innerText = "Could not verify user. Please open via Telegram.";
+        messageDisplay.innerText = "Error: Could not verify user. Please open via Telegram.";
         showAdButton.disabled = true;
         withdrawButton.disabled = true;
         return;
@@ -48,13 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (docSnap.exists()) {
                 pointsDisplay.innerText = docSnap.data().points || 0;
             } else {
-                // নতুন ব্যবহারকারী হলে ডেটাবেসে এন্ট্রি তৈরি করুন
                 await userDocRef.set({ points: 0, userId: userId, username: tg.initDataUnsafe.user.username || '' });
                 pointsDisplay.innerText = 0;
             }
         } catch (error) {
             console.error("Error loading user data:", error);
-            messageDisplay.innerText = "Error loading your data.";
+            // এখানে এরর মেসেজটি স্ক্রিনে দেখানো হবে
+            messageDisplay.innerText = `Error loading data: ${error.message}`;
         }
     }
 
@@ -65,39 +65,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.showGiga()
             .then(async () => {
-                messageDisplay.innerText = "Congratulations! You earned 1 point.";
-                
-                // Firestore transaction ব্যবহার করে পয়েন্ট আপডেট করুন
-                await userDocRef.update({
-                    points: firebase.firestore.FieldValue.increment(1)
-                });
-                
-                // UI তে নতুন পয়েন্ট দেখান
-                const currentPoints = parseInt(pointsDisplay.innerText);
-                pointsDisplay.innerText = currentPoints + 1;
+                messageDisplay.innerText = "Ad successful! Adding point...";
+                try {
+                    // Firestore transaction ব্যবহার করে পয়েন্ট আপডেট করুন
+                    await userDocRef.update({
+                        points: firebase.firestore.FieldValue.increment(1)
+                    });
+                    
+                    // UI তে নতুন পয়েন্ট দেখান
+                    const currentPoints = parseInt(pointsDisplay.innerText);
+                    pointsDisplay.innerText = currentPoints + 1;
+                    messageDisplay.innerText = "Congratulations! You earned 1 point.";
+
+                } catch (error) {
+                    console.error("Error updating points:", error);
+                    // পয়েন্ট যোগ করতে ব্যর্থ হলে এরর মেসেজ দেখানো হবে
+                    messageDisplay.innerText = `Error saving point: ${error.message}`;
+                }
             })
             .catch(e => {
                 console.error("Ad error:", e);
-                messageDisplay.innerText = "Failed to show ad. Please try again.";
+                // অ্যাড দেখাতে ব্যর্থ হলে এরর মেসেজ দেখানো হবে
+                messageDisplay.innerText = `Failed to show ad. Please try again.`;
             })
             .finally(() => {
-                showAdButton.disabled = false; // বাটন আবার সক্রিয় করুন
+                showAdButton.disabled = false;
             });
     });
 
     // ৭. পয়েন্ট উত্তোলনের অনুরোধ পাঠানোর লজিক
     withdrawButton.addEventListener('click', async () => {
-        const pointsToWithdraw = prompt("How many points do you want to withdraw?", "50");
-        if (!pointsToWithdraw || isNaN(pointsToWithdraw) || Number(pointsToWithdraw) <= 0) {
-            alert("Please enter a valid number.");
+        const currentPoints = parseInt(pointsDisplay.innerText);
+        if (currentPoints <= 0) {
+            alert("You do not have any points to withdraw.");
             return;
         }
 
-        const currentPoints = parseInt(pointsDisplay.innerText);
-        const amount = Number(pointsToWithdraw);
-
-        if (amount > currentPoints) {
-            alert("You do not have enough points to withdraw.");
+        if (!confirm(`Are you sure you want to request withdrawal for ${currentPoints} points?`)) {
             return;
         }
 
@@ -105,29 +109,26 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDisplay.innerText = "Submitting request...";
 
         try {
-            // Firestore-এ 'withdrawal_requests' নামে একটি নতুন কালেকশনে অনুরোধটি জমা দিন
             const requestId = `req_${userId}_${Date.now()}`;
             await db.collection('withdrawal_requests').doc(requestId).set({
                 userId: userId,
                 username: tg.initDataUnsafe.user.username || '',
-                points: amount,
+                points: currentPoints,
                 status: 'pending',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // ব্যবহারকারীর অ্যাকাউন্ট থেকে পয়েন্ট কেটে নিন
             await userDocRef.update({
-                points: firebase.firestore.FieldValue.increment(-amount)
+                points: 0
             });
 
-            // UI আপডেট করুন
-            pointsDisplay.innerText = currentPoints - amount;
+            pointsDisplay.innerText = 0;
             alert("Your withdrawal request has been submitted successfully!");
             messageDisplay.innerText = "Withdrawal request sent.";
 
         } catch (error) {
             console.error("Error submitting withdrawal request:", error);
-            messageDisplay.innerText = "Failed to submit request. Try again.";
+            messageDisplay.innerText = `Request failed: ${error.message}`;
         } finally {
             withdrawButton.disabled = false;
         }
