@@ -134,33 +134,34 @@ body {
 /* ============================================================= */
 
 /* Spin Screen */
-.spin-screen { display: none; padding: 20px; text-align: center; }
+.spin-screen { display: none; padding: 20px; text-align: center; perspective: 1000px; }
 .spin-screen.active { display: block; }
-.spin-limit { margin-bottom: 20px; color: #aaa; font-weight: 600; }
-.wheel-container { width: 320px; height: 320px; margin: 30px auto; position: relative; }
-.wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#ff3b30 0deg 45deg, #ff9500 45deg 90deg, #ffcc00 90deg 135deg, #4cd964 135deg 180deg, #5ac8fa 180deg 225deg, #007aff 225deg 270deg, #5856d6 270deg 315deg, #af52de 315deg 360deg); position: relative; box-shadow: 0 0 30px rgba(255,255,255,0.4), inset 0 0 40px rgba(0,0,0,0.5); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); border: none; }
-.wheel::before { content: ''; position: absolute; top: -35px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 40px solid var(--gold); z-index: 10; animation: pointerPulse 2s infinite; }
+.spin-limit { margin-bottom: 20px; color: #aaa; font-weight: 600; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+.wheel-container { width: 320px; height: 320px; margin: 30px auto; position: relative; transform-style: preserve-3d; perspective: 1000px; }
+.wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#ff3b30 0deg 45deg, #ff9500 45deg 90deg, #ffcc00 90deg 135deg, #4cd964 135deg 180deg, #5ac8fa 180deg 225deg, #007aff 225deg 270deg, #5856d6 270deg 315deg, #af52de 315deg 360deg); position: relative; box-shadow: 0 0 30px rgba(255,255,255,0.4), inset 0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(255,215,0,0.3); transform-style: preserve-3d; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); border: none; filter: drop-shadow(0 0 20px var(--gold)); }
+.wheel::before { content: ''; position: absolute; top: -35px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 40px solid var(--gold); filter: drop-shadow(0 8px 15px rgba(0,0,0,0.6)); z-index: 10; animation: pointerPulse 2s infinite; }
 @keyframes pointerPulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.15); } }
-.wheel-inner { position: absolute; top: 50%; left: 50%; width: 70px; height: 70px; background: radial-gradient(circle, #fff, #ddd); border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 25px gold; }
-.spin-wheel-btn { margin-top: 35px; background: linear-gradient(45deg, var(--gold), #ff8c00); color: #000; border: none; padding: 16px 36px; border-radius: 50px; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 8px 20px rgba(255,215,0,0.5); transition: all 0.3s; }
-.spin-wheel-btn:hover { transform: scale(1.08); box-shadow: var(--glow); }
+.wheel-inner { position: absolute; top: 50%; left: 50%; width: 70px; height: 70px; background: radial-gradient(circle, #fff, #ddd); border-radius: 50%; transform: translate(-50%, -50%) translateZ(25px); box-shadow: 0 0 25px gold, inset 0 0 15px #ccc; }
+.spin-wheel-btn { margin-top: 35px; background: linear-gradient(45deg, var(--gold), #ff8c00); color: #000; border: none; padding: 16px 36px; border-radius: 50px; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 8px 20px rgba(255,215,0,0.5); transform: translateZ(25px); transition: all 0.3s; }
+.spin-wheel-btn:hover { transform: translateZ(30px) scale(1.08); box-shadow: var(--glow), 0 12px 25px rgba(0,0,0,0.5); }
 
 /* Scratch Card */
-.scratch-screen { display: none; padding: 20px; text-align: center; }
+.scratch-screen { display: none; padding: 20px; text-align: center; perspective: 1000px; }
 .scratch-screen.active { display: block; }
-.scratch-limit { margin-bottom: 20px; color: #aaa; font-weight: 600; }
-.scratch-card { width: 300px; height: 200px; margin: 30px auto; position: relative; cursor: pointer; transition: transform 0.8s ease; }
+.scratch-limit { margin-bottom: 20px; color: #aaa; font-weight: 600; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+.scratch-card { width: 300px; height: 200px; margin: 30px auto; position: relative; transform-style: preserve-3d; perspective: 1000px; cursor: pointer; transition: transform 0.8s ease; }
 .scratch-front, .scratch-back { position: absolute; width: 100%; height: 100%; border-radius: 16px; backface-visibility: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.6); }
-.scratch-front { background: linear-gradient(135deg, #555, #777); overflow: hidden; }
-.scratch-back { background: linear-gradient(135deg, #1e3c72, #2a5298); color: gold; display: flex; flex-direction: column; justify-content: center; align-items: center; transform: rotateY(180deg); font-size: 26px; font-weight: bold; text-shadow: 0 0 15px gold; }
+.scratch-front { background: linear-gradient(135deg, #555, #777); overflow: hidden; transform: rotateY(0deg) translateZ(20px); }
+.scratch-front::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.12) 10px, rgba(255,255,255,.12) 20px); pointer-events: none; }
+.scratch-back { background: linear-gradient(135deg, #1e3c72, #2a5298); color: gold; display: flex; flex-direction: column; justify-content: center; align-items: center; transform: rotateY(180deg) translateZ(20px); font-size: 26px; font-weight: bold; text-shadow: 0 0 15px gold; }
 .scratch-back i { font-size: 45px; margin-bottom: 12px; animation: gemBounce 1.6s infinite; }
 @keyframes gemBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-.scratch-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 16px; cursor: grab; }
-.claim-scratch { margin-top: 25px; background: linear-gradient(45deg, #4caf50, #66bb6a); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 17px; cursor: pointer; box-shadow: 0 8px 20px rgba(76,175,80,0.5); transition: all 0.3s; }
-.claim-scratch:hover { transform: scale(1.06); }
+.scratch-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 16px; cursor: grab; transform: translateZ(30px); }
+.claim-scratch { margin-top: 25px; background: linear-gradient(45deg, #4caf50, #66bb6a); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 17px; cursor: pointer; box-shadow: 0 8px 20px rgba(76,175,80,0.5); transform: translateZ(25px); transition: all 0.3s; }
+.claim-scratch:hover { transform: translateZ(30px) scale(1.06); box-shadow: var(--glow); }
 
 /* Modal */
-.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(12px); }
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(12px); perspective: 1000px; }
 .modal-content { background: linear-gradient(135deg, rgba(30,30,30,0.92), rgba(20,20,20,0.92)); padding: 32px; border-radius: 22px; width: 90%; max-width: 400px; box-shadow: 0 25px 60px rgba(0,0,0,0.7); border: 1px solid rgba(76, 175, 80, 0.6); animation: modalFlipIn 0.7s ease-out; }
 @keyframes modalFlipIn { from { transform: rotateY(-100deg) scale(0.7); opacity: 0; } to { transform: rotateY(0deg) scale(1); opacity: 1; } }
 input { width: 100%; padding: 15px; margin: 12px 0; border-radius: 14px; border: 1px solid rgba(76, 175, 80, 0.6); background: rgba(255,255,255,0.12); color: white; font-size: 16px; }
