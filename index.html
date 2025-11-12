@@ -112,19 +112,19 @@
 
         /* Reward Buttons Row */
         .reward-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            display: flex;
             justify-content: space-around;
             margin: 20px;
             gap: 10px;
         }
         .reward-btn {
+            flex: 1;
             background: linear-gradient(45deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
-            padding: 12px 5px;
+            padding: 12px;
             border-radius: 30px;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(76,175,80,0.4);
@@ -154,9 +154,8 @@
         }
 
         .wheel-container {
-            max-width: 320px;
-            width: 90%;
-            aspect-ratio: 1 / 1;
+            width: 320px;
+            height: 320px;
             margin: 30px auto;
             position: relative;
             transform-style: preserve-3d;
@@ -253,9 +252,8 @@
         }
 
         .scratch-card {
-            max-width: 300px;
-            width: 90%;
-            aspect-ratio: 3 / 2;
+            width: 300px;
+            height: 200px;
             margin: 30px auto;
             position: relative;
             transform-style: preserve-3d;
@@ -412,7 +410,7 @@
             background: linear-gradient(45deg, #f44336, #d32f2f);
         }
 
-        /* Wallet, Task, History, Nav */
+        /* Wallet, Task, History, Nav - আগের মতোই */
         .wallet-header {
             background: linear-gradient(45deg, #2196f3, #673ab7);
             color: white;
@@ -516,33 +514,6 @@
         }
         .history-item:hover { transform: translateX(5px); }
         .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
-
-        /* Referral Section on Home Page */
-        .referral-section-home {
-            margin: 40px 20px 20px 20px;
-            padding: 20px;
-            background: var(--card);
-            border-radius: 16px;
-            text-align: center;
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        }
-        .referral-section-home h3 {
-            color: var(--primary);
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-        .referral-section-home p {
-            color: #ccc;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        #referralLink {
-            cursor: pointer;
-            background-color: rgba(255,255,255,0.05);
-            text-align: center;
-        }
-
     </style>
 </head>
 <body>
@@ -565,17 +536,9 @@
         </div>
         <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
         <div class="reward-buttons">
-            <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি (+<span id="dailyPoints">50</span>)</button>
+            <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
             <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
-            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ (+<span id="scratchPoints">50</span>)</button>
-        </div>
-
-        <!-- Referral Section Added to Home Page -->
-        <div class="referral-section-home">
-            <h3><i class="fas fa-users"></i> বন্ধুদের রেফার করুন</h3>
-            <p>আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন। আপনার বন্ধু আপনার লিঙ্কে ক্লিক করে অ্যাপে আসলেই আপনি পুরস্কার পাবেন!</p>
-            <input type="text" id="referralLink" readonly>
-            <button id="copyReferralLink" class="action-btn" style="background:linear-gradient(45deg,#2196f3,#673ab7); margin-top:0;"><i class="fas fa-copy"></i> লিঙ্ক কপি করুন</button>
+            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
         </div>
     </div>
 
@@ -603,9 +566,19 @@
         </div>
     </div>
 
+    <div id="refer" class="screen">
+        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">বন্ধুদের রেফার করুন</h2>
+        <div style="padding: 20px; text-align: center; max-width: 400px; margin: auto;">
+            <i class="fas fa-users" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
+            <p style="color: #ccc; margin-bottom: 20px;">আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন। আপনার বন্ধু আপনার লিঙ্কে ক্লিক করে অ্যাপে আসলেই আপনি পুরস্কার পাবেন!</p>
+            <input type="text" id="referralLink" readonly style="margin-top: 20px; text-align: center; background-color: rgba(255,255,255,0.05); cursor: pointer;">
+            <button id="copyReferralLink" class="action-btn" style="background:linear-gradient(45deg,#2196f3,#673ab7);"><i class="fas fa-copy"></i> লিঙ্ক কপি করুন</button>
+        </div>
+    </div>
+
     <div id="profile" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">প্রোফাইল</h2>
-        <div style="text-align:center; padding: 20px;">
+        <div style="text-align:center;">
             <img id="profileImgBig" class="profile-img" style="width:100px;height:100px;border-radius:50%;box-shadow:0 0 20px rgba(76,175,80,0.6);" src="" alt="">
             <p style="margin:15px 0; font-size:18px;" id="profileName"></p>
             <p style="color:#aaa;">Telegram ID: <span id="telegramId"></span></p>
@@ -641,7 +614,7 @@
         <p class="scratch-limit" id="scratchLimit">লোড হচ্ছে...</p>
         <div class="scratch-card" id="scratchCard">
             <div class="scratch-front">
-                <canvas id="scratchCanvas" class="scratch-canvas" width="300" height="200"></canvas>
+                <canvas id="scratchCanvas" class="scratch-canvas"></canvas>
             </div>
             <div class="scratch-back">
                 <i class="fas fa-gem"></i>
@@ -657,6 +630,7 @@
         <div class="nav-item" data-screen="wallet"><i class="fas fa-wallet"></i> ওয়ালেট</div>
         <div class="nav-item" data-screen="history"><i class="fas fa-history"></i> হিস্ট্রি</div>
         <div class="nav-item" data-screen="task"><i class="fas fa-tasks"></i> টাস্ক</div>
+        <div class="nav-item" data-screen="refer"><i class="fas fa-user-friends"></i> রেফার</div>
         <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i> প্রোফাইল</div>
     </div>
 
@@ -725,6 +699,7 @@
                 if (screenId === 'wallet') loadPaymentMethods();
                 if (screenId === 'spin') loadSpinLimit();
                 if (screenId === 'scratch') { loadScratchLimit(); initScratchCard(); }
+                if (screenId === 'refer') setupReferralUI();
             });
         });
 
@@ -1010,22 +985,18 @@
         function initScratchCard() {
             const canvas = document.getElementById('scratchCanvas');
             const ctx = canvas.getContext('2d');
-            const cardElement = document.getElementById('scratchCard');
-            canvas.width = cardElement.clientWidth;
-            canvas.height = cardElement.clientHeight;
-
-            ctx.fillStyle = '#999'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = `bold ${canvas.width / 14}px Arial`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-            ctx.fillText('স্ক্র্যাচ করুন', canvas.width / 2, canvas.height / 2);
-            
+            canvas.width = 300; canvas.height = 200;
+            ctx.fillStyle = '#999'; ctx.fillRect(0, 0, 300, 200);
+            ctx.font = 'bold 22px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+            ctx.fillText('স্ক্র্যাচ করুন', 150, 100);
             scratched = false;
-            cardElement.style.transform = 'rotateY(0deg)';
+            const card = document.getElementById('scratchCard');
+            card.style.transform = 'rotateY(0deg)';
 
             let isDrawing = false;
             const startDraw = () => isDrawing = true;
             const stopDraw = () => { isDrawing = false; checkScratched(); };
             const draw = (e) => {
-                e.preventDefault();
                 if (!isDrawing) return;
                 const rect = canvas.getBoundingClientRect();
                 const x = (e.clientX || e.touches[0].clientX) - rect.left;
@@ -1042,14 +1013,14 @@
             canvas.addEventListener('touchmove', draw);
 
             function checkScratched() {
-                const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                const data = ctx.getImageData(0, 0, 300, 200).data;
                 let transparent = 0;
                 for (let i = 3; i < data.length; i += 4) {
                     if (data[i] === 0) transparent++;
                 }
-                if (transparent / (canvas.width * canvas.height) > 0.5 && !scratched) { // Scratched over 50%
+                if (transparent > 18000 && !scratched) {
                     scratched = true;
-                    cardElement.style.transform = 'rotateY(180deg)';
+                    card.style.transform = 'rotateY(180deg)';
                 }
             }
         }
