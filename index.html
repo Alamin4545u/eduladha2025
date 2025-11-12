@@ -20,16 +20,13 @@
             --glass: rgba(255, 255, 255, 0.05);
             --text: #fff;
             --gold: #ffd700;
-            --glow: 0 0 20px rgba(76, 175, 80, 0.7);
+            --glow: 0 0 20px rgba(255, 215, 0, 0.6);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html {
-            scroll-behavior: smooth;
-        }
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: #121212;
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
@@ -90,7 +87,7 @@
         @keyframes bannerSlideIn { to { opacity: 1; transform: translateX(0); } }
         .banner:hover { transform: scale(1.02) rotateY(5deg); }
 
-        /* Live Notice - Scrolling Removed */
+        /* Live Notice */
         .live-notice {
             margin: 20px;
             background: var(--card);
@@ -98,67 +95,49 @@
             border-radius: 16px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             color: #ffd700;
+            font-style: italic;
             text-align: center;
             animation: fadeIn 0.5s;
+            white-space: nowrap;
+            overflow: hidden;
         }
-        
-        /* Reward Buttons Row - Updated 3D Style */
+        .live-notice span {
+            display: inline-block;
+            animation: scroll-left 15s linear infinite;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Reward Buttons Row */
         .reward-buttons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 15px;
+            justify-content: space-around;
             margin: 20px;
-            padding: 0;
+            gap: 10px;
         }
         .reward-btn {
-            background: linear-gradient(145deg, #2e2e2e, #1a1a1a);
-            color: #e0e0e0;
-            border: 1px solid #333;
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
             padding: 12px 5px;
-            border-radius: 50px;
+            border-radius: 30px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease-in-out;
-            text-shadow: 0 0 5px var(--glow);
-            position: relative;
+            box-shadow: 0 4px 10px rgba(76,175,80,0.4);
+            transition: all 0.3s;
+            text-align: center;
         }
-        .reward-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50px;
-            padding: 2px;
-            background: linear-gradient(45deg, var(--primary), var(--gold));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        .reward-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
-            color: #fff;
-        }
-        .reward-btn:hover::before {
-            opacity: 1;
-        }
+        .reward-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 15px rgba(76,175,80,0.6); }
         .reward-btn:disabled {
-            background: #222;
+            background: #444;
             cursor: not-allowed;
-            opacity: 0.5;
-            transform: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            opacity: 0.6;
         }
-        .reward-btn:disabled:hover::before {
-             opacity: 0.3;
-        }
-        .reward-btn i {
-            margin-right: 5px;
-        }
-        
+
         /* ==================== 3D SPIN SCREEN ==================== */
         .spin-screen {
             display: none;
@@ -173,6 +152,7 @@
             font-weight: 600;
             text-shadow: 0 0 5px rgba(255,255,255,0.3);
         }
+
         .wheel-container {
             max-width: 320px;
             width: 90%;
@@ -187,145 +167,360 @@
             height: 100%;
             border-radius: 50%;
             background: conic-gradient(
-                #ff3b30 0deg 45deg, #ff9500 45deg 90deg, #ffcc00 90deg 135deg, #4cd964 135deg 180deg,
-                #5ac8fa 180deg 225deg, #007aff 225deg 270deg, #5856d6 270deg 315deg, #af52de 315deg 360deg
+                #ff3b30 0deg 45deg,
+                #ff9500 45deg 90deg,
+                #ffcc00 90deg 135deg,
+                #4cd964 135deg 180deg,
+                #5ac8fa 180deg 225deg,
+                #007aff 225deg 270deg,
+                #5856d6 270deg 315deg,
+                #af52de 315deg 360deg
             );
             position: relative;
-            box-shadow: 0 0 30px rgba(255,255,255,0.4), inset 0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(255,215,0,0.3);
+            box-shadow: 
+                0 0 30px rgba(255,255,255,0.4),
+                inset 0 0 40px rgba(0,0,0,0.5),
+                0 0 60px rgba(255,215,0,0.3);
             transform-style: preserve-3d;
             transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-            border: none;
-            filter: drop-shadow(0 0 20px var(--gold));
+            border: none; /* Border removed */
+            filter: drop-shadow(0 0 20px var(--gold)); /* 3D Glow added */
         }
         .wheel::before {
-            content: ''; position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent;
-            border-bottom: 40px solid #ffd700; filter: drop-shadow(0 8px 15px rgba(0,0,0,0.6));
-            z-index: 10; animation: pointerPulse 2s infinite;
+            content: '';
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 18px solid transparent;
+            border-right: 18px solid transparent;
+            border-bottom: 40px solid #ffd700;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.6));
+            z-index: 10;
+            animation: pointerPulse 2s infinite;
         }
-        @keyframes pointerPulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.15); } }
+        @keyframes pointerPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.15); }
+        }
+
         .wheel-inner {
-            position: absolute; top: 50%; left: 50%; width: 70px; height: 70px;
-            background: radial-gradient(circle, #fff, #ddd); border-radius: 50%;
-            transform: translate(-50%, -50%) translateZ(25px); box-shadow: 0 0 25px gold, inset 0 0 15px #ccc;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, #fff, #ddd);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) translateZ(25px);
+            box-shadow: 0 0 25px gold, inset 0 0 15px #ccc;
         }
+
         .spin-wheel-btn {
-            margin-top: 35px; background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; border: none;
-            padding: 16px 36px; border-radius: 50px; font-weight: bold; font-size: 18px; cursor: pointer;
-            box-shadow: 0 8px 20px rgba(255,215,0,0.5); transform: translateZ(25px); transition: all 0.3s;
+            margin-top: 35px;
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            color: #000;
+            border: none;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255,215,0,0.5);
+            transform: translateZ(25px);
+            transition: all 0.3s;
         }
-        .spin-wheel-btn:hover { transform: translateZ(30px) scale(1.08); box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 12px 25px rgba(0,0,0,0.5); }
+        .spin-wheel-btn:hover {
+            transform: translateZ(30px) scale(1.08);
+            box-shadow: var(--glow), 0 12px 25px rgba(0,0,0,0.5);
+        }
 
         /* ==================== 3D SCRATCH CARD ==================== */
-        .scratch-screen { display: none; padding: 20px; text-align: center; perspective: 1000px; }
+        .scratch-screen {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            perspective: 1000px;
+        }
         .scratch-screen.active { display: block; }
-        .scratch-limit { margin-bottom: 20px; color: #aaa; font-weight: 600; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        .scratch-limit {
+            margin-bottom: 20px;
+            color: #aaa;
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(255,255,255,0.3);
+        }
+
         .scratch-card {
-            max-width: 300px; width: 90%; aspect-ratio: 3 / 2; margin: 30px auto; position: relative;
-            transform-style: preserve-3d; perspective: 1000px; cursor: pointer; transition: transform 0.8s ease;
+            max-width: 300px;
+            width: 90%;
+            aspect-ratio: 3 / 2;
+            margin: 30px auto;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.8s ease;
         }
         .scratch-front, .scratch-back {
-            position: absolute; width: 100%; height: 100%; border-radius: 16px; backface-visibility: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            backface-visibility: hidden;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.6);
         }
-        .scratch-front { background: linear-gradient(135deg, #555, #777); overflow: hidden; transform: rotateY(0deg) translateZ(20px); }
+        .scratch-front {
+            background: linear-gradient(135deg, #555, #777);
+            overflow: hidden;
+            transform: rotateY(0deg) translateZ(20px);
+        }
         .scratch-front::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.12) 10px, rgba(255,255,255,.12) 20px);
+            pointer-events: none;
         }
         .scratch-back {
-            background: linear-gradient(135deg, #1e3c72, #2a5298); color: gold; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; transform: rotateY(180deg) translateZ(20px);
-            font-size: 26px; font-weight: bold; text-shadow: 0 0 15px gold;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: gold;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotateY(180deg) translateZ(20px);
+            font-size: 26px;
+            font-weight: bold;
+            text-shadow: 0 0 15px gold;
         }
-        .scratch-back i { font-size: 45px; margin-bottom: 12px; animation: gemBounce 1.6s infinite; }
-        @keyframes gemBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .scratch-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 16px; cursor: grab; transform: translateZ(30px); }
+        .scratch-back i {
+            font-size: 45px;
+            margin-bottom: 12px;
+            animation: gemBounce 1.6s infinite;
+        }
+        @keyframes gemBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .scratch-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 16px;
+            cursor: grab;
+            transform: translateZ(30px);
+        }
         .scratch-canvas:active { cursor: grabbing; }
+
         .claim-scratch {
-            margin-top: 25px; background: linear-gradient(45deg, #4caf50, #66bb6a); color: white; border: none; padding: 14px 32px;
-            border-radius: 50px; font-weight: bold; font-size: 17px; cursor: pointer; box-shadow: 0 8px 20px rgba(76,175,80,0.5);
-            transform: translateZ(25px); transition: all 0.3s;
+            margin-top: 25px;
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 17px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(76,175,80,0.5);
+            transform: translateZ(25px);
+            transition: all 0.3s;
         }
-        .claim-scratch:hover { transform: translateZ(30px) scale(1.06); box-shadow: 0 0 20px rgba(76, 175, 80, 0.7); }
+        .claim-scratch:hover {
+            transform: translateZ(30px) scale(1.06);
+            box-shadow: var(--glow);
+        }
 
         /* ==================== 3D WITHDRAW MODAL ==================== */
         .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88);
-            z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(12px); perspective: 1000px;
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            perspective: 1000px;
         }
         .modal-content {
-            background: linear-gradient(135deg, rgba(30,30,30,0.92), rgba(20,20,20,0.92)); backdrop-filter: blur(25px);
-            padding: 32px; border-radius: 22px; width: 90%; max-width: 400px; box-shadow: 0 25px 60px rgba(0,0,0,0.7);
-            border: 1px solid rgba(76, 175, 80, 0.6); transform-style: preserve-3d; animation: modalFlipIn 0.7s ease-out; position: relative;
+            background: linear-gradient(135deg, rgba(30,30,30,0.92), rgba(20,20,20,0.92));
+            backdrop-filter: blur(25px);
+            padding: 32px;
+            border-radius: 22px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+            border: 1px solid rgba(76, 175, 80, 0.6);
+            transform-style: preserve-3d;
+            animation: modalFlipIn 0.7s ease-out;
+            position: relative;
         }
-        @keyframes modalFlipIn { from { transform: rotateY(-100deg) scale(0.7); opacity: 0; } to { transform: rotateY(0deg) scale(1); opacity: 1; } }
+        @keyframes modalFlipIn {
+            0% { transform: rotateY(-100deg) scale(0.7); opacity: 0; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+        }
         .modal-content::before {
-            content: ''; position: absolute; top: -12px; left: -12px; right: -12px; bottom: -12px;
-            background: linear-gradient(45deg, #4caf50, #2196f3, #9c27b0); border-radius: 28px;
-            z-index: -1; filter: blur(18px); opacity: 0.35;
+            content: '';
+            position: absolute;
+            top: -12px; left: -12px; right: -12px; bottom: -12px;
+            background: linear-gradient(45deg, #4caf50, #2196f3, #9c27b0);
+            border-radius: 28px;
+            z-index: -1;
+            filter: blur(18px);
+            opacity: 0.35;
         }
+
         input {
-            width: 100%; padding: 15px; margin: 12px 0; border-radius: 14px; border: 1px solid rgba(76, 175, 80, 0.6);
-            background: rgba(255,255,255,0.12); color: white; font-size: 16px; backdrop-filter: blur(6px); transition: all 0.3s;
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 14px;
+            border: 1px solid rgba(76, 175, 80, 0.6);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            font-size: 16px;
+            backdrop-filter: blur(6px);
+            transition: all 0.3s;
         }
-        input:focus { outline: none; border-color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+        input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.4);
+        }
+
         .action-btn {
-            width: 100%; padding: 15px; margin: 12px 0; border: none; border-radius: 14px; font-weight: bold;
-            font-size: 16px; cursor: pointer; transition: all 0.3s; transform: translateZ(15px);
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 14px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            transform: translateZ(15px);
         }
-        .action-btn:hover { transform: translateZ(20px) scale(1.03); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-        .btn-close { background: linear-gradient(45deg, #f44336, #d32f2f); }
+        .action-btn:hover {
+            transform: translateZ(20px) scale(1.03);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .btn-close {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
 
         /* Wallet, Task, History, Nav */
         .wallet-header {
-            background: linear-gradient(45deg, #2196f3, #673ab7); color: white; padding: 20px; border-radius: 10px;
-            margin: 20px; text-align: left; position: relative;
+            background: linear-gradient(45deg, #2196f3, #673ab7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            text-align: left;
+            position: relative;
         }
         .wallet-header h3 { margin: 0; }
         .wallet-header p { margin: 5px 0 0; }
-        .wallet-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 40px; }
+        .wallet-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+        }
         .payment-method {
-            background: white; color: black; padding: 15px; margin: 20px; border-radius: 10px;
-            display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: white;
+            color: black;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .payment-logo { width: 40px; margin-right: 10px; }
         .payment-info { flex: 1; }
-        .payment-btn { background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        .payment-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
 
         .task-list { margin: 20px; }
-        .task-item { background: var(--card); padding: 15px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .task-btn { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; margin-top: 10px; width: 100%; }
+        .task-item {
+            background: var(--card);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .task-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
 
         .nav {
-            position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(15px);
-            display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid rgba(76, 175, 80, 0.3); z-index: 1000;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid rgba(76, 175, 80, 0.3);
+            z-index: 1000;
         }
         .nav-item {
-            text-align: center; color: #aaa; font-size: 12px; transition: all 0.3s; padding: 8px;
-            border-radius: 12px; width: 60px; cursor: pointer;
+            text-align: center;
+            color: #aaa;
+            font-size: 12px;
+            transition: all 0.3s;
+            padding: 8px;
+            border-radius: 12px;
+            width: 60px;
+            cursor: pointer;
         }
-        .nav-item.active, .nav-item:hover { color: var(--primary); background: rgba(76, 175, 80, 0.2); transform: scale(1.1); }
+        .nav-item.active, .nav-item:hover {
+            color: var(--primary);
+            background: rgba(76, 175, 80, 0.2);
+            transform: scale(1.1);
+        }
         .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
 
         .screen { display: none; padding: 10px; }
         .screen.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
-        /* History Screen - Scrolling fixed */
-        #history {
-            padding: 10px 20px;
-        }
         .history-item {
-            background: var(--card); padding: 15px; margin: 12px 0; border-radius: 14px;
-            border-left: 4px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.3s;
+            background: var(--card);
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 14px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
         }
         .history-item:hover { transform: translateX(5px); }
         .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
 
-        /* Referral Section on Home Page - Compacted */
+        /* Referral Section on Home Page */
         .referral-section-home {
-            margin: 30px 20px 20px 20px;
-            padding: 15px;
+            margin: 40px 20px 20px 20px;
+            padding: 20px;
             background: var(--card);
             border-radius: 16px;
             text-align: center;
@@ -334,25 +529,18 @@
         }
         .referral-section-home h3 {
             color: var(--primary);
-            margin-bottom: 10px;
-            font-size: 18px;
+            margin-bottom: 15px;
+            font-size: 20px;
         }
         .referral-section-home p {
             color: #ccc;
-            margin-bottom: 15px;
-            font-size: 14px;
-            line-height: 1.5;
+            margin-bottom: 20px;
+            line-height: 1.6;
         }
         #referralLink {
             cursor: pointer;
             background-color: rgba(255,255,255,0.05);
             text-align: center;
-            font-size: 14px;
-            padding: 12px;
-        }
-        #copyReferralLink {
-            font-size: 15px;
-            padding: 12px;
         }
 
     </style>
@@ -375,17 +563,17 @@
         <div class="banner-container" id="bannerContainer">
             <!-- Dynamic banners from config -->
         </div>
-        <div class="live-notice" id="liveNotice">লোড হচ্ছে...</div>
+        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
         <div class="reward-buttons">
             <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি (+<span id="dailyPoints">50</span>)</button>
-            <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync-alt"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
-            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket-alt"></i> স্ক্র্যাচ (+<span id="scratchPoints">50</span>)</button>
+            <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
+            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ (+<span id="scratchPoints">50</span>)</button>
         </div>
 
         <!-- Referral Section Added to Home Page -->
         <div class="referral-section-home">
             <h3><i class="fas fa-users"></i> বন্ধুদের রেফার করুন</h3>
-            <p>আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন।</p>
+            <p>আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন। আপনার বন্ধু আপনার লিঙ্কে ক্লিক করে অ্যাপে আসলেই আপনি পুরস্কার পাবেন!</p>
             <input type="text" id="referralLink" readonly>
             <button id="copyReferralLink" class="action-btn" style="background:linear-gradient(45deg,#2196f3,#673ab7); margin-top:0;"><i class="fas fa-copy"></i> লিঙ্ক কপি করুন</button>
         </div>
@@ -400,7 +588,7 @@
         <div id="paymentMethodsList">
             <!-- Dynamic payment methods -->
         </div>
-        <!-- "1 BDT = 1 Taka" text removed from here -->
+        <p style="text-align:center; color:#aaa; margin-top:20px;">১ ৳ = ১ টাকা</p>
     </div>
 
     <div id="history" class="screen">
@@ -508,9 +696,7 @@
             pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, 
             liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: '', 
             dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50,
-            vpnEnabled: true, referReward: 1, 
-            // UPDATED: Added a default botUrl
-            botUrl: 'https://t.me/YourBot/YourApp' 
+            vpnEnabled: true, referReward: 1, botUrl: 'https://t.me/YourBot/YourApp'
         };
         
         let isTaskCountry = false;
@@ -549,8 +735,13 @@
                 if (doc.exists) {
                     config = { ...config, ...doc.data() };
                     updatePointsDisplay();
-                    document.getElementById('liveNotice').innerText = config.liveNotice || 'কোনো নোটিস নেই';
-                    
+                    const noticeSpan = document.getElementById('liveNotice').querySelector('span');
+                    noticeSpan.innerText = config.liveNotice || 'কোনো নোটিস নেই';
+                    if (noticeSpan.scrollWidth > document.getElementById('liveNotice').clientWidth) {
+                        noticeSpan.style.animation = 'scroll-left 15s linear infinite';
+                    } else {
+                        noticeSpan.style.animation = 'none';
+                    }
                     const container = document.getElementById('bannerContainer');
                     container.innerHTML = '';
                     config.bannerUrls.forEach((url, index) => {
@@ -587,7 +778,11 @@
                     throw new Error("VPN detected");
                 }
                 
-                isTaskCountry = ALLOWED_COUNTRIES.includes(data.country_code);
+                if (ALLOWED_COUNTRIES.includes(data.country_code)) {
+                    isTaskCountry = true;
+                } else {
+                    isTaskCountry = false;
+                }
 
             } catch (error) {
                 console.error("IP Check Error:", error);
@@ -645,7 +840,6 @@
         }
 
         function setupReferralUI() {
-            // UPDATED: This now correctly uses the botUrl from the config
             const referralLink = `${config.botUrl}?start=REF_${telegramId}`;
             const linkInput = document.getElementById('referralLink');
             if(linkInput) linkInput.value = referralLink;
@@ -706,7 +900,6 @@
                         }
                     }, err => console.error("Snapshot listener error:", err));
                     
-                    // Setup referral UI after config is loaded
                     setupReferralUI();
                 });
             });
@@ -841,10 +1034,13 @@
                 ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2); ctx.fill();
             };
 
-            ['mousedown', 'touchstart'].forEach(evt => canvas.addEventListener(evt, startDraw));
-            ['mouseup', 'touchend'].forEach(evt => canvas.addEventListener(evt, stopDraw));
-            ['mousemove', 'touchmove'].forEach(evt => canvas.addEventListener(evt, draw));
-            
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchend', stopDraw);
+            canvas.addEventListener('touchmove', draw);
+
             function checkScratched() {
                 const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
                 let transparent = 0;
