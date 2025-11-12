@@ -71,7 +71,7 @@
 
         /* Banners */
         .banner-container {
-            margin: 20px;
+            margin: 15px 20px; /* Compact margin */
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -85,21 +85,29 @@
             transform: translateX(-50px);
             animation: bannerSlideIn 0.8s ease-out forwards;
         }
-        .banner:nth-child(1) { animation-delay: 0.2s; }
-        .banner:nth-child(2) { animation-delay: 0.6s; }
         @keyframes bannerSlideIn { to { opacity: 1; transform: translateX(0); } }
         .banner:hover { transform: scale(1.02) rotateY(5deg); }
 
-        /* Live Notice - Scrolling Removed */
+        /* Live Notice - Scrolling Re-enabled */
         .live-notice {
-            margin: 20px;
+            margin: 15px 20px; /* Compact margin */
             background: var(--card);
-            padding: 15px;
+            padding: 12px 15px;
             border-radius: 16px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             color: #ffd700;
             text-align: center;
             animation: fadeIn 0.5s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .live-notice span {
+            display: inline-block;
+            /* Animation will be applied via JS if text overflows */
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
         
         /* Reward Buttons Row - Updated 3D Style */
@@ -108,7 +116,6 @@
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 15px;
             margin: 20px;
-            padding: 0;
         }
         .reward-btn {
             background: linear-gradient(145deg, #2e2e2e, #1a1a1a);
@@ -160,42 +167,19 @@
         }
         
         /* ==================== 3D SPIN SCREEN ==================== */
-        .spin-screen {
-            display: none;
-            padding: 20px;
-            text-align: center;
-            perspective: 1000px;
-        }
+        .spin-screen { display: none; padding: 20px; text-align: center; perspective: 1000px; }
         .spin-screen.active { display: block; }
-        .spin-limit {
-            margin-bottom: 20px;
-            color: #aaa;
-            font-weight: 600;
-            text-shadow: 0 0 5px rgba(255,255,255,0.3);
-        }
+        .spin-limit { margin-bottom: 20px; color: #aaa; font-weight: 600; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
         .wheel-container {
-            max-width: 320px;
-            width: 90%;
-            aspect-ratio: 1 / 1;
-            margin: 30px auto;
-            position: relative;
-            transform-style: preserve-3d;
-            perspective: 1000px;
+            max-width: 320px; width: 90%; aspect-ratio: 1 / 1; margin: 30px auto; position: relative;
+            transform-style: preserve-3d; perspective: 1000px;
         }
         .wheel {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(
-                #ff3b30 0deg 45deg, #ff9500 45deg 90deg, #ffcc00 90deg 135deg, #4cd964 135deg 180deg,
-                #5ac8fa 180deg 225deg, #007aff 225deg 270deg, #5856d6 270deg 315deg, #af52de 315deg 360deg
-            );
-            position: relative;
-            box-shadow: 0 0 30px rgba(255,255,255,0.4), inset 0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(255,215,0,0.3);
-            transform-style: preserve-3d;
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-            border: none;
-            filter: drop-shadow(0 0 20px var(--gold));
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(#ff3b30 0deg 45deg, #ff9500 45deg 90deg, #ffcc00 90deg 135deg, #4cd964 135deg 180deg, #5ac8fa 180deg 225deg, #007aff 225deg 270deg, #5856d6 270deg 315deg, #af52de 315deg 360deg);
+            position: relative; box-shadow: 0 0 30px rgba(255,255,255,0.4), inset 0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(255,215,0,0.3);
+            transform-style: preserve-3d; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            border: none; filter: drop-shadow(0 0 20px var(--gold));
         }
         .wheel::before {
             content: ''; position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
@@ -249,10 +233,7 @@
         .claim-scratch:hover { transform: translateZ(30px) scale(1.06); box-shadow: 0 0 20px rgba(76, 175, 80, 0.7); }
 
         /* ==================== 3D WITHDRAW MODAL ==================== */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88);
-            z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(12px); perspective: 1000px;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(12px); perspective: 1000px; }
         .modal-content {
             background: linear-gradient(135deg, rgba(30,30,30,0.92), rgba(20,20,20,0.92)); backdrop-filter: blur(25px);
             padding: 32px; border-radius: 22px; width: 90%; max-width: 400px; box-shadow: 0 25px 60px rgba(0,0,0,0.7);
@@ -264,67 +245,41 @@
             background: linear-gradient(45deg, #4caf50, #2196f3, #9c27b0); border-radius: 28px;
             z-index: -1; filter: blur(18px); opacity: 0.35;
         }
-        input {
-            width: 100%; padding: 15px; margin: 12px 0; border-radius: 14px; border: 1px solid rgba(76, 175, 80, 0.6);
-            background: rgba(255,255,255,0.12); color: white; font-size: 16px; backdrop-filter: blur(6px); transition: all 0.3s;
-        }
+        input { width: 100%; padding: 15px; margin: 12px 0; border-radius: 14px; border: 1px solid rgba(76, 175, 80, 0.6); background: rgba(255,255,255,0.12); color: white; font-size: 16px; backdrop-filter: blur(6px); transition: all 0.3s; }
         input:focus { outline: none; border-color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.4); }
-        .action-btn {
-            width: 100%; padding: 15px; margin: 12px 0; border: none; border-radius: 14px; font-weight: bold;
-            font-size: 16px; cursor: pointer; transition: all 0.3s; transform: translateZ(15px);
-        }
+        .action-btn { width: 100%; padding: 15px; margin: 12px 0; border: none; border-radius: 14px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s; transform: translateZ(15px); }
         .action-btn:hover { transform: translateZ(20px) scale(1.03); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
         .btn-close { background: linear-gradient(45deg, #f44336, #d32f2f); }
 
         /* Wallet, Task, History, Nav */
-        .wallet-header {
-            background: linear-gradient(45deg, #2196f3, #673ab7); color: white; padding: 20px; border-radius: 10px;
-            margin: 20px; text-align: left; position: relative;
-        }
-        .wallet-header h3 { margin: 0; }
-        .wallet-header p { margin: 5px 0 0; }
+        .wallet-header { background: linear-gradient(45deg, #2196f3, #673ab7); color: white; padding: 20px; border-radius: 10px; margin: 20px; text-align: left; position: relative; }
+        .wallet-header h3 { margin: 0; } .wallet-header p { margin: 5px 0 0; }
         .wallet-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 40px; }
-        .payment-method {
-            background: white; color: black; padding: 15px; margin: 20px; border-radius: 10px;
-            display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .payment-logo { width: 40px; margin-right: 10px; }
-        .payment-info { flex: 1; }
+        .payment-method { background: white; color: black; padding: 15px; margin: 20px; border-radius: 10px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .payment-logo { width: 40px; margin-right: 10px; } .payment-info { flex: 1; }
         .payment-btn { background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
-
         .task-list { margin: 20px; }
         .task-item { background: var(--card); padding: 15px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .task-btn { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; margin-top: 10px; width: 100%; }
 
-        .nav {
-            position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(15px);
-            display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid rgba(76, 175, 80, 0.3); z-index: 1000;
-        }
-        .nav-item {
-            text-align: center; color: #aaa; font-size: 12px; transition: all 0.3s; padding: 8px;
-            border-radius: 12px; width: 60px; cursor: pointer;
-        }
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid rgba(76, 175, 80, 0.3); z-index: 1000; }
+        .nav-item { text-align: center; color: #aaa; font-size: 12px; transition: all 0.3s; padding: 8px; border-radius: 12px; width: 60px; cursor: pointer; }
         .nav-item.active, .nav-item:hover { color: var(--primary); background: rgba(76, 175, 80, 0.2); transform: scale(1.1); }
         .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
 
         .screen { display: none; padding: 10px; }
         .screen.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-
+        
         /* History Screen - Scrolling fixed */
-        #history {
-            padding: 10px 20px;
-        }
-        .history-item {
-            background: var(--card); padding: 15px; margin: 12px 0; border-radius: 14px;
-            border-left: 4px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.3s;
-        }
+        #history { padding: 10px 20px; }
+        .history-item { background: var(--card); padding: 15px; margin: 12px 0; border-radius: 14px; border-left: 4px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.3s; }
         .history-item:hover { transform: translateX(5px); }
         .status-pending { color: #ff9800; } .status-paid { color: #4caf50; } .status-rejected { color: #f44336; }
 
         /* Referral Section on Home Page - Compacted */
         .referral-section-home {
-            margin: 30px 20px 20px 20px;
+            margin: 20px; /* Compact margin */
             padding: 15px;
             background: var(--card);
             border-radius: 16px;
@@ -332,33 +287,13 @@
             border: 1px solid rgba(76, 175, 80, 0.3);
             box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
-        .referral-section-home h3 {
-            color: var(--primary);
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        .referral-section-home p {
-            color: #ccc;
-            margin-bottom: 15px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        #referralLink {
-            cursor: pointer;
-            background-color: rgba(255,255,255,0.05);
-            text-align: center;
-            font-size: 14px;
-            padding: 12px;
-        }
-        #copyReferralLink {
-            font-size: 15px;
-            padding: 12px;
-        }
-
+        .referral-section-home h3 { color: var(--primary); margin-bottom: 10px; font-size: 18px; }
+        .referral-section-home p { color: #ccc; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+        #referralLink { cursor: pointer; background-color: rgba(255,255,255,0.05); text-align: center; font-size: 14px; padding: 12px; }
+        #copyReferralLink { font-size: 15px; padding: 12px; }
     </style>
 </head>
 <body>
-
     <!-- Screens -->
     <div id="home" class="screen active">
         <div class="home-header">
@@ -372,17 +307,13 @@
                 ৳ <span id="balance">0</span>
             </div>
         </div>
-        <div class="banner-container" id="bannerContainer">
-            <!-- Dynamic banners from config -->
-        </div>
-        <div class="live-notice" id="liveNotice">লোড হচ্ছে...</div>
+        <div class="banner-container" id="bannerContainer"><!-- Dynamic banners --></div>
+        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
         <div class="reward-buttons">
             <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি (+<span id="dailyPoints">50</span>)</button>
             <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync-alt"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
             <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket-alt"></i> স্ক্র্যাচ (+<span id="scratchPoints">50</span>)</button>
         </div>
-
-        <!-- Referral Section Added to Home Page -->
         <div class="referral-section-home">
             <h3><i class="fas fa-users"></i> বন্ধুদের রেফার করুন</h3>
             <p>আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন।</p>
@@ -390,31 +321,22 @@
             <button id="copyReferralLink" class="action-btn" style="background:linear-gradient(45deg,#2196f3,#673ab7); margin-top:0;"><i class="fas fa-copy"></i> লিঙ্ক কপি করুন</button>
         </div>
     </div>
-
     <div id="wallet" class="screen">
         <div class="wallet-header">
             <h3>উইথড্র</h3>
             <p>আপনি যেকোনো সময় আপনার আর্নিং উইথড্র করতে পারেন</p>
             <i class="fas fa-money-bill-wave wallet-icon"></i>
         </div>
-        <div id="paymentMethodsList">
-            <!-- Dynamic payment methods -->
-        </div>
-        <!-- "1 BDT = 1 Taka" text removed from here -->
+        <div id="paymentMethodsList"><!-- Dynamic payment methods --></div>
     </div>
-
     <div id="history" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">উইথড্র হিস্ট্রি</h2>
         <div id="historyList">কোনো হিস্ট্রি নেই</div>
     </div>
-
     <div id="task" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
-        <div class="task-list" id="taskList">
-            <!-- Dynamic tasks -->
-        </div>
+        <div class="task-list" id="taskList"><!-- Dynamic tasks --></div>
     </div>
-
     <div id="profile" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">প্রোফাইল</h2>
         <div style="text-align:center; padding: 20px;">
@@ -423,8 +345,7 @@
             <p style="color:#aaa;">Telegram ID: <span id="telegramId"></span></p>
         </div>
     </div>
-
-    <!-- 3D Withdraw Modal -->
+    <!-- Modals and Other Screens -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
             <h2 style="text-align:center; color:gold; margin-bottom:20px;"><i class="fas fa-coins"></i> উইথড্র রিকোয়েস্ট</h2>
@@ -434,35 +355,23 @@
             <button class="action-btn btn-close" id="closeModal"><i class="fas fa-times"></i> বন্ধ করুন</button>
         </div>
     </div>
-
-    <!-- 3D Spin Screen -->
     <div id="spin" class="screen spin-screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary); text-shadow: 0 0 12px rgba(76,175,80,0.6);">স্পিন করে জিতুন</h2>
         <p class="spin-limit" id="spinLimit">লোড হচ্ছে...</p>
         <div class="wheel-container">
-            <div class="wheel" id="wheel">
-                <div class="wheel-inner"></div>
-            </div>
+            <div class="wheel" id="wheel"><div class="wheel-inner"></div></div>
         </div>
         <button class="spin-wheel-btn" id="spinWheelBtn"><i class="fas fa-play"></i> স্পিন করুন</button>
     </div>
-
-    <!-- 3D Scratch Screen -->
     <div id="scratch" class="screen scratch-screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary); text-shadow: 0 0 12px rgba(76,175,80,0.6);">স্ক্র্যাচ কার্ড</h2>
         <p class="scratch-limit" id="scratchLimit">লোড হচ্ছে...</p>
         <div class="scratch-card" id="scratchCard">
-            <div class="scratch-front">
-                <canvas id="scratchCanvas" class="scratch-canvas" width="300" height="200"></canvas>
-            </div>
-            <div class="scratch-back">
-                <i class="fas fa-gem"></i>
-                <div id="scratchReward">কনগ্র্যাটস! ৳50</div>
-            </div>
+            <div class="scratch-front"><canvas id="scratchCanvas" class="scratch-canvas" width="300" height="200"></canvas></div>
+            <div class="scratch-back"><i class="fas fa-gem"></i><div id="scratchReward">কনগ্র্যাটস! ৳50</div></div>
         </div>
         <button class="action-btn claim-scratch" id="claimScratch">ক্লেইম করুন</button>
     </div>
-
     <!-- Navigation -->
     <div class="nav">
         <div class="nav-item active" data-screen="home"><i class="fas fa-home"></i> হোম</div>
@@ -471,7 +380,6 @@
         <div class="nav-item" data-screen="task"><i class="fas fa-tasks"></i> টাস্ক</div>
         <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i> প্রোফাইল</div>
     </div>
-
     <script>
         // Firebase Config
         const firebaseConfig = {
@@ -547,18 +455,28 @@
                 if (doc.exists) {
                     config = { ...config, ...doc.data() };
                     updatePointsDisplay();
-                    // Live notice scrolling logic removed
-                    document.getElementById('liveNotice').innerText = config.liveNotice || 'কোনো নোটিস নেই';
                     
-                    const container = document.getElementById('bannerContainer');
-                    container.innerHTML = '';
+                    // Live Notice scrolling logic re-enabled
+                    const noticeContainer = document.getElementById('liveNotice');
+                    const noticeSpan = noticeContainer.querySelector('span');
+                    noticeSpan.innerText = config.liveNotice || 'কোনো নোটিস নেই';
+                    
+                    // Check if text overflows to apply animation
+                    if (noticeSpan.scrollWidth > noticeContainer.clientWidth) {
+                        noticeSpan.style.animation = 'scroll-left 15s linear infinite';
+                    } else {
+                        noticeSpan.style.animation = 'none';
+                    }
+
+                    const bannerContainer = document.getElementById('bannerContainer');
+                    bannerContainer.innerHTML = '';
                     config.bannerUrls.forEach((url, index) => {
                         const img = document.createElement('img');
                         img.className = 'banner';
                         img.src = url;
                         img.alt = `Banner ${index + 1}`;
                         img.style.animationDelay = `${0.2 * (index + 1)}s`;
-                        container.appendChild(img);
+                        bannerContainer.appendChild(img);
                     });
                 }
             } catch (e) { console.error("Config load error: ", e); }
@@ -575,19 +493,11 @@
                 const response = await fetch('https://ipapi.co/json/');
                 if (!response.ok) throw new Error(`IP API request failed with status ${response.status}`);
                 const data = await response.json();
-
                 if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
-                    document.body.innerHTML = `
-                        <div style='color:red; text-align:center; margin-top:50px; padding: 20px; height: 100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;'>
-                            <i class="fas fa-shield-alt" style="font-size: 60px; margin-bottom: 20px;"></i>
-                            <h1>VPN/Proxy ডিটেক্টেড</h1>
-                            <p>অ্যাপ ব্যবহার করতে আপনার VPN/Proxy বন্ধ করুন।</p>
-                        </div>`;
+                    document.body.innerHTML = `<div style='color:red; text-align:center; margin-top:50px; padding: 20px; height: 100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;'><i class="fas fa-shield-alt" style="font-size: 60px; margin-bottom: 20px;"></i><h1>VPN/Proxy ডিটেক্টেড</h1><p>অ্যাপ ব্যবহার করতে আপনার VPN/Proxy বন্ধ করুন।</p></div>`;
                     throw new Error("VPN detected");
                 }
-                
                 isTaskCountry = ALLOWED_COUNTRIES.includes(data.country_code);
-
             } catch (error) {
                 console.error("IP Check Error:", error);
                 isTaskCountry = false; // Disable tasks on error for security
@@ -600,72 +510,45 @@
         }
 
         function updateTaskButtonsState() {
-            const buttons = [
-                document.getElementById('dailyClaim'),
-                document.getElementById('spinBtn'),
-                document.getElementById('scratchBtn')
-            ];
+            const buttons = [ document.getElementById('dailyClaim'), document.getElementById('spinBtn'), document.getElementById('scratchBtn') ];
             if (isTaskCountry) {
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.title = "";
-                });
+                buttons.forEach(btn => { btn.disabled = false; btn.title = ""; });
             } else {
-                buttons.forEach(btn => {
-                    btn.disabled = true;
-                    btn.title = "এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।";
-                });
+                buttons.forEach(btn => { btn.disabled = true; btn.title = "এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।"; });
             }
         }
 
         // Handle Referral for new users
         async function handleReferral(newUserDocRef) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const startParam = urlParams.get('start');
+            const startParam = new URLSearchParams(window.location.search).get('start');
             if (!startParam || !startParam.startsWith('REF_')) return;
-
             const referrerId = startParam.split('REF_')[1];
             if (!referrerId || referrerId === telegramId) return;
-
-            const usersRef = db.collection('users');
-            const query = usersRef.where('telegramId', '==', referrerId).limit(1);
+            const query = db.collection('users').where('telegramId', '==', referrerId).limit(1);
             const snapshot = await query.get();
-
             if (!snapshot.empty) {
                 const referrerDoc = snapshot.docs[0];
-                await referrerDoc.ref.update({
-                    balance: firebase.firestore.FieldValue.increment(config.referReward)
-                });
+                await referrerDoc.ref.update({ balance: firebase.firestore.FieldValue.increment(config.referReward) });
                 await newUserDocRef.update({ referredBy: referrerId });
                 console.log(`User ${telegramId} referred by ${referrerId}. Reward of ${config.referReward} given.`);
-            } else {
-                console.log(`Referrer with ID ${referrerId} not found.`);
-            }
+            } else { console.log(`Referrer with ID ${referrerId} not found.`); }
         }
 
         function setupReferralUI() {
             const referralLink = `${config.botUrl}?start=REF_${telegramId}`;
             const linkInput = document.getElementById('referralLink');
             if(linkInput) linkInput.value = referralLink;
-            
             const rewardAmount = document.getElementById('referRewardAmount');
             if(rewardAmount) rewardAmount.innerText = config.referReward;
-
             const copyButton = document.getElementById('copyReferralLink');
             if (copyButton) {
                 copyButton.onclick = () => {
                     linkInput.select();
-                    linkInput.setSelectionRange(0, 99999); // For mobile devices
-                    navigator.clipboard.writeText(linkInput.value).then(() => {
-                        alert('রেফারেল লিঙ্ক কপি করা হয়েছে!');
-                    }, () => {
-                        alert('কপি করতে ব্যর্থ!');
-                    });
+                    linkInput.setSelectionRange(0, 99999);
+                    navigator.clipboard.writeText(linkInput.value).then(() => alert('রেফারেল লিঙ্ক কপি করা হয়েছে!'), () => alert('কপি করতে ব্যর্থ!'));
                 };
             }
-            if(linkInput){
-                 linkInput.onclick = () => copyButton.click();
-            }
+            if(linkInput) linkInput.onclick = () => copyButton.click();
         }
 
         function updatePointsDisplay() {
@@ -682,28 +565,22 @@
                 auth.onAuthStateChanged(async user => {
                     if (!user) return;
                     userDocRef = db.collection('users').doc(user.uid);
-
                     await loadConfig();
                     await performIpCheck();
-
                     const doc = await userDocRef.get();
                     if (!doc.exists) {
                         await userDocRef.set({
-                            balance: 0, telegramId, username: fullName,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            balance: 0, telegramId, username: fullName, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             lastDailyClaim: null, lastSpin: null, spinCount: 0,
                             lastScratch: null, scratchCount: 0, referredBy: null
                         });
                         await handleReferral(userDocRef);
                     }
-
                     userDocRef.onSnapshot(snap => {
                         if (snap.exists) {
-                            const balance = snap.data().balance || 0;
-                            document.getElementById('balance').innerText = balance;
+                            document.getElementById('balance').innerText = snap.data().balance || 0;
                         }
                     }, err => console.error("Snapshot listener error:", err));
-                    
                     setupReferralUI();
                 });
             });
@@ -718,14 +595,7 @@
                     const d = doc.data();
                     const div = document.createElement('div');
                     div.className = 'payment-method';
-                    div.innerHTML = `
-                        <img class="payment-logo" src="${d.logoUrl}" alt="${d.name}">
-                        <div class="payment-info">
-                            <h4>${d.name}</h4>
-                            <p>লিমিট: ${d.min} - ${d.max} BDT</p>
-                        </div>
-                        <button class="payment-btn" onclick="openWithdraw('${doc.id}')">উইথড্র</button>
-                    `;
+                    div.innerHTML = `<img class="payment-logo" src="${d.logoUrl}" alt="${d.name}"><div class="payment-info"><h4>${d.name}</h4><p>লিমিট: ${d.min} - ${d.max} BDT</p></div><button class="payment-btn" onclick="openWithdraw('${doc.id}')">উইথড্র</button>`;
                     container.appendChild(div);
                 });
             } catch (e) { console.error(e); }
@@ -747,13 +617,7 @@
                     const d = doc.data();
                     const div = document.createElement('div');
                     div.className = 'task-item';
-                    div.innerHTML = `
-                        <h3>${d.name}</h3>
-                        <p>${d.description}</p>
-                        <p>পয়েন্ট: ${d.points} ৳</p>
-                        <p>লিমিট: ${d.limit} /দিন</p>
-                        <button class="task-btn" onclick="completeTask('${doc.id}', '${d.adNetwork}')" ${!isTaskCountry ? 'disabled title="শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।"' : ''}>কমপ্লিট</button>
-                    `;
+                    div.innerHTML = `<h3>${d.name}</h3><p>${d.description}</p><p>পয়েন্ট: ${d.points} ৳</p><p>লিমিট: ${d.limit} /দিন</p><button class="task-btn" onclick="completeTask('${doc.id}', '${d.adNetwork}')" ${!isTaskCountry ? 'disabled title="শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।"' : ''}>কমপ্লিট</button>`;
                     container.appendChild(div);
                 });
             } catch (e) { console.error(e); }
@@ -765,9 +629,8 @@
                 if (adNetwork === 'gigapub') await window.showGiga();
                 else if (adNetwork === 'montage') montage.showAd(config.montageAppId, config.montageAdId);
                 const taskSnap = await db.collection('tasks').doc(taskId).get();
-                const points = taskSnap.data().points;
-                await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(points) });
-                alert(`টাস্ক কমপ্লিট! ${points} ৳ পেয়েছেন`);
+                await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(taskSnap.data().points) });
+                alert(`টাস্ক কমপ্লিট! ${taskSnap.data().points} ৳ পেয়েছেন`);
             } catch (e) { alert('টাস্ক ফেল: ' + e.message); }
         }
 
@@ -777,10 +640,7 @@
             const today = new Date().toDateString();
             let spinCount = snap.data().spinCount || 0;
             const lastSpin = snap.data().lastSpin ? snap.data().lastSpin.toDate().toDateString() : '';
-            if (lastSpin !== today) {
-                spinCount = 0;
-                await userDocRef.update({ spinCount: 0 });
-            }
+            if (lastSpin !== today) { spinCount = 0; await userDocRef.update({ spinCount: 0 }); }
             document.getElementById('spinLimit').innerText = `${config.dailySpinLimit - spinCount} / ${config.dailySpinLimit} স্পিন বাকি`;
             return config.dailySpinLimit - spinCount;
         }
@@ -791,8 +651,7 @@
             if (remaining <= 0) return alert('আজকের স্পিন লিমিট শেষ!');
             const wheel = document.getElementById('wheel');
             wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-            const deg = 360 * 6 + Math.random() * 360;
-            wheel.style.transform = `rotate(${deg}deg)`;
+            wheel.style.transform = `rotate(${360 * 6 + Math.random() * 360}deg)`;
             setTimeout(async () => {
                 try {
                     await window.showGiga();
@@ -815,59 +674,44 @@
             const canvas = document.getElementById('scratchCanvas');
             const ctx = canvas.getContext('2d');
             const cardElement = document.getElementById('scratchCard');
-            canvas.width = cardElement.clientWidth;
-            canvas.height = cardElement.clientHeight;
-
+            canvas.width = cardElement.clientWidth; canvas.height = cardElement.clientHeight;
             ctx.fillStyle = '#999'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.font = `bold ${canvas.width / 14}px Arial`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
             ctx.fillText('স্ক্র্যাচ করুন', canvas.width / 2, canvas.height / 2);
-            
             scratched = false;
             cardElement.style.transform = 'rotateY(0deg)';
-
             let isDrawing = false;
             const startDraw = () => isDrawing = true;
             const stopDraw = () => { isDrawing = false; checkScratched(); };
             const draw = (e) => {
-                e.preventDefault();
-                if (!isDrawing) return;
+                e.preventDefault(); if (!isDrawing) return;
                 const rect = canvas.getBoundingClientRect();
                 const x = (e.clientX || e.touches[0].clientX) - rect.left;
                 const y = (e.clientY || e.touches[0].clientY) - rect.top;
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2); ctx.fill();
             };
-
             ['mousedown', 'touchstart'].forEach(evt => canvas.addEventListener(evt, startDraw));
             ['mouseup', 'touchend'].forEach(evt => canvas.addEventListener(evt, stopDraw));
             ['mousemove', 'touchmove'].forEach(evt => canvas.addEventListener(evt, draw));
-            
             function checkScratched() {
                 const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
                 let transparent = 0;
-                for (let i = 3; i < data.length; i += 4) {
-                    if (data[i] === 0) transparent++;
-                }
-                if (transparent / (canvas.width * canvas.height) > 0.5 && !scratched) { // Scratched over 50%
-                    scratched = true;
-                    cardElement.style.transform = 'rotateY(180deg)';
+                for (let i = 3; i < data.length; i += 4) if (data[i] === 0) transparent++;
+                if (transparent / (canvas.width * canvas.height) > 0.5 && !scratched) {
+                    scratched = true; cardElement.style.transform = 'rotateY(180deg)';
                 }
             }
         }
-
         async function loadScratchLimit() {
             const snap = await userDocRef.get();
             const today = new Date().toDateString();
             let scratchCount = snap.data().scratchCount || 0;
             const lastScratch = snap.data().lastScratch ? snap.data().lastScratch.toDate().toDateString() : '';
-            if (lastScratch !== today) {
-                scratchCount = 0;
-                await userDocRef.update({ scratchCount: 0 });
-            }
+            if (lastScratch !== today) { scratchCount = 0; await userDocRef.update({ scratchCount: 0 }); }
             document.getElementById('scratchLimit').innerText = `${config.dailyScratchLimit - scratchCount} / ${config.dailyScratchLimit} স্ক্র্যাচ বাকি`;
             return config.dailyScratchLimit - scratchCount;
         }
-
         document.getElementById('claimScratch').onclick = async () => {
             if (!isTaskCountry) return alert('এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।');
             if (!scratched) return alert('প্রথমে স্ক্র্যাচ করুন!');
@@ -881,8 +725,7 @@
                     scratchCount: firebase.firestore.FieldValue.increment(1)
                 });
                 alert(`স্ক্র্যাচ রিওয়ার্ড! ${config.scratchReward} ৳ পেয়েছেন`);
-                loadScratchLimit();
-                initScratchCard();
+                loadScratchLimit(); initScratchCard();
             } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
         };
 
@@ -934,47 +777,34 @@
             const container = document.getElementById('historyList');
             container.innerHTML = '<p>লোড হচ্ছে...</p>';
             try {
-                const snap = await db.collection('withdrawals')
-                    .where('userUid', '==', auth.currentUser.uid)
-                    .orderBy('requestedAt', 'desc').get();
-                if (snap.empty) {
-                    container.innerHTML = '<p style="color:#aaa;text-align:center;">কোনো হিস্ট্রি নেই</p>';
-                    return;
-                }
+                const snap = await db.collection('withdrawals').where('userUid', '==', auth.currentUser.uid).orderBy('requestedAt', 'desc').get();
+                if (snap.empty) { container.innerHTML = '<p style="color:#aaa;text-align:center;">কোনো হিস্ট্রি নেই</p>'; return; }
                 container.innerHTML = '';
                 snap.forEach(doc => {
                     const d = doc.data();
                     const div = document.createElement('div');
                     div.className = 'history-item';
-                    div.innerHTML = `
-                        <div><strong>পরিমাণ:</strong> ৳ ${d.amount}</div>
-                        <div><strong>নম্বর:</strong> ${d.details}</div>
-                        <div><strong>তারিখ:</strong> ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</div>
-                        <div><strong>স্ট্যাটাস:</strong> <span class="status-${d.status}">${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span></div>
-                    `;
+                    div.innerHTML = `<div><strong>পরিমাণ:</strong> ৳ ${d.amount}</div><div><strong>নম্বর:</strong> ${d.details}</div><div><strong>তারিখ:</strong> ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</div><div><strong>স্ট্যাটাস:</strong> <span class="status-${d.status}">${d.status === 'pending' ? 'পেন্ডিং' : d.status === 'paid' ? 'পেইড' : 'রিজেক্ট'}</span></div>`;
                     container.appendChild(div);
                 });
-            } catch (e) {
-                container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড করতে সমস্যা হচ্ছে</p>';
-            }
+            } catch (e) { container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড করতে সমস্যা হচ্ছে</p>'; }
         }
 
         // Event Listeners
         document.getElementById('dailyClaim').addEventListener('click', claimDaily);
         document.getElementById('spinBtn').addEventListener('click', () => {
             if (document.getElementById('spinBtn').disabled) return;
+            navItems.forEach(n => n.classList.remove('active'));
             screens.forEach(s => s.classList.remove('active'));
             document.getElementById('spin').classList.add('active');
-            navItems.forEach(n => n.classList.remove('active'));
             loadSpinLimit();
         });
         document.getElementById('scratchBtn').addEventListener('click', () => {
             if (document.getElementById('scratchBtn').disabled) return;
+            navItems.forEach(n => n.classList.remove('active'));
             screens.forEach(s => s.classList.remove('active'));
             document.getElementById('scratch').classList.add('active');
-            navItems.forEach(n => n.classList.remove('active'));
-            loadScratchLimit();
-            initScratchCard();
+            loadScratchLimit(); initScratchCard();
         });
     </script>
 </body>
