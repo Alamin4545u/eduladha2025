@@ -797,14 +797,13 @@
 
             const referrerId = startParam.split('REF_')[1];
             if (!referrerId || referrerId === telegramId) return;
+            
+            // (+) More efficient way to get referrer doc
+            const referrerDocRef = db.collection('users').doc(referrerId);
+            const referrerDoc = await referrerDocRef.get();
 
-            const usersRef = db.collection('users');
-            const query = usersRef.where('telegramId', '==', referrerId).limit(1);
-            const snapshot = await query.get();
-
-            if (!snapshot.empty) {
-                const referrerDoc = snapshot.docs[0];
-                await referrerDoc.ref.update({
+            if (referrerDoc.exists) {
+                await referrerDocRef.update({
                     balance: firebase.firestore.FieldValue.increment(config.referReward)
                 });
                 await newUserDocRef.update({ referredBy: referrerId });
@@ -852,7 +851,9 @@
             .then(() => {
                 auth.onAuthStateChanged(async user => {
                     if (!user) return;
-                    userDocRef = db.collection('users').doc(user.uid);
+                    
+                    // (+) BUG FIX: Use Telegram ID as the unique document ID
+                    userDocRef = db.collection('users').doc(telegramId);
 
                     await loadConfig();
                     await performIpCheck();
@@ -860,12 +861,24 @@
                     const doc = await userDocRef.get();
                     if (!doc.exists) {
                         await userDocRef.set({
-                            balance: 0, telegramId, username: fullName,
+                            telegramId: telegramId, // Storing telegramId explicitly
+                            authUid: user.uid, // Storing the anonymous auth UID for security rules
+                            username: fullName,
+                            balance: 0,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lastDailyClaim: null, lastSpin: null, spinCount: 0,
-                            lastScratch: null, scratchCount: 0, referredBy: null
+                            lastDailyClaim: null,
+                            lastSpin: null,
+                            spinCount: 0,
+                            lastScratch: null,
+                            scratchCount: 0,
+                            referredBy: null
                         });
                         await handleReferral(userDocRef);
+                    } else {
+                        // (+) Update authUid if it has changed (e.g., user cleared cache)
+                        if (doc.data().authUid !== user.uid) {
+                            await userDocRef.update({ authUid: user.uid });
+                        }
                     }
 
                     userDocRef.onSnapshot(snap => {
@@ -878,6 +891,7 @@
                     setupReferralUI();
                 });
             });
+
 
         // Load Payment Methods
         async function loadPaymentMethods() {
@@ -1088,8 +1102,13 @@
                 const snap = await userDocRef.get();
                 if (snap.data().balance < amount) return alert('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই');
                 await db.collection('withdrawals').add({
-                    userUid: auth.currentUser.uid, telegramId, username: fullName, amount, details,
-                    status: 'pending', requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    userUid: auth.currentUser.uid,
+                    telegramId: telegramId,
+                    username: fullName,
+                    amount: amount,
+                    details: details,
+                    status: 'pending',
+                    requestedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(-amount) });
                 alert('উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!');
@@ -1104,6 +1123,7 @@
             const container = document.getElementById('historyList');
             container.innerHTML = '<p>লোড হচ্ছে...</p>';
             try {
+                // (+) Query remains the same, as it's secured by rules via userUid
                 const snap = await db.collection('withdrawals')
                     .where('userUid', '==', auth.currentUser.uid)
                     .orderBy('requestedAt', 'desc').get();
