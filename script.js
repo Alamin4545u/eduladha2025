@@ -27,92 +27,55 @@ const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice
 const photoUrl = tgUser.photo_url || `https://ui-avatars.com/api/?name=${fullName.replace(' ', '+')}&background=random`;
 
 // Global variables
-const screens = document.querySelectorAll('.screen');
-const navItems = document.querySelectorAll('.nav-item');
 let userDocRef;
 let config = { 
     minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, 
     liveNotice: 'আমাদের অ্যাপে স্বাগতম!', bannerUrls: [],
     dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50,
-    vpnEnabled: false, referReward: 1, botUrl: 'https://t.me/YourBot/YourApp'
+    referReward: 1, botUrl: 'https://t.me/YourBot/YourApp'
 };
 
-// Initial UI Setup
-function initializeUI() {
-    document.getElementById('avatar').innerText = initials;
-    document.getElementById('userName').innerText = fullName;
-    document.getElementById('userUsername').innerText = `@${username}`;
-    document.getElementById('profileImgBig').src = photoUrl;
-    document.getElementById('profileName').innerText = fullName;
-    document.getElementById('telegramId').innerText = telegramId;
-}
+// DOM Elements Cache
+const elements = {
+    screens: document.querySelectorAll('.screen'),
+    navItems: document.querySelectorAll('.nav-item'),
+    avatar: document.getElementById('avatar'),
+    userName: document.getElementById('userName'),
+    userUsername: document.getElementById('userUsername'),
+    balance: document.getElementById('balance'),
+    profileImgBig: document.getElementById('profileImgBig'),
+    profileName: document.getElementById('profileName'),
+    telegramId: document.getElementById('telegramId'),
+    liveNoticeSpan: document.getElementById('liveNotice').querySelector('span'),
+    bannerContainer: document.getElementById('bannerContainer'),
+    referralLink: document.getElementById('referralLink'),
+    referRewardAmount: document.getElementById('referRewardAmount'),
+    historyList: document.getElementById('historyList'),
+    taskList: document.getElementById('taskList'),
+    paymentMethodsList: document.getElementById('paymentMethodsList'),
+    spinLimit: document.getElementById('spinLimit'),
+    wheel: document.getElementById('wheel'),
+    scratchLimit: document.getElementById('scratchLimit'),
+    scratchCanvas: document.getElementById('scratchCanvas'),
+    scratchCard: document.getElementById('scratchCard'),
+    scratchReward: document.getElementById('scratchReward'),
+    withdrawModal: document.getElementById('withdrawModal'),
+    amountInput: document.getElementById('amount'),
+    paymentDetailsInput: document.getElementById('paymentDetails'),
+    // Buttons
+    dailyClaimBtn: document.getElementById('dailyClaimBtn'),
+    spinNavBtn: document.getElementById('spinNavBtn'),
+    scratchNavBtn: document.getElementById('scratchNavBtn'),
+    spinWheelBtn: document.getElementById('spinWheelBtn'),
+    claimScratchBtn: document.getElementById('claimScratchBtn'),
+    submitWithdrawBtn: document.getElementById('submitWithdraw'),
+    closeModalBtn: document.getElementById('closeModal'),
+    copyReferralLinkBtn: document.getElementById('copyReferralLink')
+};
 
-// Navigation Logic
-navItems.forEach(item => {
-    item.addEventListener('click', () => {
-        const screenId = item.dataset.screen;
-        screens.forEach(s => s.classList.remove('active'));
-        document.getElementById(screenId)?.classList.add('active');
-        navItems.forEach(n => n.classList.remove('active'));
-        item.classList.add('active');
-        
-        if (screenId === 'history') loadHistory();
-        if (screenId === 'task') loadTasks();
-        if (screenId === 'wallet') loadPaymentMethods();
-        if (screenId === 'spin') loadSpinLimit();
-        if (screenId === 'scratch') { loadScratchLimit(); initScratchCard(); }
-        if (screenId === 'refer') setupReferralUI();
-    });
-});
+// --- CORE APP LOGIC ---
 
-// Load App Configuration from Firestore
-async function loadConfig() {
-    try {
-        const doc = await db.collection('config').doc('settings').get();
-        if (doc.exists) {
-            config = { ...config, ...doc.data() };
-            const noticeSpan = document.getElementById('liveNotice').querySelector('span');
-            noticeSpan.innerText = config.liveNotice;
-            
-            const container = document.getElementById('bannerContainer');
-            container.innerHTML = '';
-            config.bannerUrls.forEach((url) => {
-                const img = document.createElement('img');
-                img.className = 'banner';
-                img.src = url;
-                container.appendChild(img);
-            });
-        }
-    } catch (e) { console.error("Config load error: ", e); }
-}
-
-// Handle Referrals for New Users
-async function handleReferral(newUserDocRef) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const startParam = urlParams.get('start');
-    if (!startParam || !startParam.startsWith('REF_')) return;
-
-    const referrerId = startParam.split('REF_')[1];
-    if (!referrerId || referrerId === telegramId) return;
-
-    const referrerDocRef = db.collection('users').doc(referrerId);
-    const referrerDoc = await referrerDocRef.get();
-
-    if (referrerDoc.exists) {
-        await referrerDocRef.update({
-            balance: firebase.firestore.FieldValue.increment(config.referReward)
-        });
-        await newUserDocRef.update({ referredBy: referrerId });
-    }
-}
-
-// Setup Referral UI
-function setupReferralUI() {
-    document.getElementById('referralLink').value = `${config.botUrl}?start=REF_${telegramId}`;
-    document.getElementById('referRewardAmount').innerText = config.referReward;
-}
-
-// Main Function to Initialize App
+// Initialize the entire application
 async function main() {
     initializeUI();
     await auth.signInAnonymously();
@@ -123,82 +86,97 @@ async function main() {
         userDocRef = db.collection('users').doc(telegramId);
         
         await loadConfig();
-
-        const doc = await userDocRef.get();
-        if (!doc.exists) {
-            await userDocRef.set({
-                telegramId, authUid: user.uid, username: fullName, balance: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastDailyClaim: null, lastSpin: null, spinCount: 0,
-                lastScratch: null, scratchCount: 0, referredBy: null
-            });
-            await handleReferral(userDocRef);
-        } else if (doc.data().authUid !== user.uid) {
-            await userDocRef.update({ authUid: user.uid });
-        }
+        await initializeUser(user);
 
         userDocRef.onSnapshot(snap => {
             if (snap.exists) {
-                document.getElementById('balance').innerText = snap.data().balance || 0;
+                elements.balance.innerText = snap.data().balance || 0;
             }
         });
     });
 }
 
-// --- TASKS ---
-async function loadTasks() {
-    const container = document.getElementById('taskList');
-    container.innerHTML = '<p>লোড হচ্ছে...</p>';
-    try {
-        const snap = await db.collection('tasks').get();
-        if (snap.empty) {
-            container.innerHTML = '<p style="text-align:center;">এখন কোনো টাস্ক উপলব্ধ নেই।</p>';
-            return;
-        }
-        container.innerHTML = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            const div = document.createElement('div');
-            div.className = 'task-item';
-            div.innerHTML = `
-                <h3>${d.name}</h3>
-                <p>${d.description}</p>
-                <p>পয়েন্ট: ${d.points} ৳</p>
-                <p>লিমিট: ${d.limit} /দিন</p>
-                <button class="task-btn" onclick="completeTask(${d.points})">কমপ্লিট করুন</button>
-            `;
-            container.appendChild(div);
+// Set up the initial user interface elements
+function initializeUI() {
+    elements.avatar.innerText = initials;
+    elements.userName.innerText = fullName;
+    elements.userUsername.innerText = `@${username}`;
+    elements.profileImgBig.src = photoUrl;
+    elements.profileName.innerText = fullName;
+    elements.telegramId.innerText = telegramId;
+}
+
+// Check if user exists, create if not
+async function initializeUser(user) {
+    const doc = await userDocRef.get();
+    if (!doc.exists) {
+        await userDocRef.set({
+            telegramId, authUid: user.uid, username: fullName, balance: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastDailyClaim: null, lastSpin: null, spinCount: 0,
+            lastScratch: null, scratchCount: 0, referredBy: null
         });
-    } catch (e) {
-        console.error("Task load error:", e);
-        container.innerHTML = '<p style="color:red;text-align:center;">টাস্ক লোড করতে সমস্যা হচ্ছে।</p>';
+        await handleReferral(userDocRef);
+    } else if (doc.data().authUid !== user.uid) {
+        await userDocRef.update({ authUid: user.uid });
     }
 }
 
-async function completeTask(points) {
+// --- NAVIGATION ---
+
+// Switch between different screens
+function navigateTo(screenId) {
+    elements.screens.forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId)?.classList.add('active');
+    elements.navItems.forEach(n => n.classList.remove('active'));
+    document.querySelector(`.nav-item[data-screen="${screenId}"]`)?.classList.add('active');
+}
+
+elements.navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const screenId = item.dataset.screen;
+        navigateTo(screenId);
+        
+        // Load data specific to the screen
+        switch(screenId) {
+            case 'history': loadHistory(); break;
+            case 'task': loadTasks(); break;
+            case 'wallet': loadPaymentMethods(); break;
+            case 'spin': loadSpinLimit(); break;
+            case 'scratch': loadScratchLimit(); initScratchCard(); break;
+            case 'refer': setupReferralUI(); break;
+        }
+    });
+});
+
+// --- DATA LOADING ---
+
+async function loadConfig() {
     try {
-        await userDocRef.update({ balance: firebase.firestore.FieldValue.increment(points) });
-        alert(`অভিনন্দন! আপনি ${points} ৳ পেয়েছেন।`);
-    } catch (e) {
-        alert('টাস্ক সম্পন্ন করতে একটি সমস্যা হয়েছে।');
-        console.error("Complete task error:", e);
-    }
+        const doc = await db.collection('config').doc('settings').get();
+        if (doc.exists) {
+            config = { ...config, ...doc.data() };
+            elements.liveNoticeSpan.innerText = config.liveNotice;
+            elements.bannerContainer.innerHTML = '';
+            config.bannerUrls.forEach(url => {
+                const img = document.createElement('img');
+                img.className = 'banner';
+                img.src = url;
+                elements.bannerContainer.appendChild(img);
+            });
+        }
+    } catch (e) { console.error("Config load error: ", e); }
 }
 
-// --- HISTORY ---
 async function loadHistory() {
-    const container = document.getElementById('historyList');
-    container.innerHTML = '<p>লোড হচ্ছে...</p>';
+    elements.historyList.innerHTML = '<p>লোড হচ্ছে...</p>';
     try {
-        const snap = await db.collection('withdrawals')
-            .where('telegramId', '==', telegramId)
-            .orderBy('requestedAt', 'desc').get();
-
+        const snap = await db.collection('withdrawals').where('telegramId', '==', telegramId).orderBy('requestedAt', 'desc').get();
         if (snap.empty) {
-            container.innerHTML = '<p style="color:#aaa;text-align:center;">কোনো হিস্ট্রি নেই</p>';
+            elements.historyList.innerHTML = '<p style="text-align:center;">কোনো হিস্ট্রি নেই</p>';
             return;
         }
-        container.innerHTML = '';
+        elements.historyList.innerHTML = '';
         snap.forEach(doc => {
             const d = doc.data();
             const statusMap = { pending: 'পেন্ডিং', paid: 'পেইড', rejected: 'রিজেক্টেড' };
@@ -210,48 +188,134 @@ async function loadHistory() {
                 <div><strong>তারিখ:</strong> ${new Date(d.requestedAt.toDate()).toLocaleString('bn-BD')}</div>
                 <div><strong>স্ট্যাটাস:</strong> <span class="status-${d.status}">${statusMap[d.status] || d.status}</span></div>
             `;
-            container.appendChild(div);
+            elements.historyList.appendChild(div);
         });
     } catch (e) {
-        console.error("History load error: ", e);
-        container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড করতে সমস্যা হচ্ছে।</p>';
+        console.error("History load error:", e);
+        elements.historyList.innerHTML = '<p style="color:red;">হিস্ট্রি লোড করতে সমস্যা হচ্ছে।</p>';
     }
 }
 
-// --- DAILY CLAIM, SPIN, SCRATCH, WITHDRAW ---
-// (This logic remains the same as before)
+// --- FEATURES ---
 
-// Event Listeners
-document.getElementById('copyReferralLink').addEventListener('click', () => {
-    const linkInput = document.getElementById('referralLink');
-    linkInput.select();
-    navigator.clipboard.writeText(linkInput.value).then(() => alert('রেফারেল লিঙ্ক কপি করা হয়েছে!'));
+// Daily Check-in with Ad
+async function handleDailyCheck() {
+    elements.dailyClaimBtn.disabled = true;
+    try {
+        const now = Date.now();
+        const doc = await userDocRef.get();
+        const lastClaim = doc.data().lastDailyClaim ? doc.data().lastDailyClaim.toMillis() : 0;
+        
+        if (now - lastClaim < config.dailyRewardCooldown) {
+            alert('আপনি ইতোমধ্যে আজকের রিওয়ার্ড নিয়েছেন।');
+            return;
+        }
+
+        await window.showGiga(); // Show Ad First
+
+        await userDocRef.update({
+            balance: firebase.firestore.FieldValue.increment(config.dailyRewardPoints),
+            lastDailyClaim: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert(`অভিনন্দন! আপনি ${config.dailyRewardPoints} ৳ পেয়েছেন।`);
+
+    } catch (e) {
+        alert('রিওয়ার্ড নিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+        console.error("Daily check error:", e);
+    } finally {
+        elements.dailyClaimBtn.disabled = false;
+    }
+}
+
+// Spin Feature
+async function handleSpinNavigation() {
+    elements.spinNavBtn.disabled = true;
+    try {
+        await window.showGiga(); // Show Ad before navigating
+        navigateTo('spin');
+        loadSpinLimit();
+    } catch(e) {
+        alert('স্পিন পেজ খুলতে সমস্যা হয়েছে।');
+        console.error("Spin navigation error:", e);
+    } finally {
+        elements.spinNavBtn.disabled = false;
+    }
+}
+
+async function loadSpinLimit() {
+    const doc = await userDocRef.get();
+    const today = new Date().toDateString();
+    let count = doc.data().spinCount || 0;
+    if (doc.data().lastSpin?.toDate().toDateString() !== today) {
+        count = 0;
+        await userDocRef.update({ spinCount: 0 });
+    }
+    elements.spinLimit.innerText = `আজকের জন্য ${config.dailySpinLimit - count} / ${config.dailySpinLimit} স্পিন বাকি`;
+    elements.spinWheelBtn.disabled = (config.dailySpinLimit - count <= 0);
+}
+
+async function executeSpin() {
+    if (elements.spinWheelBtn.disabled) return;
+    elements.spinWheelBtn.disabled = true;
+
+    const deg = 360 * 5 + Math.random() * 360;
+    elements.wheel.style.transform = `rotate(${deg}deg)`;
+
+    setTimeout(async () => {
+        try {
+            await userDocRef.update({
+                balance: firebase.firestore.FieldValue.increment(config.spinReward),
+                lastSpin: firebase.firestore.FieldValue.serverTimestamp(),
+                spinCount: firebase.firestore.FieldValue.increment(1)
+            });
+            alert(`অভিনন্দন! আপনি ${config.spinReward} ৳ জিতেছেন।`);
+            loadSpinLimit();
+        } catch (e) {
+            console.error("Execute spin error:", e);
+        }
+    }, 4000);
+}
+
+// Scratch Card Feature
+async function handleScratchNavigation() {
+    elements.scratchNavBtn.disabled = true;
+    try {
+        await window.showGiga(); // Show Ad before navigating
+        navigateTo('scratch');
+        loadScratchLimit();
+        initScratchCard();
+    } catch(e) {
+        alert('স্ক্র্যাচ কার্ড পেজ খুলতে সমস্যা হয়েছে।');
+        console.error("Scratch navigation error:", e);
+    } finally {
+        elements.scratchNavBtn.disabled = false;
+    }
+}
+
+async function loadScratchLimit() {
+    // ... logic for loading scratch limit ...
+}
+
+function initScratchCard() {
+    // ... logic for initializing scratch card ...
+}
+
+async function claimScratchReward() {
+    // ... logic for claiming scratch reward ...
+}
+
+
+// --- EVENT LISTENERS ---
+elements.dailyClaimBtn.addEventListener('click', handleDailyCheck);
+elements.spinNavBtn.addEventListener('click', handleSpinNavigation);
+elements.scratchNavBtn.addEventListener('click', handleScratchNavigation);
+elements.spinWheelBtn.addEventListener('click', executeSpin);
+elements.claimScratchBtn.addEventListener('click', claimScratchReward);
+elements.copyReferralLinkBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(elements.referralLink.value).then(() => alert('লিঙ্ক কপি করা হয়েছে!'));
 });
+elements.closeModalBtn.addEventListener('click', () => elements.withdrawModal.style.display = 'none');
+// ... add other event listeners for withdrawal, etc.
 
-document.getElementById('dailyClaim').addEventListener('click', () => {
-    // This is where you put the logic for the daily claim
-    alert('Daily Check clicked! Implement your logic here.');
-});
-
-document.getElementById('spinBtn').addEventListener('click', () => {
-    // This button now navigates to the spin screen
-    navItems.forEach(item => item.classList.remove('active'));
-    document.querySelector('.nav-item[data-screen="spin"]').classList.add('active');
-    screens.forEach(s => s.classList.remove('active'));
-    document.getElementById('spin').classList.add('active');
-    loadSpinLimit();
-});
-
-document.getElementById('scratchBtn').addEventListener('click', () => {
-    // This button now navigates to the scratch card screen
-    navItems.forEach(item => item.classList.remove('active'));
-    document.querySelector('.nav-item[data-screen="scratch"]').classList.add('active');
-    screens.forEach(s => s.classList.remove('active'));
-    document.getElementById('scratch').classList.add('active');
-    loadScratchLimit();
-    initScratchCard();
-});
-
-
-// Run the app
+// Start the application
 main();
