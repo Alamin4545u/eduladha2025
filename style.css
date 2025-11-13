@@ -11,12 +11,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .header-wallet { text-align: right; }
 .header-wallet p { margin: 0; font-size: 12px; color: var(--text-secondary); }
 .header-wallet .balance-amount { font-size: 18px; font-weight: 600; color: var(--balance-color); }
-
 .content-container { padding: 20px; height: 100%; overflow: hidden; box-sizing: border-box; display: flex; }
 .screen { display: none; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; height: 100%; overflow: hidden; }
 .screen.active { display: flex; }
 .screen h2 { margin-top: 0; color: var(--accent-color); text-align: center; margin-bottom: 20px; flex-shrink: 0; }
-
 .home-actions { display: flex; justify-content: flex-start; align-items: center; width: 100%; margin-top: 20px; gap: 15px; flex-wrap: wrap; }
 .icon-btn { background: linear-gradient(145deg, #2a2a2a, #1e1e1e); border: 1px solid var(--border-color); box-shadow: 3px 3px 6px #1c1c1c, -3px -3px 6px #262626; color: var(--text-primary); width: 80px; height: 80px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.2s ease-in-out; padding: 5px; box-sizing: border-box; }
 .icon-btn:hover { background: linear-gradient(145deg, #1e1e1e, #2a2a2a); }
@@ -24,7 +22,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .icon-btn .icon { width: 32px; height: 32px; margin-bottom: 5px; fill: var(--accent-color); }
 .icon-btn span { font-size: 12px; font-weight: 500; }
 .icon-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
 .screen#spin-screen { position: relative; justify-content: flex-start; overflow-y: auto; }
 .back-btn { background: #313f51; border: none; color: var(--text-primary); font-size: 14px; cursor: pointer; z-index: 5; padding: 8px 12px; border-radius: 20px; display: flex; align-items: center; gap: 5px; position: absolute; top: 0; left: 0; }
 .back-btn span { font-size: 20px; line-height: 1; }
@@ -38,7 +35,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 #spinTriggerBtn:disabled { cursor: not-allowed; background: #bdbdbd; }
 #spin-info { font-size: 16px; margin-top: 15px; color: var(--text-secondary); font-weight: 500; }
 #spin-info span { color: var(--text-primary); font-weight: bold; }
-
 .scrollable-content { overflow-y: auto; width: 100%; flex-grow: 1; padding-top: 10px; }
 #task-list { width: 100%; display: flex; flex-direction: column; gap: 15px; }
 .task-item { background-color: var(--tertiary-bg); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-color); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
@@ -48,12 +44,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .task-description { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .task-item.completed { opacity: 0.6; cursor: not-allowed; border-left-color: var(--success-color); }
 .task-item.completed::after { content: '✔'; position: absolute; top: 10px; right: 15px; font-size: 24px; color: var(--success-color); }
-
-/* === কুইজ স্ক্রিনের ফাইনাল আপডেট === */
-.screen#quiz-screen {
-    position: relative;
-    justify-content: center; /* কন্টেন্টকে উল্লম্বভাবে মাঝখানে আনে */
-}
+.screen#quiz-screen { position: relative; justify-content: center; }
 .quiz-info { text-align: center; margin-bottom: 15px; width: 100%; }
 .quiz-info p { margin: 4px 0; font-size: 14px; color: var(--text-secondary); }
 .quiz-progress-bar { width: 100%; background-color: var(--secondary-bg); border-radius: 5px; height: 10px; margin-top: 8px; overflow: hidden; }
@@ -66,7 +57,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .quiz-option.selected { border-color: var(--accent-color); background-color: #4a5a6e; }
 .quiz-option.correct { border-color: var(--success-color); background-color: rgba(46, 204, 113, 0.2); }
 .quiz-option.wrong { border-color: var(--danger-color); background-color: rgba(231, 76, 60, 0.2); }
-
 .action-btn { width: 100%; padding: 15px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; color: white; background-color: var(--accent-color); margin-bottom: 15px; transition: background-color 0.3s; }
 .action-btn:disabled { background-color: #4a5a6e; cursor: not-allowed; opacity: 0.7; }
 .wallet-box, .form-group, .refer-box { text-align: left; margin-bottom: 20px; width: 100%; }
