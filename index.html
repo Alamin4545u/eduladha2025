@@ -2,144 +2,37 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>এ্যাড দেখে টাকা ইনকাম করুন</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
-    <script src="https://montage-ads.com/sdk.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Ad App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- Screens -->
-    <div id="home" class="screen active">
-        <div class="home-header">
-            <div class="avatar" id="avatar"></div>
-            <div class="user-info">
-                <div class="user-name" id="userName"></div>
-                <div class="user-username" id="userUsername"></div>
-            </div>
-            <div class="user-balance">
-                <div class="balance-label">আপনার ব্যালেন্স</div>
-                ৳ <span id="balance">0</span>
-            </div>
+    <div class="container">
+        <h1>বিজ্ঞাপন দেখে আয় করুন</h1>
+        <div class="wallet">
+            <p>আপনার ব্যালেন্স:</p>
+            <h2 id="balance">লোড হচ্ছে...</h2>
         </div>
-        <div class="banner-container" id="bannerContainer">
-            <!-- Dynamic banners from config -->
+        <div class="user-info">
+            <p>ব্যবহারকারী আইডি: <span id="userId">...</span></p>
         </div>
-        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
-        <div class="reward-buttons">
-            <button class="reward-btn" data-screen="daily" id="dailyClaim" disabled>
-                <i class="fas fa-calendar-check"></i> 
-                ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)
-            </button>
-            <button class="reward-btn" data-screen="spin" id="spinBtn" disabled>
-                <i class="fas fa-sync"></i> 
-                স্পিন (+<span id="spinPoints">100</span>)
-            </button>
-            <button class="reward-btn" data-screen="scratch" id="scratchBtn" disabled>
-                <i class="fas fa-ticket"></i> 
-                স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)
-            </button>
-        </div>
+        <button id="showAdBtn" class="action-btn">বিজ্ঞাপন দেখুন</button>
+        <button id="withdrawBtn" class="action-btn secondary">উইথড্র করুন</button>
+        <p class="footer">GigaPub দ্বারা বিজ্ঞাপন চালিত</p>
     </div>
 
-    <div id="wallet" class="screen">
-        <div class="wallet-header">
-            <h3>উইথড্র</h3>
-            <p>আপনি যেকোনো সময় আপনার আর্নিং উইথড্র করতে পারেন</p>
-            <i class="fas fa-money-bill-wave wallet-icon"></i>
-        </div>
-        <div id="paymentMethodsList">
-            <!-- Dynamic payment methods -->
-        </div>
-        <p style="text-align:center; color:#aaa; margin-top:20px;">১ ৳ = ১ টাকা</p>
-    </div>
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <div id="history" class="screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">উইথড্র হিস্ট্রি</h2>
-        <div id="historyList">কোনো হিস্ট্রি নেই</div>
-    </div>
+    <!-- Gigapub Ad Script -->
+    <!-- এখানে আপনার Gigapub এর দেওয়া স্ক্রিপ্টটি বসান -->
+    <script src="https://ad.gigapub.tech/script?id=YOUR_GIGAPUB_ID"></script>
 
-    <div id="task" class="screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
-        <div class="task-list" id="taskList">
-            <!-- Dynamic tasks -->
-        </div>
-    </div>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    <div id="refer" class="screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">বন্ধুদের রেফার করুন</h2>
-        <div style="padding: 20px; text-align: center; max-width: 400px; margin: auto;">
-            <i class="fas fa-users" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
-            <p style="color: #ccc; margin-bottom: 20px;">আপনার বন্ধুদের রেফার করে প্রতি রেফারে ৳<span id="referRewardAmount">1</span> ইনকাম করুন। আপনার বন্ধু আপনার লিঙ্কে ক্লিক করে অ্যাপে আসলেই আপনি পুরস্কার পাবেন!</p>
-            <input type="text" id="referralLink" readonly style="margin-top: 20px; text-align: center; background-color: rgba(255,255,255,0.05); cursor: pointer;">
-            <button id="copyReferralLink" class="action-btn" style="background:linear-gradient(45deg,#2196f3,#673ab7);"><i class="fas fa-copy"></i> লিঙ্ক কপি করুন</button>
-        </div>
-    </div>
-
-    <div id="profile" class="screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary);">প্রোফাইল</h2>
-        <div style="text-align:center;">
-            <img id="profileImgBig" class="profile-img" style="width:100px;height:100px;border-radius:50%;box-shadow:0 0 20px rgba(76,175,80,0.6);" src="" alt="">
-            <p style="margin:15px 0; font-size:18px;" id="profileName"></p>
-            <p style="color:#aaa;">Telegram ID: <span id="telegramId"></span></p>
-        </div>
-    </div>
-
-    <!-- 3D Withdraw Modal -->
-    <div class="modal" id="withdrawModal">
-        <div class="modal-content">
-            <h2 style="text-align:center; color:gold; margin-bottom:20px;"><i class="fas fa-coins"></i> উইথড্র রিকোয়েস্ট</h2>
-            <input id="amount" type="number" placeholder="ন্যূনতম 500 ৳">
-            <input id="paymentDetails" type="text" placeholder="bKash/Nagad/Rocket নম্বর">
-            <button class="action-btn" id="submitWithdraw" style="background:linear-gradient(45deg,#4caf50,#66bb6a);"><i class="fas fa-paper-plane"></i> সাবমিট করুন</button>
-            <button class="action-btn btn-close" id="closeModal"><i class="fas fa-times"></i> বন্ধ করুন</button>
-        </div>
-    </div>
-
-    <!-- 3D Spin Screen -->
-    <div id="spin" class="screen spin-screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary); text-shadow: 0 0 12px rgba(76,175,80,0.6);">স্পিন করে জিতুন</h2>
-        <p class="spin-limit" id="spinLimit">লোড হচ্ছে...</p>
-        <div class="wheel-container">
-            <div class="wheel" id="wheel">
-                <div class="wheel-inner"></div>
-            </div>
-        </div>
-        <button class="spin-wheel-btn" id="spinWheelBtn"><i class="fas fa-play"></i> স্পিন করুন</button>
-    </div>
-
-    <!-- 3D Scratch Screen -->
-    <div id="scratch" class="screen scratch-screen">
-        <h2 style="text-align:center; margin:20px 0; color:var(--primary); text-shadow: 0 0 12px rgba(76,175,80,0.6);">স্ক্র্যাচ কার্ড</h2>
-        <p class="scratch-limit" id="scratchLimit">লোড হচ্ছে...</p>
-        <div class="scratch-card" id="scratchCard">
-            <div class="scratch-front">
-                <canvas id="scratchCanvas" class="scratch-canvas"></canvas>
-            </div>
-            <div class="scratch-back">
-                <i class="fas fa-gem"></i>
-                <div id="scratchReward">কনগ্র্যাটস! ৳50</div>
-            </div>
-        </div>
-        <button class="action-btn claim-scratch" id="claimScratch">ক্লেইম করুন</button>
-    </div>
-
-    <!-- Navigation -->
-    <div class="nav">
-        <div class="nav-item active" data-screen="home"><i class="fas fa-home"></i> হোম</div>
-        <div class="nav-item" data-screen="wallet"><i class="fas fa-wallet"></i> ওয়ালেট</div>
-        <div class="nav-item" data-screen="history"><i class="fas fa-history"></i> হিস্ট্রি</div>
-        <div class="nav-item" data-screen="task"><i class="fas fa-tasks"></i> টাস্ক</div>
-        <div class="nav-item" data-screen="refer"><i class="fas fa-user-friends"></i> রেফার</div>
-        <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i> প্রোফাইল</div>
-    </div>
-
+    <!-- আপনার কাস্টম জাভাস্ক্রিপ্ট -->
     <script src="script.js"></script>
 </body>
 </html>
