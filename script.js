@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUser, userRef, userData = {};
     let isSpinning = false;
     let currentRotation = 0;
+    const numSegments = 10;
+    const anglePerSegment = 360 / numSegments;
 
     // --- UI Elements ---
     const screens = document.querySelectorAll('.screen');
@@ -33,7 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
         backBtn: document.getElementById('spinBackBtn'),
         triggerBtn: document.getElementById('spinTriggerBtn'),
         spinsLeft: document.getElementById('spinsLeft'),
-        wheelGroup: document.getElementById('wheelGroup')
+        wheelGroup: document.getElementById('wheelGroup'),
+        svgWheel: document.getElementById('svgWheel')
     };
     const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
     const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn') };
@@ -59,8 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!wheelGroup) return;
         wheelGroup.innerHTML = ''; // Clear previous elements
         
-        const numSegments = 10;
-        const angle = 360 / numSegments;
         const gradientIds = [
             'segmentGradient1', 'segmentGradient2', 'segmentGradient3', 'segmentGradient4',
             'segmentGradient5', 'segmentGradient6', 'segmentGradient7', 'segmentGradient8',
@@ -78,8 +79,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Create Segments with Gradients
         for (let i = 0; i < numSegments; i++) {
-            const startAngle = i * angle;
-            const endAngle = startAngle + angle;
+            const startAngle = i * anglePerSegment;
+            const endAngle = startAngle + anglePerSegment;
             const start = polarToCartesian(250, 250, 220, endAngle);
             const end = polarToCartesian(250, 250, 220, startAngle);
             const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
@@ -94,9 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
             wheelGroup.appendChild(path);
 
             // Add Segment Labels
-            const textAngle = startAngle + (angle / 2);
+            const textAngle = startAngle + (anglePerSegment / 2);
             const textRadius = 120;
-            const textPos = polarToCartesian(250, 250, textRadius, textAngle + 90); // Adjust for text orientation
+            const textPos = polarToCartesian(250, 250, textRadius, textAngle);
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", textPos.x);
             text.setAttribute("y", textPos.y);
@@ -110,14 +111,14 @@ document.addEventListener('DOMContentLoaded', function() {
             text.textContent = prizes[i];
             // Rotate text for better alignment
             const textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            textGroup.setAttribute("transform", `rotate(${-(startAngle + (angle / 2))}, ${textPos.x}, ${textPos.y})`);
+            textGroup.setAttribute("transform", `rotate(${-(startAngle + (anglePerSegment / 2))}, ${textPos.x}, ${textPos.y})`);
             textGroup.appendChild(text);
             wheelGroup.appendChild(textGroup);
         }
         
         // Enhanced Sparkles with Animation
         for (let i = 0; i < numSegments; i++) {
-            const sparkleAngle = (i * angle) + (angle / 2);
+            const sparkleAngle = (i * anglePerSegment) + (anglePerSegment / 2);
             const sparkleRadius = 180;
             const sparklePos = polarToCartesian(250, 250, sparkleRadius, sparkleAngle);
             const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -131,22 +132,9 @@ document.addEventListener('DOMContentLoaded', function() {
             wheelGroup.appendChild(sparkle);
         }
 
-        // Add CSS for sparkle animation if not present
-        if (!document.getElementById('sparkle-style')) {
-            const style = document.createElement('style');
-            style.id = 'sparkle-style';
-            style.textContent = `
-                @keyframes twinkle {
-                    0%, 100% { opacity: 0.5; transform: scale(1); }
-                    50% { opacity: 1; transform: scale(1.2); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
         // Add outer ring dividers
         for (let i = 0; i < numSegments; i++) {
-            const dividerAngle = i * angle;
+            const dividerAngle = i * anglePerSegment;
             const inner = polarToCartesian(250, 250, 30, dividerAngle);
             const outer = polarToCartesian(250, 250, 220, dividerAngle);
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -242,19 +230,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
+        spinScreenElements.triggerBtn.classList.add('spinning');
         spinScreenElements.triggerBtn.innerHTML = '<span>SPINNING...</span>'; // Visual feedback
+        spinScreenElements.svgWheel.classList.add('spinning');
 
-        const randomExtraRotation = Math.floor(Math.random() * 360) + (360 * 5); // Ensure at least 5 full rotations
-        const totalRotation = currentRotation + randomExtraRotation;
-        
-        spinScreenElements.wheelGroup.style.transform = `rotate(${totalRotation}deg)`;
-        currentRotation = totalRotation % 360;
-        
-        setTimeout(spinFinished, 5000);
+        // Calculate random target segment and rotation for precise landing
+        const targetSegment = Math.floor(Math.random() * numSegments);
+        const targetAngle = targetSegment * anglePerSegment + (anglePerSegment / 2); // Center of segment
+        const numFullSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full spins for excitement
+        const extraRotation = Math.random() * 360; // Additional randomness
+        const totalRotation = currentRotation + (numFullSpins * 360) + extraRotation;
+        const finalAngle = (totalRotation % 360);
+        const adjustedFinalRotation = totalRotation - (finalAngle - (360 - targetAngle)); // Adjust to land on target under pointer (assuming pointer at 0deg)
+
+        // Set CSS variable for animation
+        spinScreenElements.wheelGroup.style.setProperty('--final-rotation', `${adjustedFinalRotation}deg`);
+        spinScreenElements.wheelGroup.classList.add('spinning');
+
+        // Haptic feedback during spin
+        tg.HapticFeedback.impactOccurred('medium');
+
+        setTimeout(spinFinished, 4000); // Match animation duration
     }
     
     function spinFinished() {
-        tg.HapticFeedback.impactOccurred('light');
+        tg.HapticFeedback.impactOccurred('heavy');
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
             const today = new Date().toISOString().slice(0, 10);
@@ -269,15 +269,21 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             isSpinning = false;
             spinScreenElements.triggerBtn.disabled = false;
+            spinScreenElements.triggerBtn.classList.remove('spinning');
             spinScreenElements.triggerBtn.innerHTML = '<span>SPIN</span>'; // Reset button
+            spinScreenElements.svgWheel.classList.remove('spinning');
+            spinScreenElements.svgWheel.classList.add('winning');
+            spinScreenElements.wheelGroup.classList.remove('spinning');
+            spinScreenElements.wheelGroup.classList.add('winning');
             
-            // Smooth reset to final position
-            spinScreenElements.wheelGroup.style.transition = 'none';
-            spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
+            // Update current rotation
+            currentRotation = parseFloat(spinScreenElements.wheelGroup.style.getPropertyValue('--final-rotation')) % 360;
             
+            // Remove winning class after bounce
             setTimeout(() => {
-                spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.23, 1, 0.32, 1)';
-            }, 50);
+                spinScreenElements.wheelGroup.classList.remove('winning');
+                spinScreenElements.svgWheel.classList.remove('winning');
+            }, 600);
         });
     }
 
