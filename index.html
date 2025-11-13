@@ -33,9 +33,18 @@
         </div>
         <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
         <div class="reward-buttons">
-            <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
-            <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
-            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
+            <button class="reward-btn" data-screen="daily" id="dailyClaim" disabled>
+                <i class="fas fa-calendar-check"></i> 
+                ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)
+            </button>
+            <button class="reward-btn" data-screen="spin" id="spinBtn" disabled>
+                <i class="fas fa-sync"></i> 
+                স্পিন (+<span id="spinPoints">100</span>)
+            </button>
+            <button class="reward-btn" data-screen="scratch" id="scratchBtn" disabled>
+                <i class="fas fa-ticket"></i> 
+                স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)
+            </button>
         </div>
     </div>
 
@@ -133,4 +142,4 @@
 
     <script src="script.js"></script>
 </body>
-    </html>
+</html>
