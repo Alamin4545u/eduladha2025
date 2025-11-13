@@ -31,13 +31,14 @@ const navItems = document.querySelectorAll('.nav-item');
 const rewardBtns = document.querySelectorAll('.reward-btn');
 let userDocRef;
 let config = { 
-    pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, 
+    pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 1, dailyRewardCooldown: 86400000, // ৳1 + 24h
     liveNotice: '', bannerUrls: [], montageAppId: '', montageAdId: '', 
     dailySpinLimit: 1, spinReward: 100, dailyScratchLimit: 1, scratchReward: 50,
     vpnEnabled: true, referReward: 1, botUrl: 'https://t.me/YourBot/YourApp'
 };
 
 let isTaskCountry = false;
+ infinit;
 const ALLOWED_COUNTRIES = ['US', 'UK', 'CA'];
 
 // Set Home Header
@@ -58,7 +59,6 @@ function switchScreen(screenId) {
     const navItem = document.querySelector(`[data-screen="${screenId}"]`);
     if (navItem) navItem.classList.add('active');
 
-    // Load screen-specific data
     if (screenId === 'history') loadHistory();
     if (screenId === 'task') loadTasks();
     if (screenId === 'wallet') loadPaymentMethods();
@@ -72,7 +72,7 @@ rewardBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const screen = btn.dataset.screen;
         if (screen === 'daily') {
-            claimDaily();
+            claimDaily(); // Gigapub ad + ৳1
         } else {
             switchScreen(screen);
         }
@@ -426,19 +426,21 @@ document.getElementById('claimScratch').onclick = async () => {
             lastScratch: firebase.firestore.FieldValue.serverTimestamp(),
             scratchCount: firebase.firestore.FieldValue.increment(1)
         });
-        alert(`স্ক্র্যাচ রিওয়ার্ড! ${config.scratchReward} ৳ পেয়েছেন`);
+        alert(`স্ক্র্যাচ রিওয়ার্ড! ${config.scratschReward} ৳ পেয়েছেন`);
         loadScratchLimit();
         initScratchCard();
     } catch (e) { alert('ক্লেইম ফেল: ' + e.message); }
 };
 
-// Daily Claim
+// Daily Claim - GIGAPUB AD + ৳1
 async function claimDaily() {
     if (!isTaskCountry) return alert('এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।');
+
     try {
         const now = Date.now();
         const snap = await userDocRef.get();
         const last = snap.data().lastDailyClaim ? snap.data().lastDailyClaim.toMillis() : 0;
+
         if (now - last < config.dailyRewardCooldown) {
             const remaining = config.dailyRewardCooldown - (now - last);
             const hours = Math.floor(remaining / 3600000);
@@ -446,12 +448,20 @@ async function claimDaily() {
             alert(`${hours} ঘন্টা ${minutes} মিনিট পর আবার ক্লেইম করুন`);
             return;
         }
+
+        // Show Gigapub Ad
+        await window.showGiga();
+
+        // Add ৳1 to balance
         await userDocRef.update({
             balance: firebase.firestore.FieldValue.increment(config.dailyRewardPoints),
             lastDailyClaim: firebase.firestore.FieldValue.serverTimestamp()
         });
-        alert(`ডেইলি রিওয়ার্ড! ${config.dailyRewardPoints} ৳ পেয়েছেন`);
-    } catch (e) { alert('ডেইলি ক্লেইম ফেল: ' + e.message); }
+
+        alert(`ডেইলি রিওয়ার্ড! ৳${config.dailyRewardPoints} পেয়েছেন`);
+    } catch (e) {
+        alert('ডেইলি ক্লেইম ফেল: ' + e.message);
+    }
 }
 
 // Withdraw
