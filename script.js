@@ -27,16 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
     const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn') };
     const taskListContainer = document.getElementById('task-list');
-    const quizScreenElements = {
-        backBtn: document.getElementById('quizBackBtn'),
-        progressText: document.getElementById('quiz-progress-text'),
-        stepText: document.getElementById('quiz-step-text'),
-        progressInner: document.getElementById('quiz-progress-inner'),
-        instruction: document.getElementById('quiz-instruction'),
-        questionText: document.getElementById('quiz-question-text'),
-        optionsContainer: document.getElementById('quiz-options-container'),
-        nextBtn: document.getElementById('next-quiz-btn')
-    };
+    const quizScreenElements = { backBtn: document.getElementById('quizBackBtn'), progressText: document.getElementById('quiz-progress-text'), stepText: document.getElementById('quiz-step-text'), progressInner: document.getElementById('quiz-progress-inner'), instruction: document.getElementById('quiz-instruction'), questionText: document.getElementById('quiz-question-text'), optionsContainer: document.getElementById('quiz-options-container'), nextBtn: document.getElementById('next-quiz-btn') };
 
     // --- Main Logic ---
     tg.ready();
@@ -106,11 +97,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function loadAndDisplayTasks() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
+        taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
+        try {
+            const taskSnapshot = await db.collection('tasks').where('isActive', '==', true).orderBy('createdAt', 'desc').get();
+            if (taskSnapshot.empty) { taskListContainer.innerHTML = '<p>নতুন টাস্ক শীঘ্রই আসছে...</p>'; return; }
+            taskListContainer.innerHTML = '';
+            taskSnapshot.forEach(doc => {
+                const task = doc.data(); const taskId = doc.id; const isCompleted = userData.completedTasks && userData.completedTasks.includes(taskId);
+                const taskElement = document.createElement('div'); taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`; taskElement.dataset.taskId = taskId; taskElement.dataset.reward = task.reward;
+                taskElement.innerHTML = `<div class="task-item-header"><h3 class="task-title">${task.title}</h3><span class="task-reward">৳ ${task.reward.toFixed(2)}</span></div><p class="task-description">${task.description}</p>`;
+                taskListContainer.appendChild(taskElement);
+            });
+        } catch (error) {
+            console.error("টাস্ক লোড করার সময় Firestore ত্রুটি:", error);
+            handleError('টাস্ক লোড করতে সমস্যা হয়েছে। সম্ভবত ডেটাবেস ইনডেক্স তৈরি করা হয়নি।', error);
+            taskListContainer.innerHTML = '<p>টাস্ক লোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।</p>';
+        }
     }
 
     function handleTaskClick(e) {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
+        const taskItem = e.target.closest('.task-item'); if (!taskItem || taskItem.classList.contains('completed')) { if (taskItem) tg.showAlert('আপনি এই টাস্কটি ইতোমধ্যে সম্পন্ন করেছেন।'); return; } const taskId = taskItem.dataset.taskId; const reward = parseFloat(taskItem.dataset.reward); tg.HapticFeedback.impactOccurred('light'); window.showGiga().then(() => { tg.HapticFeedback.notificationOccurred('success'); userRef.update({ balance: firebase.firestore.FieldValue.increment(reward), completedTasks: firebase.firestore.FieldValue.arrayUnion(taskId) }).then(() => { tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`); taskItem.classList.add('completed'); }); }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e));
     }
 
     async function startQuiz() {
@@ -133,15 +139,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const completedToday = userData.quizProgress?.completedToday || 0;
         const remaining = quizConfig.dailyLimit - completedToday;
         quizScreenElements.progressText.textContent = `দৈনিক কুইজ সেশন বাকি আছে: ${remaining}`;
-
+        
         const currentStep = userData.quizProgress?.currentStep || 0;
         const clickTarget = quizConfig.clickTarget;
         
-        // === অগ্রগতি প্রদর্শন আপডেট ===
         quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
         quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
 
-        if (currentStep >= clickTarget) { handleError('একটি অপ্রত্যাশিত সমস্যা হয়েছে, অনুগ্রহ করে আবার শুরু করুন।'); showScreen('home-screen'); return; }
+        if (currentStep >= clickTarget) { userRef.update({'quizProgress.currentStep': 0}); handleError('একটি অপ্রত্যাশিত সমস্যা হয়েছে, অনুগ্রহ করে আবার শুরু করুন।'); showScreen('home-screen'); return; }
         if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
         
         const quiz = quizQuestions[currentQuizIndex];
@@ -154,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (currentStep === clickTarget - 1) {
             quizScreenElements.instruction.textContent = `এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।`;
-            quizScreenElements.nextBtn.textContent = 'Claim Reward'; // বাটন টেক্সট পরিবর্তন
+            quizScreenElements.nextBtn.textContent = 'Claim Reward';
         } else {
             quizScreenElements.instruction.textContent = `সঠিক উত্তর দিয়ে পরবর্তী ধাপে যান`;
             quizScreenElements.nextBtn.textContent = 'পরবর্তী কুইজ';
@@ -195,10 +200,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     showScreen('home-screen');
                 });
             } else {
-                userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) }).then(() => {
-                    currentQuizIndex++;
-                    displayCurrentQuiz();
-                });
+                userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
+                    .then(() => {
+                        // ডাটাবেস আপডেটের পর UI তাৎক্ষণিক ঠিক করার জন্য লোকাল ডাটাও আপডেট করা হলো
+                        if(userData.quizProgress) userData.quizProgress.currentStep++;
+                        currentQuizIndex++;
+                        displayCurrentQuiz();
+                    });
             }
         }).catch(e => {
             handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
