@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
     }
 
-    // --- SVG Wheel Creation ---
+    // --- Enhanced SVG Wheel Creation ---
     function createSvgWheel() {
         const wheelGroup = spinScreenElements.wheelGroup;
         if (!wheelGroup) return;
@@ -61,7 +61,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const numSegments = 10;
         const angle = 360 / numSegments;
-        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
+        const gradientIds = [
+            'segmentGradient1', 'segmentGradient2', 'segmentGradient3', 'segmentGradient4',
+            'segmentGradient5', 'segmentGradient6', 'segmentGradient7', 'segmentGradient8',
+            'segmentGradient9', 'segmentGradient10'
+        ];
+        const prizes = ['1 Tk', '2 Tk', '1 Tk', '3 Tk', '1 Tk', '2 Tk', '1 Tk', '4 Tk', '1 Tk', '2 Tk']; // Visual prizes, logic remains fixed
         
         const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
             const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
@@ -71,33 +76,88 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         };
 
-        // Create Segments
+        // Create Segments with Gradients
         for (let i = 0; i < numSegments; i++) {
             const startAngle = i * angle;
             const endAngle = startAngle + angle;
-            const start = polarToCartesian(250, 250, 210, endAngle);
-            const end = polarToCartesian(250, 250, 210, startAngle);
-            const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
+            const start = polarToCartesian(250, 250, 220, endAngle);
+            const end = polarToCartesian(250, 250, 220, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+            const pathData = `M 250 250 L ${start.x} ${start.y} A 220 220 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
             
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", pathData);
-            path.setAttribute("fill", colors[i]);
-            path.setAttribute("stroke", "#8d6e63");
-            path.setAttribute("stroke-width", "4");
+            path.setAttribute("fill", `url(#${gradientIds[i]})`);
+            path.setAttribute("stroke", "#fff");
+            path.setAttribute("stroke-width", "2");
+            path.setAttribute("filter", "url(#glow)");
             wheelGroup.appendChild(path);
+
+            // Add Segment Labels
+            const textAngle = startAngle + (angle / 2);
+            const textRadius = 120;
+            const textPos = polarToCartesian(250, 250, textRadius, textAngle + 90); // Adjust for text orientation
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", textPos.x);
+            text.setAttribute("y", textPos.y);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "middle");
+            text.setAttribute("font-family", "Arial, sans-serif");
+            text.setAttribute("font-size", "18");
+            text.setAttribute("font-weight", "bold");
+            text.setAttribute("fill", "#fff");
+            text.setAttribute("filter", "url(#glow)");
+            text.textContent = prizes[i];
+            // Rotate text for better alignment
+            const textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            textGroup.setAttribute("transform", `rotate(${-(startAngle + (angle / 2))}, ${textPos.x}, ${textPos.y})`);
+            textGroup.appendChild(text);
+            wheelGroup.appendChild(textGroup);
         }
         
-        // Create Sparkles
+        // Enhanced Sparkles with Animation
         for (let i = 0; i < numSegments; i++) {
             const sparkleAngle = (i * angle) + (angle / 2);
-            const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
-            const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            sparkle.setAttribute("cx", sparklePos.x);
-            sparkle.setAttribute("cy", sparklePos.y);
-            sparkle.setAttribute("r", "5");
-            sparkle.setAttribute("fill", "white");
-            sparkle.setAttribute("filter", "url(#glow)");
+            const sparkleRadius = 180;
+            const sparklePos = polarToCartesian(250, 250, sparkleRadius, sparkleAngle);
+            const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            sparkle.innerHTML = `
+                <circle cx="${sparklePos.x}" cy="${sparklePos.y}" r="3" fill="white" filter="url(#glow)"/>
+                <circle cx="${sparklePos.x - 4}" cy="${sparklePos.y - 4}" r="1" fill="white" opacity="0.7"/>
+                <circle cx="${sparklePos.x + 4}" cy="${sparklePos.y + 4}" r="1" fill="white" opacity="0.7"/>
+            `;
+            // Add sparkle animation
+            sparkle.style.animation = "twinkle 2s infinite";
             wheelGroup.appendChild(sparkle);
+        }
+
+        // Add CSS for sparkle animation if not present
+        if (!document.getElementById('sparkle-style')) {
+            const style = document.createElement('style');
+            style.id = 'sparkle-style';
+            style.textContent = `
+                @keyframes twinkle {
+                    0%, 100% { opacity: 0.5; transform: scale(1); }
+                    50% { opacity: 1; transform: scale(1.2); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Add outer ring dividers
+        for (let i = 0; i < numSegments; i++) {
+            const dividerAngle = i * angle;
+            const inner = polarToCartesian(250, 250, 30, dividerAngle);
+            const outer = polarToCartesian(250, 250, 220, dividerAngle);
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", inner.x);
+            line.setAttribute("y1", inner.y);
+            line.setAttribute("x2", outer.x);
+            line.setAttribute("y2", outer.y);
+            line.setAttribute("stroke", "#fff");
+            line.setAttribute("stroke-width", "3");
+            line.setAttribute("filter", "url(#glow)");
+            wheelGroup.appendChild(line);
         }
     }
 
@@ -182,12 +242,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
+        spinScreenElements.triggerBtn.innerHTML = '<span>SPINNING...</span>'; // Visual feedback
 
-        const randomExtraRotation = Math.floor(Math.random() * 360);
-        const totalRotation = currentRotation + (360 * 5) + randomExtraRotation;
+        const randomExtraRotation = Math.floor(Math.random() * 360) + (360 * 5); // Ensure at least 5 full rotations
+        const totalRotation = currentRotation + randomExtraRotation;
         
         spinScreenElements.wheelGroup.style.transform = `rotate(${totalRotation}deg)`;
-        currentRotation = totalRotation;
+        currentRotation = totalRotation % 360;
         
         setTimeout(spinFinished, 5000);
     }
@@ -208,14 +269,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             isSpinning = false;
             spinScreenElements.triggerBtn.disabled = false;
+            spinScreenElements.triggerBtn.innerHTML = '<span>SPIN</span>'; // Reset button
             
-            const finalRotation = currentRotation % 360;
+            // Smooth reset to final position
             spinScreenElements.wheelGroup.style.transition = 'none';
-            spinScreenElements.wheelGroup.style.transform = `rotate(${finalRotation}deg)`;
-            currentRotation = finalRotation;
+            spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
             
             setTimeout(() => {
-                spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+                spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.23, 1, 0.32, 1)';
             }, 50);
         });
     }
