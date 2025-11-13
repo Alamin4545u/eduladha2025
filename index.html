@@ -32,21 +32,10 @@
             <!-- Dynamic banners from config -->
         </div>
         <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
-
-        <!-- UPDATED 3 REWARD BUTTONS (LIKE SCREENSHOT) -->
         <div class="reward-buttons">
-            <button class="reward-btn" id="dailyClaim" data-type="daily" disabled>
-                <i class="fas fa-calendar-check"></i>
-                <span>Daily Check</span>
-            </button>
-            <button class="reward-btn" id="spinBtn" data-type="spin" disabled>
-                <i class="fas fa-sync-alt"></i>
-                <span>Spin</span>
-            </button>
-            <button class="reward-btn" id="scratchBtn" data-type="scratch" disabled>
-                <i class="fas fa-ticket-alt"></i>
-                <span>Scratch Card</span>
-            </button>
+            <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
+            <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
+            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
         </div>
     </div>
 
@@ -144,4 +133,4 @@
 
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
