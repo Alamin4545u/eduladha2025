@@ -59,10 +59,12 @@
             <p id="spin-info">আপনার আজকের স্পিন বাকি আছে: <span id="spinsLeft">...</span></p>
         </div>
 
-        <!-- Task Screen -->
+        <!-- Task Screen: গঠন পরিবর্তন করা হয়েছে -->
         <div id="task-screen" class="screen">
             <h2>টাস্ক সেন্টার</h2>
-            <div id="task-list"><p>নতুন টাস্ক শীঘ্রই আসছে...</p></div>
+            <div class="scrollable-content">
+                <div id="task-list"><p>নতুন টাস্ক শীঘ্রই আসছে...</p></div>
+            </div>
         </div>
 
         <!-- Quiz Screen -->
@@ -105,4 +107,4 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="script.js"></script>
 </body>
-            </html>
+</html>
