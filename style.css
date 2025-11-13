@@ -78,6 +78,12 @@ body {
     border-top: 50px solid #ffd700;
     filter: drop-shadow(0 0 10px #ffd700);
     position: relative;
+    animation: pointerGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pointerGlow {
+    from { filter: drop-shadow(0 0 10px #ffd700); }
+    to { filter: drop-shadow(0 0 20px #ffd700) drop-shadow(0 0 10px #ffed4e); }
 }
 
 .pointer-base {
@@ -108,7 +114,39 @@ body {
 
 #wheelGroup {
     transform-origin: center;
-    transition: transform 5s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Improved easing for smoother deceleration */
+}
+
+#wheelGroup.spinning {
+    animation: wheelSpin 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes wheelSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(var(--final-rotation, 0deg));
+    }
+}
+
+#wheelGroup.winning {
+    animation: wheelBounce 0.6s ease-out forwards;
+}
+
+@keyframes wheelBounce {
+    0%, 100% { transform: rotate(var(--final-rotation, 0deg)) scale(1); }
+    25% { transform: rotate(var(--final-rotation, 0deg)) scale(1.05); }
+    50% { transform: rotate(var(--final-rotation, 0deg)) scale(0.98); }
+    75% { transform: rotate(var(--final-rotation, 0deg)) scale(1.02); }
+}
+
+#svgWheel.spinning {
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+}
+
+#svgWheel.winning {
+    filter: drop-shadow(0 0 30px rgba(76, 175, 80, 0.8)) drop-shadow(0 8px 16px rgba(0,0,0,0.5));
 }
 
 #spinTriggerBtn {
@@ -153,6 +191,15 @@ body {
     box-shadow: none;
 }
 
+#spinTriggerBtn.spinning {
+    animation: buttonPulse 1s ease-in-out infinite;
+}
+
+@keyframes buttonPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+    50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255, 215, 0, 1); }
+}
+
 .btn-glow {
     position: absolute;
     top: -2px;
@@ -190,3 +237,8 @@ input[type="tel"], input[type="text"] { width: 100%; padding: 12px; font-size: 1
 .nav-btn svg { width: 24px; height: 24px; margin-bottom: 2px; fill: currentColor; }
 .nav-btn span { font-size: 12px; }
 .nav-btn.active { color: var(--accent-color); }
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+    }
