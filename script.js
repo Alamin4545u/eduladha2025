@@ -19,17 +19,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
     const MINIMUM_WITHDRAW_AMOUNT = 10;
     const DAILY_REWARD = 1;
-
-    let spinConfig = { dailyLimit: 5, rewardAmount: 1 }; // Default values
-    let theWheel, currentUser, userRef, userData = {};
+    let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
+    let currentUser, userRef, userData = {};
     let isSpinning = false;
+    let currentRotation = 0;
 
     // --- UI Elements ---
     const screens = document.querySelectorAll('.screen');
     const navButtons = document.querySelectorAll('.nav-btn');
     const headerElements = { pic: document.getElementById('profilePic'), fullName: document.getElementById('headerFullName'), username: document.getElementById('headerUsername'), balance: document.getElementById('headerBalance') };
     const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn') };
-    const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft') };
+    const spinScreenElements = {
+        backBtn: document.getElementById('spinBackBtn'),
+        triggerBtn: document.getElementById('spinTriggerBtn'),
+        spinsLeft: document.getElementById('spinsLeft'),
+        wheelGroup: document.getElementById('wheelGroup')
+    };
     const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
     const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn') };
 
@@ -43,19 +48,63 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAdminSettings();
         fetchUserData();
         setupEventListeners();
-        initializeSpinWheel();
+        createSvgWheel();
     } else {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
     }
 
-    // --- Functions ---
+    // --- SVG Wheel Creation ---
+    function createSvgWheel() {
+        const wheelGroup = spinScreenElements.wheelGroup;
+        if (!wheelGroup) return;
+        wheelGroup.innerHTML = ''; // Clear previous elements
+        
+        const numSegments = 10;
+        const angle = 360 / numSegments;
+        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
+        
+        const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        };
+
+        // Create Segments
+        for (let i = 0; i < numSegments; i++) {
+            const startAngle = i * angle;
+            const endAngle = startAngle + angle;
+            const start = polarToCartesian(250, 250, 210, endAngle);
+            const end = polarToCartesian(250, 250, 210, startAngle);
+            const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
+            
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pathData);
+            path.setAttribute("fill", colors[i]);
+            path.setAttribute("stroke", "#8d6e63");
+            path.setAttribute("stroke-width", "4");
+            wheelGroup.appendChild(path);
+        }
+        
+        // Create Sparkles
+        for (let i = 0; i < numSegments; i++) {
+            const sparkleAngle = (i * angle) + (angle / 2);
+            const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
+            const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            sparkle.setAttribute("cx", sparklePos.x);
+            sparkle.setAttribute("cy", sparklePos.y);
+            sparkle.setAttribute("r", "5");
+            sparkle.setAttribute("fill", "white");
+            sparkle.setAttribute("filter", "url(#glow)");
+            wheelGroup.appendChild(sparkle);
+        }
+    }
+
+    // --- Data Fetch & UI Update ---
     function fetchAdminSettings() {
         db.collection('settings').doc('spinConfig').get().then(doc => {
-            if (doc.exists) {
-                spinConfig = doc.data();
-            } else {
-                console.warn("Spin configuration not found in Firestore. Using default values.");
-            }
+            if (doc.exists) spinConfig = doc.data();
         }).catch(e => console.error("Could not fetch admin settings:", e));
     }
 
@@ -75,9 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     lastCheckin: null,
                     spinsToday: { date: today, count: 0 }
                 };
-                userRef.set(newUser).then(() => {
-                    userData = newUser;
-                });
+                userRef.set(newUser).then(() => userData = newUser);
             }
             updateUI();
         }, (error) => handleError("Failed to fetch user data.", error));
@@ -109,11 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
         spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
     }
 
+    // --- Event Listeners & Handlers ---
     function setupEventListeners() {
-        navButtons.forEach(btn => btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            showScreen(btn.dataset.screen);
-        }));
+        navButtons.forEach(btn => btn.addEventListener('click', (e) => showScreen(btn.dataset.screen)));
         homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
         homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
         spinScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
@@ -125,44 +170,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function showScreen(screenId) {
         screens.forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
-        navButtons.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.screen === screenId);
-        });
-    }
-
-    function initializeSpinWheel() {
-        if (typeof Winwheel === 'undefined') {
-            console.error("Winwheel library is not loaded.");
-            return;
-        }
-        theWheel = new Winwheel({
-            'numSegments': 8,
-            'outerRadius': 145,
-            'innerRadius': 40,
-            'textFontSize': 16,
-            'segments': [
-                {'fillStyle' : '#26c6da', 'text': 'Try'}, {'fillStyle' : '#ff7043', 'text': 'Again'}, 
-                {'fillStyle' : '#7e57c2', 'text': 'Spin'}, {'fillStyle' : '#FFEE58', 'text': 'More'},
-                {'fillStyle' : '#9ccc65', 'text': 'Win'}, {'fillStyle' : '#ec407a', 'text': 'Now'}, 
-                {'fillStyle' : '#5c6bc0', 'text': 'Play'}, {'fillStyle' : '#29b6f6', 'text': 'Daily'}
-            ],
-            'animation': { 'type': 'spinToStop', 'duration': 5, 'spins': 8, 'callbackFinished': spinFinished }
-        });
+        navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
     }
 
     function handleSpin() {
         if (isSpinning) return;
         const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
         if (spinsLeftCount <= 0) {
-            tg.showAlert("আপনার আজকের জন্য আর কোনো স্পিন বাকি নেই।");
+            tg.showAlert("আপনার আজকের জন্য আর কোনো স্পিন باقی নেই।");
             return;
         }
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
-        theWheel.startAnimation();
+
+        const randomExtraRotation = Math.floor(Math.random() * 360);
+        const totalRotation = currentRotation + (360 * 5) + randomExtraRotation;
+        
+        spinScreenElements.wheelGroup.style.transform = `rotate(${totalRotation}deg)`;
+        currentRotation = totalRotation;
+        
+        setTimeout(spinFinished, 5000);
     }
     
-    function spinFinished(indicatedSegment) {
+    function spinFinished() {
         tg.HapticFeedback.impactOccurred('light');
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
@@ -174,14 +204,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(() => {
                 tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${spinConfig.rewardAmount.toFixed(2)} পেয়েছেন।`);
             });
-        }).catch(e => {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", e);
-        }).finally(() => {
+        }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e))
+        .finally(() => {
             isSpinning = false;
             spinScreenElements.triggerBtn.disabled = false;
-            theWheel.stopAnimation(false);
-            theWheel.rotationAngle = 0;
-            theWheel.draw();
+            
+            const finalRotation = currentRotation % 360;
+            spinScreenElements.wheelGroup.style.transition = 'none';
+            spinScreenElements.wheelGroup.style.transform = `rotate(${finalRotation}deg)`;
+            currentRotation = finalRotation;
+            
+            setTimeout(() => {
+                spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            }, 50);
         });
     }
 
@@ -201,9 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(() => {
                 tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${DAILY_REWARD.toFixed(2)} পেয়েছেন।`);
             });
-        }).catch(e => {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", e);
-        }).finally(() => { this.disabled = false; });
+        }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => { this.disabled = false; });
     }
     
     function handleSubmitWithdraw() {
@@ -212,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.showAlert("অনুগ্রহ করে একটি সঠিক বিকাশ নম্বর দিন।");
             return;
         }
-        if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) {
+        if ((userData.balance || 0) < MINIMUM_WITHDRAW_AMOUNT) {
             tg.showAlert(`ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন।`);
             return;
         }
