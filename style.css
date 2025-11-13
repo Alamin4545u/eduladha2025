@@ -11,10 +11,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .header-wallet { text-align: right; }
 .header-wallet p { margin: 0; font-size: 12px; color: var(--text-secondary); }
 .header-wallet .balance-amount { font-size: 18px; font-weight: 600; color: var(--balance-color); }
-.content-container { padding: 20px; height: 100%; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; }
-.screen { display: none; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; height: 100%; }
+
+/* === কন্টেইনার এবং স্ক্রিন স্টাইল আপডেট === */
+.content-container { padding: 20px; height: 100%; overflow: hidden; box-sizing: border-box; display: flex; }
+.screen { display: none; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; height: 100%; overflow: hidden; /* ডিফল্ট স্ক্রলিং বন্ধ */}
 .screen.active { display: flex; }
 .screen h2 { margin-top: 0; color: var(--accent-color); text-align: center; margin-bottom: 20px; flex-shrink: 0; }
+
 .home-actions { display: flex; justify-content: flex-start; align-items: center; width: 100%; margin-top: 20px; gap: 15px; flex-wrap: wrap; }
 .icon-btn { background: linear-gradient(145deg, #2a2a2a, #1e1e1e); border: 1px solid var(--border-color); box-shadow: 3px 3px 6px #1c1c1c, -3px -3px 6px #262626; color: var(--text-primary); width: 80px; height: 80px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.2s ease-in-out; padding: 5px; box-sizing: border-box; }
 .icon-btn:hover { background: linear-gradient(145deg, #1e1e1e, #2a2a2a); }
@@ -22,10 +25,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .icon-btn .icon { width: 32px; height: 32px; margin-bottom: 5px; fill: var(--accent-color); }
 .icon-btn span { font-size: 12px; font-weight: 500; }
 .icon-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.screen#spin-screen, .screen#quiz-screen { position: relative; justify-content: flex-start; }
+
+.screen#spin-screen, .screen#quiz-screen { position: relative; justify-content: flex-start; overflow-y: auto; /* স্পিন এবং কুইজ স্ক্রিনের জন্য প্রয়োজনে স্ক্রল চালু */}
+#quiz-screen { overflow-y: hidden; /* কুইজ স্ক্রিনের জন্য বিশেষভাবে স্ক্রল বন্ধ করা হলো */ }
+
 .back-btn { background: #313f51; border: none; color: var(--text-primary); font-size: 14px; cursor: pointer; z-index: 5; padding: 8px 12px; border-radius: 20px; display: flex; align-items: center; gap: 5px; position: absolute; top: 0; left: 0; }
 .back-btn span { font-size: 20px; line-height: 1; }
-.spin-wrapper { position: relative; width: 320px; height: 320px; margin: 20px auto; }
+.spin-wrapper { position: relative; width: 320px; height: 320px; margin: 20px auto; flex-shrink: 0; }
 .spin-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 50px; height: 60px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 125"><path fill="%23ffc107" d="M50 0a20 20 0 00-20 20c0 11 15 40 20 50s20-39 20-50A20 20 0 0050 0z"/><circle fill="white" cx="50" cy="20" r="10"/></svg>'); background-size: contain; background-repeat: no-repeat; z-index: 10; }
 .spin-wheel-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 #svgWheel { width: 100%; height: 100%; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4)); }
@@ -35,9 +41,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 #spinTriggerBtn:disabled { cursor: not-allowed; background: #bdbdbd; }
 #spin-info { font-size: 16px; margin-top: 15px; color: var(--text-secondary); font-weight: 500; }
 #spin-info span { color: var(--text-primary); font-weight: bold; }
-/* === টাস্ক এবং স্ক্রল স্টাইল আপডেট === */
-.scrollable-content { overflow-y: auto; width: 100%; flex-grow: 1; }
+
+/* === টাস্ক এবং স্ক্রল স্টাইল ফাইনাল আপডেট === */
+.scrollable-content { overflow-y: auto; width: 100%; flex-grow: 1; padding-top: 10px; }
 #task-list { width: 100%; display: flex; flex-direction: column; gap: 15px; }
+
 .task-item { background-color: var(--tertiary-bg); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-color); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
 .task-item:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
 .task-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -46,7 +54,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .task-description { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .task-item.completed { opacity: 0.6; cursor: not-allowed; border-left-color: var(--success-color); }
 .task-item.completed::after { content: '✔'; position: absolute; top: 10px; right: 15px; font-size: 24px; color: var(--success-color); }
-/* === কুইজ স্টাইল আপডেট === */
 .quiz-info { text-align: center; margin-bottom: 15px; width: 100%; }
 .quiz-info p { margin: 4px 0; font-size: 14px; color: var(--text-secondary); }
 .quiz-progress-bar { width: 100%; background-color: var(--secondary-bg); border-radius: 5px; height: 10px; margin-top: 8px; overflow: hidden; }
