@@ -124,7 +124,7 @@ async function performIpCheck() {
 
     } catch (error) {
         console.error("IP Check Error:", error);
-        isTaskCountry = false;
+        isTaskCountry = false; // Disable tasks on error for security
         if (error.message !== "VPN detected") {
              alert("আপনার লোকেশন যাচাই করা যায়নি। কিছু ফিচার বন্ধ থাকতে পারে।");
         }
@@ -189,7 +189,7 @@ function setupReferralUI() {
     if (copyButton) {
         copyButton.onclick = () => {
             linkInput.select();
-            linkInput.setSelectionRange(0, 99999);
+            linkInput.setSelectionRange(0, 99999); // For mobile devices
             navigator.clipboard.writeText(linkInput.value).then(() => {
                 alert('রেফারেল লিঙ্ক কপি করা হয়েছে!');
             }, () => {
