@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let quizQuestions = [];
     let currentQuizIndex = 0;
     let selectedQuizOption = null;
+    let adClicked = false; // === বিজ্ঞাপন ক্লিক যাচাই করার জন্য নতুন ভ্যারিয়েবল ===
 
     // --- UI Elements ---
     const screens = document.querySelectorAll('.screen');
@@ -139,24 +140,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const completedToday = userData.quizProgress?.completedToday || 0;
         const remaining = quizConfig.dailyLimit - completedToday;
         quizScreenElements.progressText.textContent = `দৈনিক কুইজ সেশন বাকি আছে: ${remaining}`;
-        
         const currentStep = userData.quizProgress?.currentStep || 0;
         const clickTarget = quizConfig.clickTarget;
-        
         quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
         quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
-
         if (currentStep >= clickTarget) { userRef.update({'quizProgress.currentStep': 0}); handleError('একটি অপ্রত্যাশিত সমস্যা হয়েছে, অনুগ্রহ করে আবার শুরু করুন।'); showScreen('home-screen'); return; }
         if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
-        
         const quiz = quizQuestions[currentQuizIndex];
         quizScreenElements.questionText.textContent = quiz.question;
         quizScreenElements.optionsContainer.innerHTML = '';
         quiz.options.forEach(optionText => { const optionDiv = document.createElement('div'); optionDiv.className = 'quiz-option'; optionDiv.textContent = optionText; quizScreenElements.optionsContainer.appendChild(optionDiv); });
-        
         selectedQuizOption = null;
         quizScreenElements.nextBtn.disabled = true;
-
         if (currentStep === clickTarget - 1) {
             quizScreenElements.instruction.textContent = `এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।`;
             quizScreenElements.nextBtn.textContent = 'Claim Reward';
@@ -184,34 +179,64 @@ document.addEventListener('DOMContentLoaded', function() {
         const isClickTask = currentStep === quizConfig.clickTarget - 1;
 
         if (isClickTask) {
+            // === বিজ্ঞাপন ক্লিক যাচাই করার মূল লজিক (The main logic for verifying ad click) ===
+            adClicked = false; // প্রতিটি নতুন ক্লিকের আগে ফ্ল্যাগ রিসেট করুন
+            
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'hidden') {
+                    adClicked = true;
+                }
+            };
+            
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
             tg.showPopup({ title: 'গুরুত্বপূর্ণ নির্দেশনা', message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন এবং কমপক্ষে ৩০ সেকেন্ড অপেক্ষা করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।', buttons: [{ type: 'ok', text: 'ঠিক আছে' }] });
-        }
-        
-        tg.HapticFeedback.impactOccurred('light');
-        window.showGiga().then(() => {
-            tg.HapticFeedback.notificationOccurred('success');
-            if (isClickTask) {
-                userRef.update({
-                    balance: firebase.firestore.FieldValue.increment(quizConfig.reward),
-                    'quizProgress.completedToday': firebase.firestore.FieldValue.increment(1),
-                    'quizProgress.currentStep': 0
-                }).then(() => {
-                    tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
-                    showScreen('home-screen');
-                });
-            } else {
+            
+            tg.HapticFeedback.impactOccurred('light');
+            window.showGiga().then(() => {
+                // বিজ্ঞাপন বন্ধ হওয়ার পর এই কোডটি চলবে
+                document.removeEventListener('visibilitychange', handleVisibilityChange); // ইভেন্ট লিসেনার মুছে ফেলা হচ্ছে
+                
+                if (adClicked) {
+                    // যদি বিজ্ঞাপনে ক্লিক করা হয়ে থাকে
+                    tg.HapticFeedback.notificationOccurred('success');
+                    userRef.update({
+                        balance: firebase.firestore.FieldValue.increment(quizConfig.reward),
+                        'quizProgress.completedToday': firebase.firestore.FieldValue.increment(1),
+                        'quizProgress.currentStep': 0
+                    }).then(() => {
+                        tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
+                        showScreen('home-screen');
+                    });
+                } else {
+                    // যদি বিজ্ঞাপনে ক্লিক না করা হয়
+                    tg.HapticFeedback.notificationOccurred('error');
+                    tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক। অনুগ্রহ করে আবার চেষ্টা করুন।");
+                    quizScreenElements.nextBtn.disabled = false; // বাটন আবার সক্রিয় করা হলো
+                }
+            }).catch(e => {
+                // যদি বিজ্ঞাপন লোড না হয়
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
+                quizScreenElements.nextBtn.disabled = false;
+            });
+
+        } else {
+            // সাধারণ ধাপ (ক্লিক টাস্ক নয়)
+            tg.HapticFeedback.impactOccurred('light');
+            window.showGiga().then(() => {
+                tg.HapticFeedback.notificationOccurred('success');
                 userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
                     .then(() => {
-                        // ডাটাবেস আপডেটের পর UI তাৎক্ষণিক ঠিক করার জন্য লোকাল ডাটাও আপডেট করা হলো
                         if(userData.quizProgress) userData.quizProgress.currentStep++;
                         currentQuizIndex++;
                         displayCurrentQuiz();
                     });
-            }
-        }).catch(e => {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-            quizScreenElements.nextBtn.disabled = false;
-        });
+            }).catch(e => {
+                handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
+                quizScreenElements.nextBtn.disabled = false;
+            });
+        }
     }
 
     function handleSpin() {
