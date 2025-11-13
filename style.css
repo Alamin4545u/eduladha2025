@@ -54,7 +54,18 @@ body {
 .back-btn { background: #313f51; border: none; color: var(--text-primary); font-size: 14px; cursor: pointer; z-index: 5; padding: 8px 12px; border-radius: 20px; display: flex; align-items: center; gap: 5px; position: absolute; top: 0; left: 0; }
 .back-btn span { font-size: 20px; line-height: 1; }
 .spin-wrapper { position: relative; width: 320px; height: 320px; margin: auto; }
-.spin-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 50px; height: 60px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 125"><path fill="%23ffc107" d="M50 0a20 20 0 00-20 20c0 11 15 40 20 50s20-39 20-50A20 20 0 0050 0z"/><circle fill="white" cx="50" cy="20" r="10"/></svg>'); background-size: contain; background-repeat: no-repeat; z-index: 10; }
+.spin-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 60px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 125"><path fill="%23ffc107" d="M50 0a20 20 0 00-20 20c0 11 15 40 20 50s20-39 20-50A20 20 0 0050 0z"/><circle fill="white" cx="50" cy="20" r="10"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 10;
+}
 .spin-wheel-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 #svgWheel { width: 100%; height: 100%; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4)); }
 #wheelGroup { transform-origin: center; transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1); }
@@ -65,63 +76,15 @@ body {
 #spin-info span { color: var(--text-primary); font-weight: bold; }
 
 /* Task Screen Styles */
-#task-list {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 10px;
-}
-.task-item {
-    background-color: var(--tertiary-bg);
-    padding: 15px;
-    border-radius: 10px;
-    border-left: 5px solid var(--accent-color);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-    overflow: hidden;
-}
-.task-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-}
-.task-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-.task-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0;
-}
-.task-reward {
-    background-color: var(--balance-color);
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 14px;
-    font-weight: bold;
-}
-.task-description {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 0;
-}
-.task-item.completed {
-    opacity: 0.6;
-    cursor: not-allowed;
-    border-left-color: var(--success-color);
-}
-.task-item.completed::after {
-    content: '✔';
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    color: var(--success-color);
-}
+#task-list { width: 100%; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+.task-item { background-color: var(--tertiary-bg); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-color); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
+.task-item:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+.task-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.task-title { font-size: 18px; font-weight: 600; margin: 0; }
+.task-reward { background-color: var(--balance-color); padding: 4px 10px; border-radius: 15px; font-size: 14px; font-weight: bold; }
+.task-description { font-size: 14px; color: var(--text-secondary); margin: 0; }
+.task-item.completed { opacity: 0.6; cursor: not-allowed; border-left-color: var(--success-color); }
+.task-item.completed::after { content: '✔'; position: absolute; top: 10px; right: 15px; font-size: 24px; color: var(--success-color); }
 
 /* General Buttons & Forms */
 .action-btn { width: 100%; padding: 15px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; color: white; background-color: var(--accent-color); margin-bottom: 15px; transition: background-color 0.3s; }
