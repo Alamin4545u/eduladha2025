@@ -16,20 +16,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const tg = window.Telegram.WebApp;
 
     // --- Constants ---
-    const AD_REWARD = 1;
+    const DAILY_REWARD = 1;
     const MINIMUM_WITHDRAW_AMOUNT = 10;
 
     // --- UI Elements ---
     const screens = { home: document.getElementById('home-screen'), withdraw: document.getElementById('withdraw-screen') };
     
     // Header elements
-    const headerFirstNameElement = document.getElementById('headerFirstName');
+    const profilePicElement = document.getElementById('profilePic');
+    const headerFullNameElement = document.getElementById('headerFullName');
     const headerUsernameElement = document.getElementById('headerUsername');
     const headerBalanceElement = document.getElementById('headerBalance');
 
     // Home screen elements
-    const balanceElement = document.getElementById('balance');
-    const watchAdBtn = document.getElementById('watchAdBtn');
+    const dailyCheckinBtn = document.getElementById('dailyCheckinBtn');
     const goToWithdrawBtn = document.getElementById('goToWithdrawBtn');
 
     // Withdraw screen elements
@@ -37,15 +37,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const bkashNumberInput = document.getElementById('bkashNumber');
     const submitWithdrawBtn = document.getElementById('submitWithdrawBtn');
     const backBtn = document.getElementById('backBtn');
-    const withdrawStatusElement = document.getElementById('withdraw-status');
-
+    
     let currentUser = null;
     let userRef = null;
-    let userBalance = 0;
+    let userData = {};
 
     // --- Main Logic ---
     tg.ready();
-    tg.expand(); // Expands the web app to full height
+    tg.expand();
 
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUser = tg.initDataUnsafe.user;
@@ -62,31 +61,47 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchUserData() {
         userRef.get().then((doc) => {
             if (doc.exists) {
-                userBalance = doc.data().balance;
+                userData = doc.data();
             } else {
-                userRef.set({
+                // Create new user data
+                const newUser = {
                     username: currentUser.username || '',
-                    firstName: currentUser.first_name || '',
-                    balance: 0
-                });
-                userBalance = 0;
+                    fullName: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(),
+                    balance: 0,
+                    lastCheckin: null
+                };
+                userRef.set(newUser);
+                userData = newUser;
             }
             updateUI();
         }).catch(handleError);
     }
 
+    function getInitials(fullName) {
+        if (!fullName) return '';
+        const names = fullName.split(' ');
+        const firstInitial = names[0] ? names[0][0] : '';
+        const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
+        return `${firstInitial}${lastInitial}`.toUpperCase();
+    }
+
     function updateUI() {
-        const formattedBalance = `৳ ${userBalance.toFixed(2)}`;
+        const balance = userData.balance || 0;
+        const fullName = userData.fullName || currentUser.first_name;
+        const username = userData.username || currentUser.id;
+
+        const formattedBalance = `৳ ${balance.toFixed(2)}`;
+        
         // Update header
         headerBalanceElement.innerText = formattedBalance;
-        headerFirstNameElement.innerText = currentUser.first_name || 'ব্যবহারকারী';
-        headerUsernameElement.innerText = currentUser.username ? `@${currentUser.username}` : `#${currentUser.id}`;
+        headerFullNameElement.innerText = fullName;
+        headerUsernameElement.innerText = username ? `@${username}` : `#${currentUser.id}`;
+        profilePicElement.innerText = getInitials(fullName);
         
-        // Update main content
-        balanceElement.innerText = formattedBalance;
+        // Update withdraw screen balance
         withdrawBalanceElement.innerText = formattedBalance;
         
-        if (userBalance < MINIMUM_WITHDRAW_AMOUNT) {
+        if (balance < MINIMUM_WITHDRAW_AMOUNT) {
             submitWithdrawBtn.disabled = true;
             submitWithdrawBtn.innerText = `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন`;
         } else {
@@ -96,36 +111,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupEventListeners() {
-        watchAdBtn.addEventListener('click', handleWatchAd);
+        dailyCheckinBtn.addEventListener('click', handleDailyCheckin);
         goToWithdrawBtn.addEventListener('click', () => showScreen('withdraw'));
         backBtn.addEventListener('click', () => showScreen('home'));
         submitWithdrawBtn.addEventListener('click', handleSubmitWithdraw);
     }
 
-    function handleWatchAd() {
-        tg.HapticFeedback.impactOccurred('light');
-        watchAdBtn.disabled = true;
-        watchAdBtn.innerText = "লোড হচ্ছে...";
+    function handleDailyCheckin() {
+        dailyCheckinBtn.disabled = true;
+        const today = new Date().toISOString().slice(0, 10); // Get date as YYYY-MM-DD
 
-        window.showGiga()
-            .then(() => {
-                tg.HapticFeedback.notificationOccurred('success');
-                userRef.update({ balance: firebase.firestore.FieldValue.increment(AD_REWARD) })
-                    .then(() => {
-                        userBalance += AD_REWARD;
-                        updateUI();
-                        tg.showAlert(`অভিনন্দন! আপনি ৳ ${AD_REWARD.toFixed(2)} পেয়েছেন।`);
-                    });
-            })
-            .catch(e => {
-                tg.HapticFeedback.notificationOccurred('error');
-                tg.showAlert('দুঃখিত, এই মুহূর্তে কোনো বিজ্ঞাপন উপলব্ধ নেই।');
-                console.error("Ad failed:", e);
-            })
-            .finally(() => {
-                watchAdBtn.disabled = false;
-                watchAdBtn.innerText = `বিজ্ঞাপন দেখুন (৳ ${AD_REWARD.toFixed(2)})`;
-            });
+        if (userData.lastCheckin === today) {
+            tg.showAlert("আপনি আজকের বোনাস ইতোমধ্যে সংগ্রহ করেছেন।");
+            dailyCheckinBtn.disabled = false;
+            return;
+        }
+
+        userRef.update({
+            balance: firebase.firestore.FieldValue.increment(DAILY_REWARD),
+            lastCheckin: today
+        }).then(() => {
+            userData.balance += DAILY_REWARD;
+            userData.lastCheckin = today;
+            updateUI();
+            tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert(`অভিনন্দন! আপনি ডেইলি চেকিং বোনাস হিসেবে ৳ ${DAILY_REWARD.toFixed(2)} পেয়েছেন।`);
+            dailyCheckinBtn.disabled = false;
+        }).catch(handleError);
     }
 
     function handleSubmitWithdraw() {
@@ -134,15 +146,13 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.showAlert("অনুগ্রহ করে একটি সঠিক বিকাশ নম্বর দিন।");
             return;
         }
-        if (userBalance < MINIMUM_WITHDRAW_AMOUNT) {
+        if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) {
             tg.showAlert(`আপনার ব্যালেন্স পর্যাপ্ত নয়।`);
             return;
         }
         
         submitWithdrawBtn.disabled = true;
-        withdrawStatusElement.innerText = "অনুরোধ প্রক্রিয়া করা হচ্ছে...";
-        
-        const withdrawalAmount = userBalance;
+        const withdrawalAmount = userData.balance;
 
         db.collection('withdrawals').add({
             userId: currentUser.id.toString(),
@@ -151,19 +161,16 @@ document.addEventListener('DOMContentLoaded', function() {
             bkashNumber: bkashNumber,
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
+        }).then(() => {
             userRef.update({ balance: 0 }).then(() => {
-                userBalance = 0;
+                userData.balance = 0;
                 updateUI();
                 tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
                 showScreen('home');
             });
-        })
-        .catch(handleError)
+        }).catch(handleError)
         .finally(() => {
             submitWithdrawBtn.disabled = false;
-            withdrawStatusElement.innerText = "";
             bkashNumberInput.value = "";
         });
     }
@@ -176,5 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleError(error) {
         console.error("An error occurred:", error);
         tg.showAlert("একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+        // Re-enable buttons on error
+        dailyCheckinBtn.disabled = false;
+        submitWithdrawBtn.disabled = false;
     }
 });
