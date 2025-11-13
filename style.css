@@ -11,10 +11,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .header-wallet { text-align: right; }
 .header-wallet p { margin: 0; font-size: 12px; color: var(--text-secondary); }
 .header-wallet .balance-amount { font-size: 18px; font-weight: 600; color: var(--balance-color); }
-.content-container { padding: 20px; height: 100%; overflow-y: auto; box-sizing: border-box; }
-.screen { display: none; }
-.screen.active { display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
-.screen h2 { margin-top: 0; color: var(--accent-color); text-align: center; }
+.content-container { padding: 20px; height: 100%; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; }
+.screen { display: none; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; height: 100%; }
+.screen.active { display: flex; }
+.screen h2 { margin-top: 0; color: var(--accent-color); text-align: center; margin-bottom: 20px; flex-shrink: 0; }
 .home-actions { display: flex; justify-content: flex-start; align-items: center; width: 100%; margin-top: 20px; gap: 15px; flex-wrap: wrap; }
 .icon-btn { background: linear-gradient(145deg, #2a2a2a, #1e1e1e); border: 1px solid var(--border-color); box-shadow: 3px 3px 6px #1c1c1c, -3px -3px 6px #262626; color: var(--text-primary); width: 80px; height: 80px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.2s ease-in-out; padding: 5px; box-sizing: border-box; }
 .icon-btn:hover { background: linear-gradient(145deg, #1e1e1e, #2a2a2a); }
@@ -35,7 +35,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 #spinTriggerBtn:disabled { cursor: not-allowed; background: #bdbdbd; }
 #spin-info { font-size: 16px; margin-top: 15px; color: var(--text-secondary); font-weight: 500; }
 #spin-info span { color: var(--text-primary); font-weight: bold; }
-#task-list { width: 100%; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+/* === টাস্ক এবং স্ক্রল স্টাইল আপডেট === */
+.scrollable-content { overflow-y: auto; width: 100%; flex-grow: 1; }
+#task-list { width: 100%; display: flex; flex-direction: column; gap: 15px; }
 .task-item { background-color: var(--tertiary-bg); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-color); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
 .task-item:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
 .task-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -44,6 +46,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .task-description { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .task-item.completed { opacity: 0.6; cursor: not-allowed; border-left-color: var(--success-color); }
 .task-item.completed::after { content: '✔'; position: absolute; top: 10px; right: 15px; font-size: 24px; color: var(--success-color); }
+/* === কুইজ স্টাইল আপডেট === */
 .quiz-info { text-align: center; margin-bottom: 15px; width: 100%; }
 .quiz-info p { margin: 4px 0; font-size: 14px; color: var(--text-secondary); }
 .quiz-progress-bar { width: 100%; background-color: var(--secondary-bg); border-radius: 5px; height: 10px; margin-top: 8px; overflow: hidden; }
