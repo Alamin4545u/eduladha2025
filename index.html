@@ -2,21 +2,28 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Telegram Ad App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Home Screen -->
     <div id="home-screen" class="screen active">
+        <header class="app-header">
+            <div class="user-profile">
+                <p id="headerFirstName">ব্যবহারকারী</p>
+                <small id="headerUsername">লোড হচ্ছে...</small>
+            </div>
+            <div class="header-wallet">
+                <span id="headerBalance">৳ 0.00</span>
+            </div>
+        </header>
+        
         <div class="container">
             <h1>বিজ্ঞাপন দেখে আয় করুন</h1>
             <div class="wallet">
-                <p>আপনার ব্যালেন্স:</p>
+                <p>আপনার বর্তমান ব্যালেন্স</p>
                 <h2 id="balance">৳ 0.00</h2>
-            </div>
-            <div class="user-info">
-                <p>ব্যবহারকারী আইডি: <span id="userId">লোড হচ্ছে...</span></p>
             </div>
             <button id="watchAdBtn" class="action-btn">বিজ্ঞাপন দেখুন (৳ ১.০০)</button>
             <button id="goToWithdrawBtn" class="action-btn secondary">উইথড্র করুন</button>
@@ -35,7 +42,7 @@
             </div>
             <div class="form-group">
                 <label for="bkashNumber">আপনার বিকাশ নম্বর দিন:</label>
-                <input type="tel" id="bkashNumber" placeholder="e.g., 01700000000">
+                <input type="tel" id="bkashNumber" placeholder="e.g., 01700000000" inputmode="numeric">
             </div>
             <button id="submitWithdrawBtn" class="action-btn">সাবমিট করুন</button>
             <p id="withdraw-status" class="status-message"></p>
@@ -44,7 +51,7 @@
 
     <!-- স্ক্রিপ্ট ট্যাগগুলো -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script> <!-- আপনার Gigapub ID দিন -->
+    <script src="https://ad.gigapub.tech/script?id=4203"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="script.js"></script>
