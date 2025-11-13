@@ -44,7 +44,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .task-description { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .task-item.completed { opacity: 0.6; cursor: not-allowed; border-left-color: var(--success-color); }
 .task-item.completed::after { content: '✔'; position: absolute; top: 10px; right: 15px; font-size: 24px; color: var(--success-color); }
-/* === কুইজ স্টাইল আপডেট === */
 .quiz-info { text-align: center; margin-bottom: 15px; width: 100%; }
 .quiz-info p { margin: 4px 0; font-size: 14px; color: var(--text-secondary); }
 .quiz-progress-bar { width: 100%; background-color: var(--secondary-bg); border-radius: 5px; height: 10px; margin-top: 8px; overflow: hidden; }
