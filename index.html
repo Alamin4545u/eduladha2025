@@ -7,32 +7,46 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>বিজ্ঞাপন দেখে আয় করুন</h1>
-        <div class="wallet">
-            <p>আপনার ব্যালেন্স:</p>
-            <h2 id="balance">লোড হচ্ছে...</h2>
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen active">
+        <div class="container">
+            <h1>বিজ্ঞাপন দেখে আয় করুন</h1>
+            <div class="wallet">
+                <p>আপনার ব্যালেন্স:</p>
+                <h2 id="balance">৳ 0.00</h2>
+            </div>
+            <div class="user-info">
+                <p>ব্যবহারকারী আইডি: <span id="userId">লোড হচ্ছে...</span></p>
+            </div>
+            <button id="watchAdBtn" class="action-btn">বিজ্ঞাপন দেখুন (৳ ১.০০)</button>
+            <button id="goToWithdrawBtn" class="action-btn secondary">উইথড্র করুন</button>
+            <p class="footer">GigaPub দ্বারা বিজ্ঞাপন চালিত</p>
         </div>
-        <div class="user-info">
-            <p>ব্যবহারকারী আইডি: <span id="userId">...</span></p>
-        </div>
-        <button id="showAdBtn" class="action-btn">বিজ্ঞাপন দেখুন</button>
-        <button id="withdrawBtn" class="action-btn secondary">উইথড্র করুন</button>
-        <p class="footer">GigaPub দ্বারা বিজ্ঞাপন চালিত</p>
     </div>
 
-    <!-- Telegram Web App Script -->
+    <!-- Withdraw Screen -->
+    <div id="withdraw-screen" class="screen">
+        <div class="container">
+            <button id="backBtn" class="back-btn">← পেছনে যান</button>
+            <h1>উইথড্র অনুরোধ</h1>
+            <div class="wallet withdraw-info">
+                <p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p>
+                <p>সর্বনিম্ন উইথড্র: <strong>৳ 10.00</strong></p>
+            </div>
+            <div class="form-group">
+                <label for="bkashNumber">আপনার বিকাশ নম্বর দিন:</label>
+                <input type="tel" id="bkashNumber" placeholder="e.g., 01700000000">
+            </div>
+            <button id="submitWithdrawBtn" class="action-btn">সাবমিট করুন</button>
+            <p id="withdraw-status" class="status-message"></p>
+        </div>
+    </div>
+
+    <!-- স্ক্রিপ্ট ট্যাগগুলো -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    <!-- Gigapub Ad Script -->
-    <!-- এখানে আপনার Gigapub এর দেওয়া স্ক্রিপ্টটি বসান -->
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
-
-    <!-- Firebase Scripts -->
+    <script src="https://ad.gigapub.tech/script?id=YOUR_GIGAPUB_ID"></script> <!-- আপনার Gigapub ID দিন -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-    <!-- আপনার কাস্টম জাভাস্ক্রিপ্ট -->
     <script src="script.js"></script>
 </body>
 </html>
