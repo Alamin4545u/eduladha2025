@@ -1,33 +1,34 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Firebase Configuration ---
+    // --- Firebase Configuration (Provided by you) ---
     const firebaseConfig = {
-  apiKey: "AIzaSyDW4TSXHbpP92hyeLvuBdSdVu56xKayTd8",
-  authDomain: "test-dc90d.firebaseapp.com",
-  databaseURL: "https://test-dc90d-default-rtdb.firebaseio.com",
-  projectId: "test-dc90d",
-  storageBucket: "test-dc90d.firebasestorage.app",
-  messagingSenderId: "804710782593",
-  appId: "1:804710782593:web:48921608aad6d348afdf80",
-  measurementId: "G-29YGNDZ2J4"
-};
+        apiKey: "AIzaSyDW4TSXHbpP92hyeLvuBdSdVu56xKayTd8",
+        authDomain: "test-dc90d.firebaseapp.com",
+        databaseURL: "https://test-dc90d-default-rtdb.firebaseio.com",
+        projectId: "test-dc90d",
+        storageBucket: "test-dc90d.appspot.com",
+        messagingSenderId: "804710782593",
+        appId: "1:804710782593:web:48921608aad6d348afdf80",
+        measurementId: "G-29YGNDZ2J4"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const tg = window.Telegram.WebApp;
 
     // --- Constants ---
-    const AD_REWARD = 1; // প্রতি বিজ্ঞাপনে ১ টাকা
-    const MINIMUM_WITHDRAW_AMOUNT = 10; // সর্বনিম্ন ১০ টাকা
+    const AD_REWARD = 1;
+    const MINIMUM_WITHDRAW_AMOUNT = 10;
 
     // --- UI Elements ---
-    const screens = {
-        home: document.getElementById('home-screen'),
-        withdraw: document.getElementById('withdraw-screen')
-    };
+    const screens = { home: document.getElementById('home-screen'), withdraw: document.getElementById('withdraw-screen') };
     
+    // Header elements
+    const headerFirstNameElement = document.getElementById('headerFirstName');
+    const headerUsernameElement = document.getElementById('headerUsername');
+    const headerBalanceElement = document.getElementById('headerBalance');
+
     // Home screen elements
     const balanceElement = document.getElementById('balance');
-    const userIdElement = document.getElementById('userId');
     const watchAdBtn = document.getElementById('watchAdBtn');
     const goToWithdrawBtn = document.getElementById('goToWithdrawBtn');
 
@@ -44,15 +45,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Main Logic ---
     tg.ready();
+    tg.expand(); // Expands the web app to full height
 
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUser = tg.initDataUnsafe.user;
         const userId = currentUser.id.toString();
         userRef = db.collection('users').doc(userId);
 
-        userIdElement.innerText = userId;
         fetchUserData();
-
         setupEventListeners();
     } else {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (doc.exists) {
                 userBalance = doc.data().balance;
             } else {
-                // Create a new user entry
                 userRef.set({
                     username: currentUser.username || '',
                     firstName: currentUser.first_name || '',
@@ -78,10 +77,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateUI() {
         const formattedBalance = `৳ ${userBalance.toFixed(2)}`;
+        // Update header
+        headerBalanceElement.innerText = formattedBalance;
+        headerFirstNameElement.innerText = currentUser.first_name || 'ব্যবহারকারী';
+        headerUsernameElement.innerText = currentUser.username ? `@${currentUser.username}` : `#${currentUser.id}`;
+        
+        // Update main content
         balanceElement.innerText = formattedBalance;
         withdrawBalanceElement.innerText = formattedBalance;
         
-        // Disable withdraw button if balance is too low
         if (userBalance < MINIMUM_WITHDRAW_AMOUNT) {
             submitWithdrawBtn.disabled = true;
             submitWithdrawBtn.innerText = `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন`;
@@ -106,13 +110,12 @@ document.addEventListener('DOMContentLoaded', function() {
         window.showGiga()
             .then(() => {
                 tg.HapticFeedback.notificationOccurred('success');
-                userRef.update({
-                    balance: firebase.firestore.FieldValue.increment(AD_REWARD)
-                }).then(() => {
-                    userBalance += AD_REWARD;
-                    updateUI();
-                    tg.showAlert(`অভিনন্দন! আপনি ৳ ${AD_REWARD.toFixed(2)} পেয়েছেন।`);
-                });
+                userRef.update({ balance: firebase.firestore.FieldValue.increment(AD_REWARD) })
+                    .then(() => {
+                        userBalance += AD_REWARD;
+                        updateUI();
+                        tg.showAlert(`অভিনন্দন! আপনি ৳ ${AD_REWARD.toFixed(2)} পেয়েছেন।`);
+                    });
             })
             .catch(e => {
                 tg.HapticFeedback.notificationOccurred('error');
@@ -127,14 +130,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleSubmitWithdraw() {
         const bkashNumber = bkashNumberInput.value.trim();
-        
         if (bkashNumber.length < 11 || !/^\d+$/.test(bkashNumber)) {
             tg.showAlert("অনুগ্রহ করে একটি সঠিক বিকাশ নম্বর দিন।");
             return;
         }
-
         if (userBalance < MINIMUM_WITHDRAW_AMOUNT) {
-            tg.showAlert(`আপনার ব্যালেন্স পর্যাপ্ত নয়। সর্বনিম্ন উইথড্র ৳ ${MINIMUM_WITHDRAW_AMOUNT}।`);
+            tg.showAlert(`আপনার ব্যালেন্স পর্যাপ্ত নয়।`);
             return;
         }
         
@@ -143,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const withdrawalAmount = userBalance;
 
-        // 1. Create withdrawal request
         db.collection('withdrawals').add({
             userId: currentUser.id.toString(),
             username: currentUser.username || '',
@@ -153,13 +153,10 @@ document.addEventListener('DOMContentLoaded', function() {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
-            // 2. Deduct balance from user's account
-            userRef.update({
-                balance: 0
-            }).then(() => {
+            userRef.update({ balance: 0 }).then(() => {
                 userBalance = 0;
                 updateUI();
-                tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে। অ্যাডমিন রিভিউ করে পেমেন্ট সম্পন্ন করবে।");
+                tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
                 showScreen('home');
             });
         })
