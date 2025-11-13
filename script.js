@@ -8,16 +8,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
     const MINIMUM_WITHDRAW_AMOUNT = 10;
-    let appConfig = { dailyReward: 1 };
+    let appConfig = { dailyReward: 1, referralBonus: 5 };
     let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
-    let quizConfig = { dailyLimit: 5, reward: 2, clickTarget: 5 };
+    let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 2 }; // ডিফল্ট মান আপডেট করা হয়েছে
     let currentUser, userRef, userData = {};
     let isSpinning = false;
     let currentRotation = 0;
     let quizQuestions = [];
     let currentQuizIndex = 0;
     let selectedQuizOption = null;
-    let adClicked = false; // বিজ্ঞাপন ক্লিক যাচাই করার জন্য ফ্ল্যাগ
+    let adClicked = false;
 
     // --- UI Elements ---
     const screens = document.querySelectorAll('.screen');
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn'), quiz: document.getElementById('quizBtn') };
     const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft'), wheelGroup: document.getElementById('wheelGroup') };
     const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
-    const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn') };
+    const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn'), notice: document.getElementById('referral-notice') };
     const taskListContainer = document.getElementById('task-list');
     const quizScreenElements = { backBtn: document.getElementById('quizBackBtn'), progressText: document.getElementById('quiz-progress-text'), stepText: document.getElementById('quiz-step-text'), progressInner: document.getElementById('quiz-progress-inner'), instruction: document.getElementById('quiz-instruction'), questionText: document.getElementById('quiz-question-text'), optionsContainer: document.getElementById('quiz-options-container'), nextBtn: document.getElementById('next-quiz-btn') };
 
@@ -59,13 +59,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 userData = doc.data();
                 if (!userData.spinsToday || userData.spinsToday.date !== today) userData.spinsToday = { date: today, count: 0 };
                 if (!userData.completedTasks) userData.completedTasks = [];
-                if (!userData.quizProgress || userData.quizProgress.date !== today) userData.quizProgress = { date: today, completedToday: 0, currentStep: 0 };
+                if (!userData.quizProgress || userData.quizProgress.date !== today) {
+                    // তারিখ ভিন্ন হলে, Firestore এ রিসেট করুন
+                    userRef.update({ quizProgress: { date: today, completedToday: 0, currentStep: 0 }});
+                    userData.quizProgress = { date: today, completedToday: 0, currentStep: 0 };
+                }
             } else {
-                const newUser = { username: currentUser.username || '', fullName: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(), balance: 0, lastCheckin: null, spinsToday: { date: today, count: 0 }, completedTasks: [], quizProgress: { date: today, completedToday: 0, currentStep: 0 } };
-                userRef.set(newUser).then(() => userData = newUser);
+                const referrerId = tg.initDataUnsafe.start_param;
+                const newUser = {
+                    username: currentUser.username || '',
+                    fullName: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(),
+                    balance: 0,
+                    lastCheckin: null,
+                    spinsToday: { date: today, count: 0 },
+                    completedTasks: [],
+                    quizProgress: { date: today, completedToday: 0, currentStep: 0 },
+                    referredBy: referrerId || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                userRef.set(newUser).then(() => {
+                    userData = newUser;
+                    if (referrerId) {
+                        handleReferralBonus(referrerId);
+                    }
+                });
             }
             updateUI();
         }, (error) => handleError("Failed to fetch user data.", error));
+    }
+
+    function handleReferralBonus(referrerId) {
+        const referrerRef = db.collection('users').doc(referrerId);
+        db.runTransaction((transaction) => {
+            return transaction.get(referrerRef).then((doc) => {
+                if (doc.exists) {
+                    transaction.update(referrerRef, {
+                        balance: firebase.firestore.FieldValue.increment(appConfig.referralBonus || 0)
+                    });
+                }
+            });
+        }).catch(err => console.error("Referral bonus error:", err));
     }
 
     function getInitials(fullName) {
@@ -73,7 +106,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateUI() {
-        const balance = userData.balance || 0; const fullName = userData.fullName || currentUser.first_name; const username = userData.username || currentUser.id; const formattedBalance = `৳ ${balance.toFixed(2)}`; headerElements.balance.innerText = formattedBalance; headerElements.fullName.innerText = fullName; headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`; headerElements.pic.innerText = getInitials(fullName); walletElements.balance.innerText = formattedBalance; walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT; walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন"; referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${currentUser.id}`; const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0); spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
+        const balance = userData.balance || 0; const fullName = userData.fullName || currentUser.first_name; const username = userData.username || currentUser.id; const formattedBalance = `৳ ${balance.toFixed(2)}`; headerElements.balance.innerText = formattedBalance; headerElements.fullName.innerText = fullName; headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`; headerElements.pic.innerText = getInitials(fullName); walletElements.balance.innerText = formattedBalance; walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT; walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
+        referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}!`;
+        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${currentUser.id}`;
+        const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
+        spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
     }
 
     function setupEventListeners() {
@@ -121,14 +158,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function startQuiz() {
-        const completedToday = userData.quizProgress?.completedToday || 0;
-        if (completedToday >= quizConfig.dailyLimit) { tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`); return; }
+        const doc = await userRef.get();
+        const freshUserData = doc.data();
+        const today = new Date().toISOString().slice(0, 10);
+        let currentQuizProgress = freshUserData.quizProgress;
+
+        if (!currentQuizProgress || currentQuizProgress.date !== today) {
+            currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
+            await userRef.update({ quizProgress: currentQuizProgress });
+        }
+        
+        userData.quizProgress = currentQuizProgress; // লোকাল ডাটা সিঙ্ক করা হলো
+
+        if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
+            tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
+            return;
+        }
+        
         showScreen('quiz-screen');
         quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
         quizScreenElements.optionsContainer.innerHTML = '';
         try {
             const snapshot = await db.collection('quizzes').get();
-            quizQuestions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            quizQuestions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
             if (quizQuestions.length === 0) { handleError('কোনো কুইজ পাওয়া যায়নি।'); return; }
             quizQuestions.sort(() => 0.5 - Math.random());
             currentQuizIndex = 0;
