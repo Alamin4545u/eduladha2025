@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const MINIMUM_WITHDRAW_AMOUNT = 10;
     const DAILY_REWARD = 1;
 
-    let spinConfig = { dailyLimit: 5, rewardAmount: 1 }; // ডিফল্ট ভ্যালু
+    let spinConfig = { dailyLimit: 5, rewardAmount: 1 }; // Default values
     let theWheel, currentUser, userRef, userData = {};
     let isSpinning = false;
 
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navButtons = document.querySelectorAll('.nav-btn');
     const headerElements = { pic: document.getElementById('profilePic'), fullName: document.getElementById('headerFullName'), username: document.getElementById('headerUsername'), balance: document.getElementById('headerBalance') };
     const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn') };
-    const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft'), canvas: document.getElementById('spinCanvas') };
+    const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft') };
     const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
     const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn') };
 
@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().slice(0, 10);
             if (doc.exists) {
                 userData = doc.data();
-                // নতুন দিনে স্পিন কাউন্ট রিসেট করুন
                 if (!userData.spinsToday || userData.spinsToday.date !== today) {
                     userData.spinsToday = { date: today, count: 0 };
                 }
@@ -78,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 userRef.set(newUser).then(() => {
                     userData = newUser;
-                    updateUI();
                 });
             }
             updateUI();
@@ -99,21 +97,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const username = userData.username || currentUser.id;
         const formattedBalance = `৳ ${balance.toFixed(2)}`;
 
-        // Header
         headerElements.balance.innerText = formattedBalance;
         headerElements.fullName.innerText = fullName;
         headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`;
         headerElements.pic.innerText = getInitials(fullName);
-
-        // Wallet Screen
         walletElements.balance.innerText = formattedBalance;
         walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
         walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
-        
-        // Referral Link
         referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${currentUser.id}`;
-
-        // Spin Screen
         const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
         spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
     }
@@ -140,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeSpinWheel() {
-        if (!Winwheel) {
+        if (typeof Winwheel === 'undefined') {
             console.error("Winwheel library is not loaded.");
             return;
         }
@@ -155,24 +146,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 {'fillStyle' : '#9ccc65', 'text': 'Win'}, {'fillStyle' : '#ec407a', 'text': 'Now'}, 
                 {'fillStyle' : '#5c6bc0', 'text': 'Play'}, {'fillStyle' : '#29b6f6', 'text': 'Daily'}
             ],
-            'animation': {
-                'type': 'spinToStop',
-                'duration': 5,
-                'spins': 8,
-                'callbackFinished': spinFinished
-            }
+            'animation': { 'type': 'spinToStop', 'duration': 5, 'spins': 8, 'callbackFinished': spinFinished }
         });
     }
 
     function handleSpin() {
         if (isSpinning) return;
-
         const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
         if (spinsLeftCount <= 0) {
             tg.showAlert("আপনার আজকের জন্য আর কোনো স্পিন বাকি নেই।");
             return;
         }
-
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
         theWheel.startAnimation();
@@ -180,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function spinFinished(indicatedSegment) {
         tg.HapticFeedback.impactOccurred('light');
-        
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
             const today = new Date().toISOString().slice(0, 10);
@@ -208,10 +191,8 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.showAlert("আপনি আজকের বোনাস ইতোমধ্যে সংগ্রহ করেছেন।");
             return;
         }
-
         this.disabled = true;
         tg.HapticFeedback.impactOccurred('light');
-
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
             userRef.update({
@@ -222,9 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }).catch(e => {
             handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", e);
-        }).finally(() => {
-            this.disabled = false;
-        });
+        }).finally(() => { this.disabled = false; });
     }
     
     function handleSubmitWithdraw() {
@@ -237,10 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.showAlert(`ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন।`);
             return;
         }
-
         this.disabled = true;
         const amountToWithdraw = userData.balance;
-
         db.collection('withdrawals').add({
             userId: currentUser.id.toString(), username: currentUser.username || '', amount: amountToWithdraw, bkashNumber: bkashNumber, status: 'pending', timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
