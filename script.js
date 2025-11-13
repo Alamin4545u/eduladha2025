@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const MINIMUM_WITHDRAW_AMOUNT = 10;
     let appConfig = { dailyReward: 1, referralBonus: 5 };
     let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
-    let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 2 }; // ডিফল্ট মান আপডেট করা হয়েছে
+    let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 2 };
     let currentUser, userRef, userData = {};
     let isSpinning = false;
     let currentRotation = 0;
@@ -46,10 +46,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const wheelGroup = spinScreenElements.wheelGroup; if (!wheelGroup) return; wheelGroup.innerHTML = ''; const numSegments = 10; const angle = 360 / numSegments; const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41']; const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => { const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0; return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) }; }; for (let i = 0; i < numSegments; i++) { const startAngle = i * angle; const endAngle = startAngle + angle; const start = polarToCartesian(250, 250, 210, endAngle); const end = polarToCartesian(250, 250, 210, startAngle); const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`; const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", pathData); path.setAttribute("fill", colors[i]); path.setAttribute("stroke", "#8d6e63"); path.setAttribute("stroke-width", "4"); wheelGroup.appendChild(path); } for (let i = 0; i < numSegments; i++) { const sparkleAngle = (i * angle) + (angle / 2); const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle); const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle"); sparkle.setAttribute("cx", sparklePos.x); sparkle.setAttribute("cy", sparklePos.y); sparkle.setAttribute("r", "5"); sparkle.setAttribute("fill", "white"); sparkle.setAttribute("filter", "url(#glow)"); wheelGroup.appendChild(sparkle); }
     }
 
-    function fetchAdminSettings() {
-        db.collection('settings').doc('appConfig').get().then(doc => { if (doc.exists) appConfig = doc.data(); });
-        db.collection('settings').doc('spinConfig').get().then(doc => { if (doc.exists) spinConfig = doc.data(); });
-        db.collection('settings').doc('quizConfig').get().then(doc => { if (doc.exists) quizConfig = doc.data(); });
+    async function fetchAdminSettings() {
+        try {
+            const appConfigDoc = await db.collection('settings').doc('appConfig').get();
+            if (appConfigDoc.exists) appConfig = appConfigDoc.data();
+            
+            const spinConfigDoc = await db.collection('settings').doc('spinConfig').get();
+            if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
+
+            const quizConfigDoc = await db.collection('settings').doc('quizConfig').get();
+            if (quizConfigDoc.exists) quizConfig = quizConfigDoc.data();
+        } catch (error) {
+            console.error("Error fetching settings:", error);
+        }
     }
 
     function fetchUserData() {
@@ -57,12 +66,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().slice(0, 10);
             if (doc.exists) {
                 userData = doc.data();
-                if (!userData.spinsToday || userData.spinsToday.date !== today) userData.spinsToday = { date: today, count: 0 };
+                if (!userData.spinsToday || userData.spinsToday.date !== today) {
+                    userData.spinsToday = { date: today, count: 0 };
+                    userRef.update({ 'spinsToday': userData.spinsToday });
+                }
                 if (!userData.completedTasks) userData.completedTasks = [];
                 if (!userData.quizProgress || userData.quizProgress.date !== today) {
-                    // তারিখ ভিন্ন হলে, Firestore এ রিসেট করুন
-                    userRef.update({ quizProgress: { date: today, completedToday: 0, currentStep: 0 }});
                     userData.quizProgress = { date: today, completedToday: 0, currentStep: 0 };
+                    userRef.update({ 'quizProgress': userData.quizProgress });
                 }
             } else {
                 const referrerId = tg.initDataUnsafe.start_param;
@@ -158,34 +169,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function startQuiz() {
-        const doc = await userRef.get();
-        const freshUserData = doc.data();
-        const today = new Date().toISOString().slice(0, 10);
-        let currentQuizProgress = freshUserData.quizProgress;
-
-        if (!currentQuizProgress || currentQuizProgress.date !== today) {
-            currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
-            await userRef.update({ quizProgress: currentQuizProgress });
-        }
-        
-        userData.quizProgress = currentQuizProgress; // লোকাল ডাটা সিঙ্ক করা হলো
-
-        if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
-            tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
-            return;
-        }
-        
-        showScreen('quiz-screen');
-        quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
-        quizScreenElements.optionsContainer.innerHTML = '';
         try {
+            const doc = await userRef.get();
+            if (!doc.exists) {
+                handleError("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
+                return;
+            }
+            const freshUserData = doc.data();
+            const today = new Date().toISOString().slice(0, 10);
+            
+            let currentQuizProgress = freshUserData.quizProgress;
+            if (!currentQuizProgress || currentQuizProgress.date !== today) {
+                currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
+                await userRef.update({ quizProgress: currentQuizProgress });
+            }
+            userData.quizProgress = currentQuizProgress;
+
+            if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
+                tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
+                return;
+            }
+            
+            showScreen('quiz-screen');
+            quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
+            quizScreenElements.optionsContainer.innerHTML = '';
+            
             const snapshot = await db.collection('quizzes').get();
             quizQuestions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
             if (quizQuestions.length === 0) { handleError('কোনো কুইজ পাওয়া যায়নি।'); return; }
+            
             quizQuestions.sort(() => 0.5 - Math.random());
             currentQuizIndex = 0;
             displayCurrentQuiz();
-        } catch (error) { handleError('কুইজ লোড করতে সমস্যা হয়েছে।', error); }
+        } catch (error) {
+            handleError('কুইজ শুরু করতে একটি অপ্রত্যাশিত সমস্যা হয়েছে।', error);
+        }
     }
 
     function displayCurrentQuiz() {
