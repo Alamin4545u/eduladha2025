@@ -28,6 +28,7 @@ const photoUrl = tgUser.photo_url || 'https://via.placeholder.com/100';
 // DOM Elements
 const screens = document.querySelectorAll('.screen');
 const navItems = document.querySelectorAll('.nav-item');
+const rewardBtns = document.querySelectorAll('.reward-btn');
 let userDocRef;
 let config = { 
     pointsPerAd: 10, minWithdraw: 500, dailyRewardPoints: 50, dailyRewardCooldown: 86400000, 
@@ -49,20 +50,40 @@ document.getElementById('profileImgBig').src = photoUrl;
 document.getElementById('profileName').innerText = username;
 document.getElementById('telegramId').innerText = telegramId;
 
-// Navigation
+// Navigation & Reward Buttons
+function switchScreen(screenId) {
+    screens.forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    navItems.forEach(n => n.classList.remove('active'));
+    const navItem = document.querySelector(`[data-screen="${screenId}"]`);
+    if (navItem) navItem.classList.add('active');
+
+    // Load screen-specific data
+    if (screenId === 'history') loadHistory();
+    if (screenId === 'task') loadTasks();
+    if (screenId === 'wallet') loadPaymentMethods();
+    if (screenId === 'spin') { loadSpinLimit(); }
+    if (screenId === 'scratch') { loadScratchLimit(); initScratchCard(); }
+    if (screenId === 'refer') setupReferralUI();
+}
+
+// Reward Buttons Click
+rewardBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const screen = btn.dataset.screen;
+        if (screen === 'daily') {
+            claimDaily();
+        } else {
+            switchScreen(screen);
+        }
+    });
+});
+
+// Navigation Click
 navItems.forEach(item => {
     item.addEventListener('click', () => {
         const screenId = item.dataset.screen;
-        screens.forEach(s => s.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
-        navItems.forEach(n => n.classList.remove('active'));
-        item.classList.add('active');
-        if (screenId === 'history') loadHistory();
-        if (screenId === 'task') loadTasks();
-        if (screenId === 'wallet') loadPaymentMethods();
-        if (screenId === 'spin') loadSpinLimit();
-        if (screenId === 'scratch') { loadScratchLimit(); initScratchCard(); }
-        if (screenId === 'refer') setupReferralUI();
+        switchScreen(screenId);
     });
 });
 
@@ -124,7 +145,7 @@ async function performIpCheck() {
 
     } catch (error) {
         console.error("IP Check Error:", error);
-        isTaskCountry = false; // Disable tasks on error for security
+        isTaskCountry = false;
         if (error.message !== "VPN detected") {
              alert("আপনার লোকেশন যাচাই করা যায়নি। কিছু ফিচার বন্ধ থাকতে পারে।");
         }
@@ -134,25 +155,19 @@ async function performIpCheck() {
 }
 
 function updateTaskButtonsState() {
-    const buttons = [
-        document.getElementById('dailyClaim'),
-        document.getElementById('spinBtn'),
-        document.getElementById('scratchBtn')
-    ];
-    if (isTaskCountry) {
-        buttons.forEach(btn => {
+    const buttons = [document.getElementById('dailyClaim'), document.getElementById('spinBtn'), document.getElementById('scratchBtn')];
+    buttons.forEach(btn => {
+        if (isTaskCountry) {
             btn.disabled = false;
             btn.title = "";
-        });
-    } else {
-        buttons.forEach(btn => {
+        } else {
             btn.disabled = true;
             btn.title = "এই ফিচারটি শুধুমাত্র US/UK/CA ব্যবহারকারীদের জন্য উপলব্ধ।";
-        });
-    }
+        }
+    });
 }
 
-// Handle Referral for new users
+// Referral
 async function handleReferral(newUserDocRef) {
     const urlParams = new URLSearchParams(window.location.search);
     const startParam = urlParams.get('start');
@@ -172,8 +187,6 @@ async function handleReferral(newUserDocRef) {
         });
         await newUserDocRef.update({ referredBy: referrerId });
         console.log(`User ${telegramId} referred by ${referrerId}. Reward of ${config.referReward} given.`);
-    } else {
-        console.log(`Referrer with ID ${referrerId} not found.`);
     }
 }
 
@@ -189,7 +202,7 @@ function setupReferralUI() {
     if (copyButton) {
         copyButton.onclick = () => {
             linkInput.select();
-            linkInput.setSelectionRange(0, 99999); // For mobile devices
+            linkInput.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(linkInput.value).then(() => {
                 alert('রেফারেল লিঙ্ক কপি করা হয়েছে!');
             }, () => {
@@ -491,21 +504,3 @@ async function loadHistory() {
         container.innerHTML = '<p style="color:red;">হিস্ট্রি লোড করতে সমস্যা হচ্ছে</p>';
     }
 }
-
-// Event Listeners
-document.getElementById('dailyClaim').addEventListener('click', claimDaily);
-document.getElementById('spinBtn').addEventListener('click', () => {
-    if (document.getElementById('spinBtn').disabled) return;
-    screens.forEach(s => s.classList.remove('active'));
-    document.getElementById('spin').classList.add('active');
-    navItems.forEach(n => n.classList.remove('active'));
-    loadSpinLimit();
-});
-document.getElementById('scratchBtn').addEventListener('click', () => {
-    if (document.getElementById('scratchBtn').disabled) return;
-    screens.forEach(s => s.classList.remove('active'));
-    document.getElementById('scratch').classList.add('active');
-    navItems.forEach(n => n.classList.remove('active'));
-    loadScratchLimit();
-    initScratchCard();
-});
