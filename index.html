@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>এ্যাড দেখে টাকা ইনকাম করুন</title>
-    <!-- External CSS লিঙ্ক -->
-    <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome লিঙ্ক -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://ad.gigapub.tech/script?id=4203"></script>
+    <script src="https://montage-ads.com/sdk.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -16,7 +20,7 @@
         <div class="home-header">
             <div class="avatar" id="avatar"></div>
             <div class="user-info">
-                <div class="user-name" id="userName">লোড হচ্ছে...</div>
+                <div class="user-name" id="userName"></div>
                 <div class="user-username" id="userUsername"></div>
             </div>
             <div class="user-balance">
@@ -24,25 +28,15 @@
                 ৳ <span id="balance">0</span>
             </div>
         </div>
-        <div class="banner-container" id="bannerContainer"></div>
-        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
-        
-        <!-- ==================== আপডেট করা বাটন সেকশন ==================== -->
-        <div class="reward-buttons">
-            <button class="reward-card" id="dailyClaimBtn">
-                <i class="fas fa-calendar-check"></i>
-                <span>Daily Check</span>
-            </button>
-            <button class="reward-card" id="spinNavBtn">
-                <i class="fas fa-sync-alt"></i>
-                <span>Spin</span>
-            </button>
-            <button class="reward-card" id="scratchNavBtn">
-                <i class="fas fa-ticket-alt"></i>
-                <span>Scratch Card</span>
-            </button>
+        <div class="banner-container" id="bannerContainer">
+            <!-- Dynamic banners from config -->
         </div>
-        <!-- ============================================================= -->
+        <div class="live-notice" id="liveNotice"><span>লোড হচ্ছে...</span></div>
+        <div class="reward-buttons">
+            <button class="reward-btn" id="dailyClaim" disabled><i class="fas fa-gift"></i> ডেইলি রিওয়ার্ড (+<span id="dailyPoints">50</span>)</button>
+            <button class="reward-btn" id="spinBtn" disabled><i class="fas fa-sync"></i> স্পিন (+<span id="spinPoints">100</span>)</button>
+            <button class="reward-btn" id="scratchBtn" disabled><i class="fas fa-ticket"></i> স্ক্র্যাচ কার্ড (+<span id="scratchPoints">50</span>)</button>
+        </div>
     </div>
 
     <div id="wallet" class="screen">
@@ -51,7 +45,9 @@
             <p>আপনি যেকোনো সময় আপনার আর্নিং উইথড্র করতে পারেন</p>
             <i class="fas fa-money-bill-wave wallet-icon"></i>
         </div>
-        <div id="paymentMethodsList"></div>
+        <div id="paymentMethodsList">
+            <!-- Dynamic payment methods -->
+        </div>
         <p style="text-align:center; color:#aaa; margin-top:20px;">১ ৳ = ১ টাকা</p>
     </div>
 
@@ -62,7 +58,9 @@
 
     <div id="task" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">টাস্ক</h2>
-        <div class="task-list" id="taskList"></div>
+        <div class="task-list" id="taskList">
+            <!-- Dynamic tasks -->
+        </div>
     </div>
 
     <div id="refer" class="screen">
@@ -78,13 +76,13 @@
     <div id="profile" class="screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary);">প্রোফাইল</h2>
         <div style="text-align:center;">
-            <img id="profileImgBig" class="profile-img" style="width:100px;height:100px;border-radius:50%;box-shadow:0 0 20px rgba(76,175,80,0.6);" src="" alt="প্রোফাইল ছবি">
+            <img id="profileImgBig" class="profile-img" style="width:100px;height:100px;border-radius:50%;box-shadow:0 0 20px rgba(76,175,80,0.6);" src="" alt="">
             <p style="margin:15px 0; font-size:18px;" id="profileName"></p>
             <p style="color:#aaa;">Telegram ID: <span id="telegramId"></span></p>
         </div>
     </div>
 
-    <!-- Modals and Other Screens -->
+    <!-- 3D Withdraw Modal -->
     <div class="modal" id="withdrawModal">
         <div class="modal-content">
             <h2 style="text-align:center; color:gold; margin-bottom:20px;"><i class="fas fa-coins"></i> উইথড্র রিকোয়েস্ট</h2>
@@ -95,45 +93,44 @@
         </div>
     </div>
 
+    <!-- 3D Spin Screen -->
     <div id="spin" class="screen spin-screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary); text-shadow: 0 0 12px rgba(76,175,80,0.6);">স্পিন করে জিতুন</h2>
         <p class="spin-limit" id="spinLimit">লোড হচ্ছে...</p>
         <div class="wheel-container">
-            <div class="wheel" id="wheel"><div class="wheel-inner"></div></div>
+            <div class="wheel" id="wheel">
+                <div class="wheel-inner"></div>
+            </div>
         </div>
         <button class="spin-wheel-btn" id="spinWheelBtn"><i class="fas fa-play"></i> স্পিন করুন</button>
     </div>
 
+    <!-- 3D Scratch Screen -->
     <div id="scratch" class="screen scratch-screen">
         <h2 style="text-align:center; margin:20px 0; color:var(--primary); text-shadow: 0 0 12px rgba(76,175,80,0.6);">স্ক্র্যাচ কার্ড</h2>
         <p class="scratch-limit" id="scratchLimit">লোড হচ্ছে...</p>
         <div class="scratch-card" id="scratchCard">
-            <div class="scratch-front"><canvas id="scratchCanvas" class="scratch-canvas"></canvas></div>
+            <div class="scratch-front">
+                <canvas id="scratchCanvas" class="scratch-canvas"></canvas>
+            </div>
             <div class="scratch-back">
                 <i class="fas fa-gem"></i>
-                <div id="scratchReward"></div>
+                <div id="scratchReward">কনগ্র্যাটস! ৳50</div>
             </div>
         </div>
-        <button class="action-btn claim-scratch" id="claimScratchBtn">ক্লেইম করুন</button>
+        <button class="action-btn claim-scratch" id="claimScratch">ক্লেইম করুন</button>
     </div>
-    
+
     <!-- Navigation -->
-    <nav class="nav">
+    <div class="nav">
         <div class="nav-item active" data-screen="home"><i class="fas fa-home"></i> হোম</div>
         <div class="nav-item" data-screen="wallet"><i class="fas fa-wallet"></i> ওয়ালেট</div>
         <div class="nav-item" data-screen="history"><i class="fas fa-history"></i> হিস্ট্রি</div>
         <div class="nav-item" data-screen="task"><i class="fas fa-tasks"></i> টাস্ক</div>
         <div class="nav-item" data-screen="refer"><i class="fas fa-user-friends"></i> রেফার</div>
         <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i> প্রোফাইল</div>
-    </nav>
+    </div>
 
-    <!-- External JS এবং SDKs -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
-    <script src="https://montage-ads.com/sdk.js"></script>
     <script src="script.js"></script>
 </body>
-    </html>
+</html>
