@@ -44,9 +44,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 .task-description { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .task-item.completed { opacity: 0.6; cursor: not-allowed; border-left-color: var(--success-color); }
 .task-item.completed::after { content: '✔'; position: absolute; top: 10px; right: 15px; font-size: 24px; color: var(--success-color); }
+/* === কুইজ স্টাইল আপডেট === */
 .quiz-info { text-align: center; margin-bottom: 15px; width: 100%; }
 .quiz-info p { margin: 4px 0; font-size: 14px; color: var(--text-secondary); }
-#quiz-instruction { font-weight: bold; color: var(--accent-color); }
+.quiz-progress-bar { width: 100%; background-color: var(--secondary-bg); border-radius: 5px; height: 10px; margin-top: 8px; overflow: hidden; }
+.quiz-progress-inner { width: 0%; height: 100%; background-color: var(--success-color); border-radius: 5px; transition: width 0.3s; }
+#quiz-instruction { font-weight: bold; color: var(--accent-color); margin-top: 8px;}
 .quiz-card { background-color: var(--tertiary-bg); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-sizing: border-box; }
 #quiz-question-text { font-size: 18px; font-weight: 600; margin: 0 0 20px 0; text-align: center; }
 #quiz-options-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
