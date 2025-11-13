@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
     const MINIMUM_WITHDRAW_AMOUNT = 10;
-    const DAILY_REWARD = 1;
+    let appConfig = { dailyReward: 1 };
     let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
     let currentUser, userRef, userData = {};
     let isSpinning = false;
@@ -29,14 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const navButtons = document.querySelectorAll('.nav-btn');
     const headerElements = { pic: document.getElementById('profilePic'), fullName: document.getElementById('headerFullName'), username: document.getElementById('headerUsername'), balance: document.getElementById('headerBalance') };
     const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn') };
-    const spinScreenElements = {
-        backBtn: document.getElementById('spinBackBtn'),
-        triggerBtn: document.getElementById('spinTriggerBtn'),
-        spinsLeft: document.getElementById('spinsLeft'),
-        wheelGroup: document.getElementById('wheelGroup')
-    };
+    const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft'), wheelGroup: document.getElementById('wheelGroup') };
     const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
     const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn') };
+    const taskListContainer = document.getElementById('task-list');
 
     // --- Main Logic ---
     tg.ready();
@@ -57,28 +53,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function createSvgWheel() {
         const wheelGroup = spinScreenElements.wheelGroup;
         if (!wheelGroup) return;
-        wheelGroup.innerHTML = ''; // Clear previous elements
-        
+        wheelGroup.innerHTML = '';
         const numSegments = 10;
         const angle = 360 / numSegments;
         const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
-        
         const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
             const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-            return {
-                x: centerX + (radius * Math.cos(angleInRadians)),
-                y: centerY + (radius * Math.sin(angleInRadians))
-            };
+            return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
         };
-
-        // Create Segments
         for (let i = 0; i < numSegments; i++) {
             const startAngle = i * angle;
             const endAngle = startAngle + angle;
             const start = polarToCartesian(250, 250, 210, endAngle);
             const end = polarToCartesian(250, 250, 210, startAngle);
             const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
-            
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", pathData);
             path.setAttribute("fill", colors[i]);
@@ -86,26 +74,16 @@ document.addEventListener('DOMContentLoaded', function() {
             path.setAttribute("stroke-width", "4");
             wheelGroup.appendChild(path);
         }
-        
-        // Create Sparkles
-        for (let i = 0; i < numSegments; i++) {
-            const sparkleAngle = (i * angle) + (angle / 2);
-            const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
-            const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            sparkle.setAttribute("cx", sparklePos.x);
-            sparkle.setAttribute("cy", sparklePos.y);
-            sparkle.setAttribute("r", "5");
-            sparkle.setAttribute("fill", "white");
-            sparkle.setAttribute("filter", "url(#glow)");
-            wheelGroup.appendChild(sparkle);
-        }
     }
 
     // --- Data Fetch & UI Update ---
     function fetchAdminSettings() {
+        db.collection('settings').doc('appConfig').get().then(doc => {
+            if (doc.exists) appConfig = doc.data();
+        }).catch(e => console.error("Could not fetch app settings:", e));
         db.collection('settings').doc('spinConfig').get().then(doc => {
             if (doc.exists) spinConfig = doc.data();
-        }).catch(e => console.error("Could not fetch admin settings:", e));
+        }).catch(e => console.error("Could not fetch spin settings:", e));
     }
 
     function fetchUserData() {
@@ -113,16 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().slice(0, 10);
             if (doc.exists) {
                 userData = doc.data();
-                if (!userData.spinsToday || userData.spinsToday.date !== today) {
-                    userData.spinsToday = { date: today, count: 0 };
-                }
+                if (!userData.spinsToday || userData.spinsToday.date !== today) userData.spinsToday = { date: today, count: 0 };
+                if (!userData.completedTasks) userData.completedTasks = [];
             } else {
                 const newUser = {
                     username: currentUser.username || '',
                     fullName: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(),
                     balance: 0,
                     lastCheckin: null,
-                    spinsToday: { date: today, count: 0 }
+                    spinsToday: { date: today, count: 0 },
+                    completedTasks: []
                 };
                 userRef.set(newUser).then(() => userData = newUser);
             }
@@ -143,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const fullName = userData.fullName || currentUser.first_name;
         const username = userData.username || currentUser.id;
         const formattedBalance = `৳ ${balance.toFixed(2)}`;
-
         headerElements.balance.innerText = formattedBalance;
         headerElements.fullName.innerText = fullName;
         headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`;
@@ -158,19 +135,80 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Event Listeners & Handlers ---
     function setupEventListeners() {
-        navButtons.forEach(btn => btn.addEventListener('click', (e) => showScreen(btn.dataset.screen)));
+        navButtons.forEach(btn => btn.addEventListener('click', (e) => {
+            const screenId = e.currentTarget.dataset.screen;
+            showScreen(screenId);
+            if (screenId === 'task-screen') {
+                loadAndDisplayTasks();
+            }
+        }));
         homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
         homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
         spinScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
         spinScreenElements.triggerBtn.addEventListener('click', handleSpin);
         walletElements.submitBtn.addEventListener('click', handleSubmitWithdraw);
         referElements.shareBtn.addEventListener('click', handleShareReferral);
+        taskListContainer.addEventListener('click', handleTaskClick);
     }
     
     function showScreen(screenId) {
         screens.forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
+    }
+
+    async function loadAndDisplayTasks() {
+        taskListContainer.innerHTML = '<p>লোড হচ্ছে...</p>';
+        try {
+            const taskSnapshot = await db.collection('tasks').where('isActive', '==', true).get();
+            if (taskSnapshot.empty) {
+                taskListContainer.innerHTML = '<p>এখন কোনো নতুন টাস্ক নেই।</p>';
+                return;
+            }
+            taskListContainer.innerHTML = '';
+            taskSnapshot.forEach(doc => {
+                const task = doc.data();
+                const taskId = doc.id;
+                const isCompleted = userData.completedTasks && userData.completedTasks.includes(taskId);
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`;
+                taskElement.dataset.taskId = taskId;
+                taskElement.dataset.reward = task.reward;
+                taskElement.innerHTML = `
+                    <div class="task-item-header">
+                        <h3 class="task-title">${task.title}</h3>
+                        <span class="task-reward">৳ ${task.reward.toFixed(2)}</span>
+                    </div>
+                    <p class="task-description">${task.description}</p>
+                `;
+                taskListContainer.appendChild(taskElement);
+            });
+        } catch (error) {
+            handleError('টাস্ক লোড করতে সমস্যা হয়েছে।', error);
+            taskListContainer.innerHTML = '<p>টাস্ক লোড করা যায়নি।</p>';
+        }
+    }
+
+    function handleTaskClick(e) {
+        const taskItem = e.target.closest('.task-item');
+        if (!taskItem || taskItem.classList.contains('completed')) {
+            if (taskItem) tg.showAlert('আপনি এই টাস্কটি ইতোমধ্যে সম্পন্ন করেছেন।');
+            return;
+        }
+        const taskId = taskItem.dataset.taskId;
+        const reward = parseFloat(taskItem.dataset.reward);
+        
+        tg.HapticFeedback.impactOccurred('light');
+        window.showGiga().then(() => {
+            tg.HapticFeedback.notificationOccurred('success');
+            userRef.update({
+                balance: firebase.firestore.FieldValue.increment(reward),
+                completedTasks: firebase.firestore.FieldValue.arrayUnion(taskId)
+            }).then(() => {
+                tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
+                taskItem.classList.add('completed');
+            });
+        }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e));
     }
 
     function handleSpin() {
@@ -182,13 +220,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
-
         const randomExtraRotation = Math.floor(Math.random() * 360);
         const totalRotation = currentRotation + (360 * 5) + randomExtraRotation;
-        
         spinScreenElements.wheelGroup.style.transform = `rotate(${totalRotation}deg)`;
         currentRotation = totalRotation;
-        
         setTimeout(spinFinished, 5000);
     }
     
@@ -208,12 +243,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             isSpinning = false;
             spinScreenElements.triggerBtn.disabled = false;
-            
             const finalRotation = currentRotation % 360;
             spinScreenElements.wheelGroup.style.transition = 'none';
             spinScreenElements.wheelGroup.style.transform = `rotate(${finalRotation}deg)`;
             currentRotation = finalRotation;
-            
             setTimeout(() => {
                 spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
             }, 50);
@@ -231,10 +264,10 @@ document.addEventListener('DOMContentLoaded', function() {
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
             userRef.update({
-                balance: firebase.firestore.FieldValue.increment(DAILY_REWARD),
+                balance: firebase.firestore.FieldValue.increment(appConfig.dailyReward),
                 lastCheckin: today
             }).then(() => {
-                tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${DAILY_REWARD.toFixed(2)} পেয়েছেন।`);
+                tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
             });
         }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => { this.disabled = false; });
     }
