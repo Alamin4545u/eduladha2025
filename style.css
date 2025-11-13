@@ -9,7 +9,6 @@
     --accent-color: #55bde2;
     --balance-color: #4caf50;
     --profile-pic-bg: #8e24aa;
-    --pointer-color: #ffca28;
 }
 
 body {
@@ -49,17 +48,69 @@ body {
 .icon-btn span { font-size: 12px; font-weight: 500; }
 .icon-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Spin Screen Styles */
-.screen#spin-screen { position: relative; }
+/* SVG Spin Screen Styles */
+.screen#spin-screen { position: relative; justify-content: space-between; }
 .back-btn { background: #313f51; border: none; color: var(--text-primary); font-size: 14px; cursor: pointer; z-index: 5; padding: 8px 12px; border-radius: 20px; display: flex; align-items: center; gap: 5px; position: absolute; top: 0; left: 0; }
 .back-btn span { font-size: 20px; line-height: 1; }
-.spin-wrapper { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
-.spin-container { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
-.spin-pointer { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 30px solid var(--pointer-color); position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
-#spinCanvas { width: 100%; height: 100%; }
-#spinTriggerBtn { width: 80px; height: 80px; border-radius: 50%; background-color: #fff; border: 8px solid #f5f5f5; color: var(--secondary-bg); font-size: 20px; font-weight: bold; cursor: pointer; position: absolute; z-index: 1; transition: transform 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
-#spinTriggerBtn:active { transform: scale(0.9); }
-#spinTriggerBtn:disabled { cursor: not-allowed; background-color: #ccc; }
+
+.spin-wrapper {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: auto;
+}
+
+.spin-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 60px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 125"><path fill="%23ffc107" d="M50 0a20 20 0 00-20 20c0 11 15 40 20 50s20-39 20-50A20 20 0 0050 0z"/><circle fill="white" cx="50" cy="20" r="10"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 10;
+}
+
+.spin-wheel-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#svgWheel {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4));
+}
+
+#wheelGroup {
+    transform-origin: center;
+    transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+#spinTriggerBtn {
+    position: absolute;
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffeda0 0%, #ffc107 100%);
+    border: 5px solid white;
+    box-shadow: 0 0 15px rgba(255,193,7,0.7), inset 0 2px 2px rgba(255,255,255,0.75);
+    color: #424242;
+    font-size: 24px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+#spinTriggerBtn:active { transform: scale(0.95); }
+#spinTriggerBtn:disabled { cursor: not-allowed; background: #bdbdbd; }
+
 #spin-info { font-size: 16px; margin-top: 15px; color: var(--text-secondary); font-weight: 500; }
 #spin-info span { color: var(--text-primary); font-weight: bold; }
 
