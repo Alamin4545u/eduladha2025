@@ -59,7 +59,7 @@
             <p id="spin-info">আপনার আজকের স্পিন বাকি আছে: <span id="spinsLeft">...</span></p>
         </div>
 
-        <!-- Task Screen: গঠন পরিবর্তন করা হয়েছে -->
+        <!-- Task Screen -->
         <div id="task-screen" class="screen">
             <h2>টাস্ক সেন্টার</h2>
             <div class="scrollable-content">
@@ -90,7 +90,14 @@
         <div id="wallet-screen" class="screen"><h2>ওয়ালেট</h2><div class="wallet-box"><p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p><p>সর্বনিম্ন উইথড্র: <strong>৳ 10.00</strong></p></div><div class="form-group"><label for="bkashNumber">আপনার বিকাশ নম্বর দিন:</label><input type="tel" id="bkashNumber" placeholder="e.g., 01700000000" inputmode="numeric"></div><button id="submitWithdrawBtn" class="action-btn">উইথড্র সাবমিট করুন</button></div>
         
         <!-- Refer Screen -->
-        <div id="refer-screen" class="screen"><h2>বন্ধুদের রেফার করুন</h2><p>আপনার বন্ধুদের রেফার করে আয় করুন। নিচের লিংকটি তাদের সাথে শেয়ার করুন।</p><div class="refer-box"><input type="text" id="referralLink" readonly><button id="shareReferralBtn">শেয়ার করুন</button></div></div>
+        <div id="refer-screen" class="screen">
+            <h2>বন্ধুদের রেফার করুন</h2>
+            <p id="referral-notice">আপনার বন্ধুদের রেফার করে আয় করুন।</p>
+            <div class="refer-box">
+                <input type="text" id="referralLink" readonly>
+                <button id="shareReferralBtn">শেয়ার করুন</button>
+            </div>
+        </div>
     </main>
 
     <!-- Bottom Navigation Bar -->
@@ -107,4 +114,4 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="script.js"></script>
 </body>
-</html>
+            </html>
