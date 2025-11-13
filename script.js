@@ -16,28 +16,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const tg = window.Telegram.WebApp;
 
     // --- Constants ---
+    const AD_REWARD = 1;
     const DAILY_REWARD = 1;
     const MINIMUM_WITHDRAW_AMOUNT = 10;
+    const BOT_USERNAME = "Bkash_earn_free_TkBot"; // <-- গুরুত্বপূর্ণ: আপনার বটের ইউজারনেম এখানে দিন
 
     // --- UI Elements ---
-    const screens = { home: document.getElementById('home-screen'), withdraw: document.getElementById('withdraw-screen') };
-    
-    // Header elements
-    const profilePicElement = document.getElementById('profilePic');
-    const headerFullNameElement = document.getElementById('headerFullName');
-    const headerUsernameElement = document.getElementById('headerUsername');
-    const headerBalanceElement = document.getElementById('headerBalance');
+    const screens = document.querySelectorAll('.screen');
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const headerElements = {
+        pic: document.getElementById('profilePic'),
+        fullName: document.getElementById('headerFullName'),
+        username: document.getElementById('headerUsername'),
+        balance: document.getElementById('headerBalance'),
+    };
+    const taskButtons = {
+        watchAd: document.getElementById('watchAdBtn'),
+        dailyCheckin: document.getElementById('dailyCheckinBtn'),
+    };
+    const walletElements = {
+        balance: document.getElementById('withdrawBalance'),
+        bkashNumber: document.getElementById('bkashNumber'),
+        submitBtn: document.getElementById('submitWithdrawBtn'),
+    };
+    const referElements = {
+        linkInput: document.getElementById('referralLink'),
+        shareBtn: document.getElementById('shareReferralBtn'),
+    };
 
-    // Home screen elements
-    const dailyCheckinBtn = document.getElementById('dailyCheckinBtn');
-    const goToWithdrawBtn = document.getElementById('goToWithdrawBtn');
-
-    // Withdraw screen elements
-    const withdrawBalanceElement = document.getElementById('withdrawBalance');
-    const bkashNumberInput = document.getElementById('bkashNumber');
-    const submitWithdrawBtn = document.getElementById('submitWithdrawBtn');
-    const backBtn = document.getElementById('backBtn');
-    
     let currentUser = null;
     let userRef = null;
     let userData = {};
@@ -48,9 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUser = tg.initDataUnsafe.user;
-        const userId = currentUser.id.toString();
-        userRef = db.collection('users').doc(userId);
-
+        userRef = db.collection('users').doc(currentUser.id.toString());
         fetchUserData();
         setupEventListeners();
     } else {
@@ -63,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (doc.exists) {
                 userData = doc.data();
             } else {
-                // Create new user data
                 const newUser = {
                     username: currentUser.username || '',
                     fullName: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(),
@@ -89,75 +92,94 @@ document.addEventListener('DOMContentLoaded', function() {
         const balance = userData.balance || 0;
         const fullName = userData.fullName || currentUser.first_name;
         const username = userData.username || currentUser.id;
-
         const formattedBalance = `৳ ${balance.toFixed(2)}`;
+
+        // Header
+        headerElements.balance.innerText = formattedBalance;
+        headerElements.fullName.innerText = fullName;
+        headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`;
+        headerElements.pic.innerText = getInitials(fullName);
+
+        // Wallet Screen
+        walletElements.balance.innerText = formattedBalance;
+        walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
+        walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT 
+            ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` 
+            : "উইথড্র সাবমিট করুন";
         
-        // Update header
-        headerBalanceElement.innerText = formattedBalance;
-        headerFullNameElement.innerText = fullName;
-        headerUsernameElement.innerText = username ? `@${username}` : `#${currentUser.id}`;
-        profilePicElement.innerText = getInitials(fullName);
-        
-        // Update withdraw screen balance
-        withdrawBalanceElement.innerText = formattedBalance;
-        
-        if (balance < MINIMUM_WITHDRAW_AMOUNT) {
-            submitWithdrawBtn.disabled = true;
-            submitWithdrawBtn.innerText = `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন`;
-        } else {
-            submitWithdrawBtn.disabled = false;
-            submitWithdrawBtn.innerText = "সাবমিট করুন";
-        }
+        // Referral Link
+        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${currentUser.id}`;
     }
 
     function setupEventListeners() {
-        dailyCheckinBtn.addEventListener('click', handleDailyCheckin);
-        goToWithdrawBtn.addEventListener('click', () => showScreen('withdraw'));
-        backBtn.addEventListener('click', () => showScreen('home'));
-        submitWithdrawBtn.addEventListener('click', handleSubmitWithdraw);
+        navButtons.forEach(btn => btn.addEventListener('click', () => showScreen(btn.dataset.screen)));
+        taskButtons.watchAd.addEventListener('click', handleWatchAd);
+        taskButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
+        walletElements.submitBtn.addEventListener('click', handleSubmitWithdraw);
+        referElements.shareBtn.addEventListener('click', handleShareReferral);
+    }
+    
+    function showScreen(screenId) {
+        screens.forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        navButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.screen === screenId);
+        });
+    }
+
+    function handleWatchAd() {
+        this.disabled = true;
+        this.innerText = "লোড হচ্ছে...";
+        tg.HapticFeedback.impactOccurred('light');
+
+        window.showGiga().then(() => {
+            tg.HapticFeedback.notificationOccurred('success');
+            updateBalance(AD_REWARD, `বিজ্ঞাপন বোনাস হিসেবে ৳ ${AD_REWARD.toFixed(2)} পেয়েছেন।`);
+        }).catch(e => {
+            handleError("কোনো বিজ্ঞাপন উপলব্ধ নেই।", e);
+        }).finally(() => {
+            this.disabled = false;
+            this.innerText = `বিজ্ঞাপন দেখুন (৳ ${AD_REWARD.toFixed(2)})`;
+        });
     }
 
     function handleDailyCheckin() {
-        dailyCheckinBtn.disabled = true;
-        const today = new Date().toISOString().slice(0, 10); // Get date as YYYY-MM-DD
-
+        const today = new Date().toISOString().slice(0, 10);
         if (userData.lastCheckin === today) {
             tg.showAlert("আপনি আজকের বোনাস ইতোমধ্যে সংগ্রহ করেছেন।");
-            dailyCheckinBtn.disabled = false;
             return;
         }
-
-        userRef.update({
-            balance: firebase.firestore.FieldValue.increment(DAILY_REWARD),
-            lastCheckin: today
-        }).then(() => {
-            userData.balance += DAILY_REWARD;
-            userData.lastCheckin = today;
+        this.disabled = true;
+        updateBalance(DAILY_REWARD, `ডেইলি চেকিং বোনাস হিসেবে ৳ ${DAILY_REWARD.toFixed(2)} পেয়েছেন।`, { lastCheckin: today });
+        this.disabled = false;
+    }
+    
+    function updateBalance(amount, message, extraData = {}) {
+        const updates = {
+            balance: firebase.firestore.FieldValue.increment(amount),
+            ...extraData
+        };
+        userRef.update(updates).then(() => {
+            userData.balance += amount;
+            if (extraData.lastCheckin) userData.lastCheckin = extraData.lastCheckin;
             updateUI();
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.showAlert(`অভিনন্দন! আপনি ডেইলি চেকিং বোনাস হিসেবে ৳ ${DAILY_REWARD.toFixed(2)} পেয়েছেন।`);
-            dailyCheckinBtn.disabled = false;
+            if (message) tg.showAlert(message);
         }).catch(handleError);
     }
 
     function handleSubmitWithdraw() {
-        const bkashNumber = bkashNumberInput.value.trim();
+        const bkashNumber = walletElements.bkashNumber.value.trim();
         if (bkashNumber.length < 11 || !/^\d+$/.test(bkashNumber)) {
             tg.showAlert("অনুগ্রহ করে একটি সঠিক বিকাশ নম্বর দিন।");
             return;
         }
-        if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) {
-            tg.showAlert(`আপনার ব্যালেন্স পর্যাপ্ত নয়।`);
-            return;
-        }
-        
-        submitWithdrawBtn.disabled = true;
-        const withdrawalAmount = userData.balance;
+        this.disabled = true;
+        const amountToWithdraw = userData.balance;
 
         db.collection('withdrawals').add({
             userId: currentUser.id.toString(),
             username: currentUser.username || '',
-            amount: withdrawalAmount,
+            amount: amountToWithdraw,
             bkashNumber: bkashNumber,
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -166,25 +188,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 userData.balance = 0;
                 updateUI();
                 tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
-                showScreen('home');
+                showScreen('home-screen');
             });
-        }).catch(handleError)
-        .finally(() => {
-            submitWithdrawBtn.disabled = false;
-            bkashNumberInput.value = "";
-        });
+        }).catch(handleError).finally(() => this.disabled = false);
     }
 
-    function showScreen(screenName) {
-        Object.values(screens).forEach(screen => screen.classList.remove('active'));
-        screens[screenName].classList.add('active');
+    function handleShareReferral() {
+        const link = referElements.linkInput.value;
+        const text = `এখানে বিজ্ঞাপন দেখে আয় করুন! আমার রেফারেল লিংক দিয়ে জয়েন করুন: ${link}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
     }
 
-    function handleError(error) {
-        console.error("An error occurred:", error);
-        tg.showAlert("একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
-        // Re-enable buttons on error
-        dailyCheckinBtn.disabled = false;
-        submitWithdrawBtn.disabled = false;
+    function handleError(message, error) {
+        if (typeof message === 'string') {
+            tg.showAlert(message);
+        } else {
+            tg.showAlert("একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+        }
+        if (error) console.error("Error:", error);
     }
 });
