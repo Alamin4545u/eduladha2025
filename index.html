@@ -3,35 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Telegram Ad App</title>
+    <title>Telegram Earning App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Home Screen -->
     <div id="home-screen" class="screen active">
         <header class="app-header">
-            <div class="user-profile">
-                <p id="headerFirstName">ব্যবহারকারী</p>
-                <small id="headerUsername">লোড হচ্ছে...</small>
+            <div class="profile-section">
+                <div class="profile-pic" id="profilePic">MA</div>
+                <div class="user-details">
+                    <p id="headerFullName">লোড হচ্ছে...</p>
+                    <small id="headerUsername">@username</small>
+                </div>
             </div>
             <div class="header-wallet">
-                <span id="headerBalance">৳ 0.00</span>
+                <p>আপনার ব্যালেন্স</p>
+                <span class="balance-amount" id="headerBalance">৳ 0.00</span>
             </div>
         </header>
         
         <div class="container">
-            <h1>বিজ্ঞাপন দেখে আয় করুন</h1>
-            <div class="wallet">
-                <p>আপনার বর্তমান ব্যালেন্স</p>
-                <h2 id="balance">৳ 0.00</h2>
-            </div>
-            <button id="watchAdBtn" class="action-btn">বিজ্ঞাপন দেখুন (৳ ১.০০)</button>
+            <button id="dailyCheckinBtn" class="action-btn">ডেইলি চেকিং</button>
             <button id="goToWithdrawBtn" class="action-btn secondary">উইথড্র করুন</button>
-            <p class="footer">GigaPub দ্বারা বিজ্ঞাপন চালিত</p>
         </div>
     </div>
 
-    <!-- Withdraw Screen -->
+    <!-- Withdraw Screen (No changes needed here) -->
     <div id="withdraw-screen" class="screen">
         <div class="container">
             <button id="backBtn" class="back-btn">← পেছনে যান</button>
@@ -49,11 +47,10 @@
         </div>
     </div>
 
-    <!-- স্ক্রিপ্ট ট্যাগগুলো -->
+    <!-- Script Tags -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
