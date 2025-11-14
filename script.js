@@ -62,13 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
     }
 
-    // অ্যাপ চালু করার মূল ফাংশন
     function initializeApp() {
         if (!firebaseUid) {
             handleError("Firebase UID পাওয়া যায়নি। অ্যাপ রিলোড করুন।");
             return;
         }
-        // ########### পরিবর্তন ১: userRef এখন টেলিগ্রাম আইডির বদলে Firebase UID দিয়ে সেট হবে ###########
         userRef = db.collection('users').doc(firebaseUid);
         
         fetchAdminSettings();
@@ -84,10 +82,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 userData = doc.data();
             } else {
                 const referrerId = tg.initDataUnsafe.start_param;
-                // ########### পরিবর্তন ২: নতুন ব্যবহারকারীর ডকুমেন্টে telegramId যোগ করা হয়েছে ###########
                 const newUser = {
                     firebaseUid: firebaseUid,
-                    telegramId: telegramUser.id.toString(), // টেলিগ্রাম আইডি এখানে সেভ করা হচ্ছে
+                    telegramId: telegramUser.id.toString(),
                     username: telegramUser.username || '',
                     fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
                     balance: 0,
@@ -353,20 +350,24 @@ document.addEventListener('DOMContentLoaded', function() {
         quizScreenElements.nextBtn.disabled = false;
     }
 
+    // ########### শুরু: কুইজের জন্য নতুন এবং উন্নত ফাংশন ###########
     function handleNextQuiz() {
         if (!selectedQuizOption) return;
+
         const isCorrect = selectedQuizOption.textContent === quizQuestions[currentQuizIndex].correctAnswer;
         if (!isCorrect) {
             tg.showAlert('ভুল উত্তর! অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন।');
             return;
         }
+
         quizScreenElements.nextBtn.disabled = true;
         const currentStep = userData.quizProgress?.currentStep || 0;
         const isClickTask = currentStep === quizConfig.clickTarget - 1;
         tg.HapticFeedback.impactOccurred('light');
 
         if (isClickTask) {
-            adClicked = false;
+            adClicked = false; 
+
             const handleVisibilityChange = () => {
                 if (document.visibilityState === 'hidden') {
                     adClicked = true;
@@ -375,40 +376,51 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             document.addEventListener('visibilitychange', handleVisibilityChange);
 
-            tg.showPopup({ title: 'গুরুত্বপূর্ণ নির্দেশনা', message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন এবং কমপক্ষে ৩০ সেকেন্ড অপেক্ষা করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।', buttons: [{ type: 'ok', text: 'ঠিক আছে' }] });
-            
+            tg.showPopup({
+                title: 'গুরুত্বপূর্ণ নির্দেশনা',
+                message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন এবং কমপক্ষে ৩০ সেকেন্ড অপেক্ষা করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
+                buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
+            });
+
             window.showGiga().then(() => {
-                document.removeEventListener('visibilitychange', handleVisibilityChange);
-                if (adClicked) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                    userRef.update({
-                        balance: firebase.firestore.FieldValue.increment(quizConfig.reward),
-                        'quizProgress.completedToday': firebase.firestore.FieldValue.increment(1),
-                        'quizProgress.currentStep': 0
-                    }).then(() => {
-                        if(userData.quizProgress) {
-                            userData.quizProgress.completedToday++;
-                            userData.quizProgress.currentStep = 0;
-                        }
-                        tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
-                        showScreen('home-screen');
-                    });
-                } else {
-                    tg.HapticFeedback.notificationOccurred('error');
-                    tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল। আপনি ক্লিক করেননি।");
-                    quizScreenElements.nextBtn.disabled = false;
-                }
+                setTimeout(() => {
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+                    if (adClicked) {
+                        tg.HapticFeedback.notificationOccurred('success');
+                        userRef.update({
+                            balance: firebase.firestore.FieldValue.increment(quizConfig.reward),
+                            'quizProgress.completedToday': firebase.firestore.FieldValue.increment(1),
+                            'quizProgress.currentStep': 0
+                        }).then(() => {
+                            if (userData.quizProgress) {
+                                userData.quizProgress.completedToday++;
+                                userData.quizProgress.currentStep = 0;
+                            }
+                            tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
+                            showScreen('home-screen');
+                        }).catch(err => handleError("ব্যালেন্স আপডেট করতে সমস্যা হয়েছে।", err));
+
+                    } else {
+                        tg.HapticFeedback.notificationOccurred('error');
+                        tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল। আপনি ক্লিক করেননি।");
+                        quizScreenElements.nextBtn.disabled = false;
+                    }
+
+                }, 3000); 
+
             }).catch(e => {
                 document.removeEventListener('visibilitychange', handleVisibilityChange);
                 handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
                 quizScreenElements.nextBtn.disabled = false;
             });
+
         } else {
             window.showGiga().then(() => {
                 tg.HapticFeedback.notificationOccurred('success');
                 userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
                     .then(() => {
-                        if(userData.quizProgress) {
+                        if (userData.quizProgress) {
                             userData.quizProgress.currentStep++;
                         }
                         currentQuizIndex++;
@@ -420,6 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+    // ########### শেষ: কুইজের জন্য নতুন এবং উন্নত ফাংশন ###########
 
     function handleSpin() {
         if (isSpinning) return;
@@ -515,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const amountToWithdraw = userData.balance;
 
         db.collection('withdrawals').add({
-            userId: firebaseUid, // এখানেও firebaseUid ব্যবহার করা উচিত
+            userId: firebaseUid,
             telegramId: telegramUser.id.toString(),
             username: telegramUser.username || '',
             amount: amountToWithdraw,
@@ -601,8 +614,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleReferralBonus(referrerId) {
         // Referral bonus should be handled by a server-side function for security.
-        // The client-side update can be insecure.
-        // For now, leaving the logic, but it's not recommended for production.
-        console.log(`Referral bonus for ${referrerId} should be processed.`);
+        const referrerRef = db.collection('users').doc(referrerId);
+        db.runTransaction((transaction) => {
+            return transaction.get(referrerRef).then((doc) => {
+                if (doc.exists) {
+                    transaction.update(referrerRef, {
+                        balance: firebase.firestore.FieldValue.increment(appConfig.referralBonus || 0)
+                    });
+                }
+            });
+        }).catch(err => console.error("Referral bonus error:", err));
     }
 });
