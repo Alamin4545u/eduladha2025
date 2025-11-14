@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // --- Firebase & Telegram Setup ---
     const firebaseConfig = { apiKey: "AIzaSyDW4TSXHbpP92hyeLvuBdSdVu56xKayTd8", authDomain: "test-dc90d.firebaseapp.com", databaseURL: "https://test-dc90d-default-rtdb.firebaseio.com", projectId: "test-dc90d", storageBucket: "test-dc90d.appspot.com", messagingSenderId: "804710782593", appId: "1:804710782593:web:48921608aad6d348afdf80", measurementId: "G-29YGNDZ2J4" };
     firebase.initializeApp(firebaseConfig);
@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
-    const MINIMUM_WITHDRAW_AMOUNT = 10;
     let appConfig = { dailyReward: 1, referralBonus: 5 };
     let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
     let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 2 };
+    let paymentMethods = [];
     let currentUser, userRef, userData = {};
     let isSpinning = false;
     let currentRotation = 0;
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const headerElements = { pic: document.getElementById('profilePic'), fullName: document.getElementById('headerFullName'), username: document.getElementById('headerUsername'), balance: document.getElementById('headerBalance') };
     const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn'), quiz: document.getElementById('quizBtn') };
     const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft'), wheelGroup: document.getElementById('wheelGroup') };
-    const walletElements = { balance: document.getElementById('withdrawBalance'), bkashNumber: document.getElementById('bkashNumber'), submitBtn: document.getElementById('submitWithdrawBtn') };
+    const walletElements = { balance: document.getElementById('withdrawBalance'), minWithdrawText: document.getElementById('minWithdrawText'), methodSelector: document.getElementById('paymentMethodSelector'), numberLabel: document.getElementById('paymentNumberLabel'), numberInput: document.getElementById('paymentNumberInput'), submitBtn: document.getElementById('submitWithdrawBtn') };
     const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn'), notice: document.getElementById('referral-notice') };
     const taskListContainer = document.getElementById('task-list');
     const quizScreenElements = { backBtn: document.getElementById('quizBackBtn'), progressText: document.getElementById('quiz-progress-text'), stepText: document.getElementById('quiz-step-text'), progressInner: document.getElementById('quiz-progress-inner'), instruction: document.getElementById('quiz-instruction'), questionText: document.getElementById('quiz-question-text'), optionsContainer: document.getElementById('quiz-options-container'), nextBtn: document.getElementById('next-quiz-btn') };
@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUser = tg.initDataUnsafe.user;
         userRef = db.collection('users').doc(currentUser.id.toString());
-        fetchAdminSettings();
+        await fetchAdminSettings();
+        populatePaymentMethods();
         fetchUserData();
         setupEventListeners();
         createSvgWheel();
@@ -82,18 +83,67 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchAdminSettings() {
         try {
             const appConfigDoc = await db.collection('settings').doc('appConfig').get();
-            if (appConfigDoc.exists) appConfig = appConfigDoc.data();
+            if (appConfigDoc.exists) appConfig = { ...appConfig, ...appConfigDoc.data() };
             
             const spinConfigDoc = await db.collection('settings').doc('spinConfig').get();
-            if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
+            if (spinConfigDoc.exists) spinConfig = { ...spinConfig, ...spinConfigDoc.data() };
 
             const quizConfigDoc = await db.collection('settings').doc('quizConfig').get();
-            if (quizConfigDoc.exists) quizConfig = quizConfigDoc.data();
+            if (quizConfigDoc.exists) quizConfig = { ...quizConfig, ...quizConfigDoc.data() };
+
+            const paymentMethodsDoc = await db.collection('settings').doc('paymentMethods').get();
+            if (paymentMethodsDoc.exists && Array.isArray(paymentMethodsDoc.data().methods) && paymentMethodsDoc.data().methods.length > 0) {
+                paymentMethods = paymentMethodsDoc.data().methods;
+            } else {
+                console.warn("Payment methods not configured. Using default.");
+                paymentMethods = [{ name: 'বিকাশ', minWithdraw: 10, placeholder: 'e.g., 01700000000' }];
+            }
         } catch (error) {
             console.error("Error fetching settings:", error);
+            handleError("অ্যাপ সেটিংস লোড করা যায়নি।");
         }
     }
+    
+    function populatePaymentMethods() {
+        if (!walletElements.methodSelector) return;
+        walletElements.methodSelector.innerHTML = '';
+        paymentMethods.forEach(method => {
+            const option = document.createElement('option');
+            option.value = method.name;
+            option.textContent = method.name;
+            walletElements.methodSelector.appendChild(option);
+        });
+        updateSelectedPaymentMethodUI();
+    }
+    
+    function updateSelectedPaymentMethodUI() {
+        const selectedMethodName = walletElements.methodSelector.value;
+        const selectedMethod = paymentMethods.find(m => m.name === selectedMethodName);
+        if (!selectedMethod) return;
 
+        walletElements.numberLabel.textContent = `আপনার ${selectedMethod.name} নম্বর দিন:`;
+        walletElements.numberInput.placeholder = selectedMethod.placeholder || `আপনার ${selectedMethod.name} নম্বর`;
+        walletElements.minWithdrawText.innerHTML = `সর্বনিম্ন উইথড্র: <strong>৳ ${selectedMethod.minWithdraw.toFixed(2)}</strong>`;
+        updateWithdrawButtonState();
+    }
+
+    function updateWithdrawButtonState() {
+        const selectedMethodName = walletElements.methodSelector.value;
+        const selectedMethod = paymentMethods.find(m => m.name === selectedMethodName);
+        if (!selectedMethod) return;
+        
+        const balance = userData.balance || 0;
+        const minAmount = selectedMethod.minWithdraw;
+
+        if (balance < minAmount) {
+            walletElements.submitBtn.disabled = true;
+            walletElements.submitBtn.innerText = `ন্যূনতম ৳${minAmount.toFixed(2)} প্রয়োজন`;
+        } else {
+            walletElements.submitBtn.disabled = false;
+            walletElements.submitBtn.innerText = "উইথড্র সাবমিট করুন";
+        }
+    }
+    
     function fetchUserData() {
         userRef.onSnapshot((doc) => {
             const today = new Date().toISOString().slice(0, 10);
@@ -163,8 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
         headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`;
         headerElements.pic.innerText = getInitials(fullName);
         walletElements.balance.innerText = formattedBalance;
-        walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
-        walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
+        updateWithdrawButtonState();
         referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}!`;
         referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${currentUser.id}`;
         const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
@@ -180,6 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         quizScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
         spinScreenElements.triggerBtn.addEventListener('click', handleSpin);
         walletElements.submitBtn.addEventListener('click', handleSubmitWithdraw);
+        walletElements.methodSelector.addEventListener('change', updateSelectedPaymentMethodUI);
         referElements.shareBtn.addEventListener('click', handleShareReferral);
         taskListContainer.addEventListener('click', handleTaskClick);
         quizScreenElements.optionsContainer.addEventListener('click', handleOptionSelect);
@@ -459,22 +509,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleSubmitWithdraw() {
-        const bkashNumber = walletElements.bkashNumber.value.trim();
-        if (bkashNumber.length < 11 || !/^\d+$/.test(bkashNumber)) {
-            tg.showAlert("অনুগ্রহ করে একটি সঠিক বিকাশ নম্বর দিন।");
+        const selectedMethodName = walletElements.methodSelector.value;
+        const selectedMethod = paymentMethods.find(m => m.name === selectedMethodName);
+
+        if (!selectedMethod) {
+            tg.showAlert("অনুগ্রহ করে একটি পেমেন্ট মেথড বেছে নিন।");
             return;
         }
-        if ((userData.balance || 0) < MINIMUM_WITHDRAW_AMOUNT) {
-            tg.showAlert(`ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন।`);
+
+        const paymentNumber = walletElements.numberInput.value.trim();
+        if (paymentNumber.length < 11 || !/^\d+$/.test(paymentNumber)) {
+            tg.showAlert(`অনুগ্রহ করে একটি সঠিক ${selectedMethod.name} নম্বর দিন।`);
             return;
         }
+        if ((userData.balance || 0) < selectedMethod.minWithdraw) {
+            tg.showAlert(`ন্যূনতম ৳${selectedMethod.minWithdraw.toFixed(2)} প্রয়োজন।`);
+            return;
+        }
+        
         this.disabled = true;
         const amountToWithdraw = userData.balance;
         db.collection('withdrawals').add({
             userId: currentUser.id.toString(),
             username: currentUser.username || '',
             amount: amountToWithdraw,
-            bkashNumber: bkashNumber,
+            method: selectedMethod.name,
+            accountNumber: paymentNumber,
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
@@ -484,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }).catch(e => handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", e)).finally(() => {
             this.disabled = false;
-            walletElements.bkashNumber.value = '';
+            walletElements.numberInput.value = '';
         });
     }
 
