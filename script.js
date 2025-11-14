@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 initializeApp();
             })
             .catch((error) => {
-                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে।", error);
+                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে। অনুগ্রহ করে অ্যাপটি রিস্টার্ট করুন।", error);
             });
     } else {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
@@ -93,7 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).catch(err => handleError("নতুন ব্যবহারকারী তৈরিতে সমস্যা হয়েছে।", err));
             }
             updateUI();
-        }, (error) => handleError("Failed to fetch user data.", error));
+        }, (error) => {
+            console.error("Firestore onSnapshot error:", error);
+            handleError("ব্যবহারকারীর ডেটা লোড করতে ব্যর্থ হয়েছে। আপনার ইন্টারনেট সংযোগ এবং অ্যাপের অনুমতি পরীক্ষা করুন।");
+        });
     }
 
     async function fetchAdminSettings() {
@@ -148,10 +151,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const selectLabel = document.createElement('label');
+        selectLabel.setAttribute('for', 'paymentMethodSelect');
         selectLabel.textContent = 'পেমেন্ট পদ্ধতি নির্বাচন করুন:';
         container.appendChild(selectLabel);
         const select = document.createElement('select');
-        select.id = "paymentMethodSelect";
+        select.id = 'paymentMethodSelect';
         paymentMethods.forEach(method => {
             const option = document.createElement('option');
             option.value = method.id;
@@ -160,11 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         container.appendChild(select);
         const inputLabel = document.createElement('label');
-        inputLabel.id = "accountNumberLabel";
+        inputLabel.setAttribute('for', 'accountNumberInput');
+        inputLabel.id = 'accountNumberLabel';
         container.appendChild(inputLabel);
         const input = document.createElement('input');
         input.type = 'text';
-        input.id = "accountNumberInput";
+        input.id = 'accountNumberInput';
         container.appendChild(input);
 
         const updateInputForMethod = () => {
@@ -255,12 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
             let currentQuizProgress = freshUserData.quizProgress || {};
             if (currentQuizProgress.date !== today) {
                 currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
-                await userRef.update({ quizProgress: currentQuizProgress });
             }
             if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
                 tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
                 return;
             }
+            currentQuizProgress.currentStep = 0; // প্রতিবার শুরু করার সময় ধাপ রিসেট করা
+            await userRef.update({ quizProgress: currentQuizProgress });
             userData.quizProgress = currentQuizProgress;
             showScreen('quiz-screen');
             quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
@@ -365,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
                 .then(() => {
                     currentQuizIndex++;
-                    displayCurrentQuiz();
+                    // displayCurrentQuiz() এখন onSnapshot থেকে কল হবে
                 });
             }
         }).catch(e => {
