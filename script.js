@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', async function() {
     // --- Firebase & Telegram Setup ---
-    const firebaseConfig = { apiKey: "AIzaSyDW4TSXHbpP92hyeLvuBdSdVu56xKayTd8", authDomain: "test-dc90d.firebaseapp.com", databaseURL: "https://test-dc90d-default-rtdb.firebaseio.com", projectId: "test-dc90d", storageBucket: "test-dc90d.appspot.com", messagingSenderId: "804710782593", appId: "1:804710782593:web:48921608aad6d348afdf80", measurementId: "G-29YGNDZ2J4" };
+    const firebaseConfig = {
+  apiKey: "AIzaSyB30yhNEJ9YWdeNIFVsBcA57DIpl3TgU3k",
+  authDomain: "bkash-mini-bot.firebaseapp.com",
+  projectId: "bkash-mini-bot",
+  storageBucket: "bkash-mini-bot.firebasestorage.app",
+  messagingSenderId: "517103882878",
+  appId: "1:517103882878:web:15b89d8a83951596e67e2f",
+  measurementId: "G-F4FT22EG6Y"
+};
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const tg = window.Telegram.WebApp;
