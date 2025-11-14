@@ -75,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 const referrerId = tg.initDataUnsafe.start_param;
                 const newUser = {
-                    firebaseUid: firebaseUid,
                     telegramId: telegramUser.id.toString(),
                     username: telegramUser.username || '',
                     fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
