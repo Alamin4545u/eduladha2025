@@ -1,8 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
 // --- Supabase Setup ---
-const SUPABASE_URL = 'https://fwikhcittcaadwziitdv.supabase.co'; // Replace with your Supabase URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aWtoY2l0dGNhYWR3emlpdGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzY0MjIsImV4cCI6MjA3ODcxMjQyMn0.wLBcy29HNFPZ5dRzJ11CaIjD_zQvBi3vNLE66HlI2es'; // Replace with your Supabase anon key
-const supabase = createClient(https://fwikhcittcaadwziitdv.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aWtoY2l0dGNhYWR3emlpdGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzY0MjIsImV4cCI6MjA3ODcxMjQyMn0.wLBcy29HNFPZ5dRzJ11CaIjD_zQvBi3vNLE66HlI2es);
+const supabaseUrl = "https://fwikhcittcaadwziitdv.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aWtoY2l0dGNhYWR3emlpdGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzY0MjIsImV4cCI6MjA3ODcxMjQyMn0.wLBcy29HNFPZ5dRzJ11CaIjD_zQvBi3vNLE66HlI2es";
+const { createClient } = supabase;
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseClient; // Alias for simplicity
+const tg = window.Telegram.WebApp;
 
 // --- Constants & Global Variables ---
 const BOT_USERNAME = "Bkash_earn_free_TkBot";
@@ -12,6 +15,7 @@ let spinConfig = { dailyLimit: 5, rewards: [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1
 let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
 let paymentMethods = [];
 let telegramUser, userData = {};
+let supabaseUid = null;
 let isSpinning = false;
 let currentRotation = 0;
 let quizQuestions = [];
@@ -35,617 +39,641 @@ tg.ready();
 tg.expand();
 
 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-telegramUser = tg.initDataUnsafe.user;
-supabase.auth.signInAnonymously()
-.then(({ data: { user } }) => {
-initializeApp();
-})
-.catch((error) => {
-handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে। অনুগ্রহ করে অ্যাপটি রিস্টার্ট করুন।", error);
-});
+    telegramUser = tg.initDataUnsafe.user;
+    supabase.auth.signInAnonymously()
+        .then(({ data, error }) => {
+            if (error) {
+                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে। অনুগ্রহ করে অ্যাপটি রিস্টার্ট করুন।", error);
+                return;
+            }
+            supabaseUid = data.user.id;
+            initializeApp();
+        });
 } else {
-document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
+    document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
 }
 
 function initializeApp() {
-fetchAdminSettings();
-fetchUserData();
-setupEventListeners();
-createSvgWheel();
+    fetchAdminSettings();
+    fetchUserData();
+    setupEventListeners();
+    createSvgWheel();
 }
 
-function fetchUserData() {
-const userId = telegramUser.id.toString();
-const subscription = supabase
-  .channel('user-channel')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'users', filter: `telegram_id=eq.${userId}` }, (payload) => {
+async function fetchUserData() {
     const today = new Date().toISOString().slice(0, 10);
-    if (payload.new) {
-      userData = payload.new;
+    const userId = telegramUser.id.toString();
+    const { data: user, error: fetchError } = await supabase.from('users').select('*').eq('id', userId).single();
+
+    if (fetchError && fetchError.message !== 'JSON object requested, multiple (or no) rows returned') {
+        console.error("Supabase fetch error:", fetchError);
+        handleError("ব্যবহারকারীর ডেটা লোড করতে ব্যর্থ হয়েছে। আপনার ইন্টারনেট সংযোগ এবং অ্যাপের অনুমতি পরীক্ষা করুন।");
+        return;
+    }
+
+    if (user) {
+        userData = user;
     } else {
-      // Fetch fresh data if no payload.new (e.g., initial load)
-      supabase.from('users').select('*').eq('telegram_id', userId).single().then(({ data }) => {
-        if (data) {
-          userData = data;
-        } else {
-          const referrerId = tg.initDataUnsafe.start_param;
-          const newUser = {
-            telegram_id: userId,
+        const referrerId = tg.initDataUnsafe.start_param;
+        const newUser = {
+            id: userId,
+            telegramId: userId,
             username: telegramUser.username || '',
-            full_name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
+            fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
             balance: 0,
-            last_checkin: null,
-            checkins_today: { date: today, count: 0 },
-            spins_today: { date: today, count: 0 },
-            completed_tasks: [],
-            quiz_progress: { date: today, completed_today: 0, current_step: 0 },
-            referred_by: referrerId || null,
-            referrals: [],
-            referral_earnings: 0,
-            affiliate_code: generateUniqueAffiliateCode(telegramUser.username || userId),
-            created_at: new Date().toISOString(),
-          };
-          supabase.from('users').insert([newUser]).then(() => {
-            userData = newUser;
-            if (referrerId && referrerId !== newUser.affiliate_code) {
-              handleAffiliateSignup(referrerId, newUser.telegram_id);
-            }
-          }).catch(err => handleError("নতুন ব্যবহারকারী তৈরিতে সমস্যা হয়েছে।", err));
+            lastCheckin: null,
+            checkinsToday: { date: today, count: 0 },
+            spinsToday: { date: today, count: 0 },
+            completedTasks: [],
+            quizProgress: { date: today, completedToday: 0, currentStep: 0 },
+            referredBy: referrerId || null,
+            referrals: [], 
+            referralEarnings: 0, 
+            affiliateCode: generateUniqueAffiliateCode(telegramUser.username || telegramUser.id.toString()), 
+            createdAt: new Date().toISOString(),
+            uid: supabaseUid
+        };
+        const { error: insertError } = await supabase.from('users').insert(newUser);
+        if (insertError) {
+            handleError("নতুন ব্যবহারকারী তৈরিতে সমস্যা হয়েছে।", insertError);
+            return;
         }
-        updateUI();
-      });
+        userData = newUser;
+        if (referrerId && referrerId !== newUser.affiliateCode) {
+            await handleAffiliateSignup(referrerId, newUser.id);
+        }
     }
     updateUI();
-  })
-  .subscribe();
+
+    // Realtime subscription
+    supabase.channel('user-updates').on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'users',
+        filter: `id=eq.${userId}`
+    }, payload => {
+        userData = payload.new;
+        updateUI();
+    }).subscribe((status, err) => {
+        if (err) console.error("Subscription error:", err);
+    });
 }
 
 async function fetchAdminSettings() {
-try {
-const [appConfigData, spinConfigData, quizConfigData, paymentMethodsData] = await Promise.all([
-  supabase.from('settings').select('*').eq('id', 'appConfig').single(),
-  supabase.from('settings').select('*').eq('id', 'spinConfig').single(),
-  supabase.from('settings').select('*').eq('id', 'quizConfig').single(),
-  supabase.from('settings').select('*').eq('id', 'paymentMethods').single()
-]);
+    try {
+        const { data: settings, error } = await supabase.from('settings').select('*');
+        if (error) throw error;
 
-if (appConfigData.data) {
-  const data = appConfigData.data.config;
-  appConfig = { 
-    dailyReward: data.dailyReward || 1, 
-    dailyCheckinLimit: data.dailyCheckinLimit || 1,
-    referralBonus: data.referralBonus || 5,
-    affiliateCommissionRate: data.affiliateCommissionRate || 0.1
-  };
-}
-if (spinConfigData.data) {
-  const data = spinConfigData.data.config;
-  spinConfig = { dailyLimit: data.dailyLimit || 5, rewards: data.rewards || [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
-}
-if (quizConfigData.data) {
-  quizConfig = quizConfigData.data.config;
-  quizConfig.clickTarget = quizConfig.clickTarget || 3;
-}
-if (paymentMethodsData.data) {
-  paymentMethods = paymentMethodsData.data.config.methods.filter(method => method.enabled);
-}
-updateWalletUI();
-} catch (error) {
-handleError("অ্যাপ সেটিংস লোড করা যায়নি।", error);
-}
+        const appConfigDoc = settings.find(s => s.id === 'appConfig');
+        if (appConfigDoc) {
+            const data = appConfigDoc.config || {}; // Assume config is JSONB
+            appConfig = { 
+                dailyReward: data.dailyReward || 1, 
+                dailyCheckinLimit: data.dailyCheckinLimit || 1,
+                referralBonus: data.referralBonus || 5,
+                affiliateCommissionRate: data.affiliateCommissionRate || 0.1
+            };
+        }
+
+        const spinConfigDoc = settings.find(s => s.id === 'spinConfig');
+        if (spinConfigDoc) {
+            const data = spinConfigDoc.config || {};
+            spinConfig = { dailyLimit: data.dailyLimit || 5, rewards: data.rewards || [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
+        }
+
+        const quizConfigDoc = settings.find(s => s.id === 'quizConfig');
+        if (quizConfigDoc) {
+            const data = quizConfigDoc.config || {};
+            quizConfig = { ...data, clickTarget: data.clickTarget || 3 };
+        }
+
+        const paymentMethodsDoc = settings.find(s => s.id === 'paymentMethods');
+        if (paymentMethodsDoc) {
+            paymentMethods = (paymentMethodsDoc.config?.methods || []).filter(method => method.enabled);
+        }
+
+        updateWalletUI();
+    } catch (error) {
+        handleError("অ্যাপ সেটিংস লোড করা যায়নি।", error);
+    }
 }
 
 function updateUI() {
-const balance = userData.balance || 0;
-const fullName = userData.full_name || telegramUser.first_name;
-const username = userData.username || telegramUser.id;
-const formattedBalance = `৳ ${balance.toFixed(2)}`;
-headerElements.balance.innerText = formattedBalance;
-headerElements.fullName.innerText = fullName;
-headerElements.username.innerText = username ? `@${username}` : `#${telegramUser.id}`;
-headerElements.pic.innerText = getInitials(fullName);
-walletElements.balance.innerText = formattedBalance;
-walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
-walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
-referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}! অ্যাফিলিয়েট কমিশন: ${(appConfig.affiliateCommissionRate * 100).toFixed(0)}%`; // Updated notice
-referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${userData.affiliate_code || telegramUser.id}`; // Use affiliateCode
-const spinsLeftCount = spinConfig.dailyLimit - (userData.spins_today?.count || 0);
-spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
+    const balance = userData.balance || 0;
+    const fullName = userData.fullName || telegramUser.first_name;
+    const username = userData.username || telegramUser.id;
+    const formattedBalance = `৳ ${balance.toFixed(2)}`;
+    headerElements.balance.innerText = formattedBalance;
+    headerElements.fullName.innerText = fullName;
+    headerElements.username.innerText = username ? `@${username}` : `#${telegramUser.id}`;
+    headerElements.pic.innerText = getInitials(fullName);
+    walletElements.balance.innerText = formattedBalance;
+    walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
+    walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
+    referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}! অ্যাফিলিয়েট কমিশন: ${(appConfig.affiliateCommissionRate * 100).toFixed(0)}%`; // Updated notice
+    referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${userData.affiliateCode || telegramUser.id}`; // Use affiliateCode
+    const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
+    spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
 
-// Display referral/affiliate stats
-if (referElements.count) {
-  referElements.count.textContent = userData.referrals ? userData.referrals.length : 0;
-}
-if (referElements.earnings) {
-  referElements.earnings.textContent = `৳ ${(userData.referral_earnings || 0).toFixed(2)}`;
-}
+    // Display referral/affiliate stats
+    if (referElements.count) {
+        referElements.count.textContent = userData.referrals ? userData.referrals.length : 0;
+    }
+    if (referElements.earnings) {
+        referElements.earnings.textContent = `৳ ${(userData.referralEarnings || 0).toFixed(2)}`;
+    }
 
-// Fix: Update quiz UI if quiz screen is active
-if (document.getElementById('quiz-screen').classList.contains('active')) {
-  displayCurrentQuiz();
-}
+    // Fix: Update quiz UI if quiz screen is active
+    if (document.getElementById('quiz-screen').classList.contains('active')) {
+        displayCurrentQuiz();
+    }
 }
 
 function updateWalletUI() {
-const container = walletElements.paymentContainer;
-container.innerHTML = '';
-if (paymentMethods.length === 0) {
-  container.innerHTML = '<p>কোনো পেমেন্ট পদ্ধতি উপলব্ধ নেই।</p>';
-  return;
-}
-const selectLabel = document.createElement('label');
-selectLabel.setAttribute('for', 'paymentMethodSelect');
-selectLabel.textContent = 'পেমেন্ট পদ্ধতি নির্বাচন করুন:';
-container.appendChild(selectLabel);
-const select = document.createElement('select');
-select.id = 'paymentMethodSelect';
-paymentMethods.forEach(method => {
-  const option = document.createElement('option');
-  option.value = method.id;
-  option.textContent = method.name;
-  select.appendChild(option);
-});
-container.appendChild(select);
-const inputLabel = document.createElement('label');
-inputLabel.setAttribute('for', 'accountNumberInput');
-inputLabel.id = 'accountNumberLabel';
-container.appendChild(inputLabel);
-const input = document.createElement('input');
-input.type = 'text';
-input.id = 'accountNumberInput';
-container.appendChild(input);
+    const container = walletElements.paymentContainer;
+    container.innerHTML = '';
+    if (paymentMethods.length === 0) {
+        container.innerHTML = '<p>কোনো পেমেন্ট পদ্ধতি উপলব্ধ নেই।</p>';
+        return;
+    }
 
-const updateInputForMethod = () => {
-  const selectedMethod = paymentMethods.find(m => m.id === select.value);
-  if (selectedMethod) {
-    inputLabel.textContent = `আপনার ${selectedMethod.name} নম্বর দিন:`;
-    input.placeholder = selectedMethod.placeholder || '';
-    input.inputMode = selectedMethod.inputMode || 'text';
-  }
-};
-select.addEventListener('change', updateInputForMethod);
-updateInputForMethod();
+    const selectLabel = document.createElement('label');
+    selectLabel.setAttribute('for', 'paymentMethodSelect');
+    selectLabel.textContent = 'পেমেন্ট পদ্ধতি নির্বাচন করুন:';
+    container.appendChild(selectLabel);
+    const select = document.createElement('select');
+    select.id = 'paymentMethodSelect';
+    paymentMethods.forEach(method => {
+        const option = document.createElement('option');
+        option.value = method.id;
+        option.textContent = method.name;
+        select.appendChild(option);
+    });
+    container.appendChild(select);
+    const inputLabel = document.createElement('label');
+    inputLabel.setAttribute('for', 'accountNumberInput');
+    inputLabel.id = 'accountNumberLabel';
+    container.appendChild(inputLabel);
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'accountNumberInput';
+    container.appendChild(input);
+
+    const updateInputForMethod = () => {
+        const selectedMethod = paymentMethods.find(m => m.id === select.value);
+        if (selectedMethod) {
+            inputLabel.textContent = `আপনার ${selectedMethod.name} নম্বর দিন:`;
+            input.placeholder = selectedMethod.placeholder || '';
+            input.inputMode = selectedMethod.inputMode || 'text';
+        }
+    };
+    select.addEventListener('change', updateInputForMethod);
+    updateInputForMethod();
 }
 
 function setupEventListeners() {
-navButtons.forEach(btn => btn.addEventListener('click', (e) => { const screenId = e.currentTarget.dataset.screen; showScreen(screenId); if (screenId === 'task-screen') { loadAndDisplayTasks(); } else if (screenId === 'refer-screen') { updateUI(); } }));
-homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
-homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
-homeButtons.quiz.addEventListener('click', startQuiz);
-spinScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
-quizScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
-spinScreenElements.triggerBtn.addEventListener('click', handleSpin);
-walletElements.submitBtn.addEventListener('click', handleSubmitWithdraw);
-referElements.shareBtn.addEventListener('click', handleShareReferral);
-taskListContainer.addEventListener('click', handleTaskClick);
-quizScreenElements.optionsContainer.addEventListener('click', handleOptionSelect);
-quizScreenElements.nextBtn.addEventListener('click', handleNextQuiz);
+    navButtons.forEach(btn => btn.addEventListener('click', (e) => { const screenId = e.currentTarget.dataset.screen; showScreen(screenId); if (screenId === 'task-screen') { loadAndDisplayTasks(); } else if (screenId === 'refer-screen') { updateUI(); } }));
+    homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
+    homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
+    homeButtons.quiz.addEventListener('click', startQuiz);
+    spinScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
+    quizScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
+    spinScreenElements.triggerBtn.addEventListener('click', handleSpin);
+    walletElements.submitBtn.addEventListener('click', handleSubmitWithdraw);
+    referElements.shareBtn.addEventListener('click', handleShareReferral);
+    taskListContainer.addEventListener('click', handleTaskClick);
+    quizScreenElements.optionsContainer.addEventListener('click', handleOptionSelect);
+    quizScreenElements.nextBtn.addEventListener('click', handleNextQuiz);
 }
 
 function showScreen(screenId) {
-screens.forEach(s => s.classList.remove('active'));
-document.getElementById(screenId).classList.add('active');
-navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
+    screens.forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
 }
 
 async function loadAndDisplayTasks() {
-taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
-try {
-const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('created_at', { ascending: false });
-if (tasks.length === 0) {
-  taskListContainer.innerHTML = '<p>নতুন টাস্ক শীঘ্রই আসছে...</p>';
-  return;
-}
-taskListContainer.innerHTML = '';
-tasks.forEach(task => {
-  const taskId = task.id;
-  const isCompleted = userData.completed_tasks && userData.completed_tasks.includes(taskId);
-  const taskElement = document.createElement('div');
-  taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`;
-  taskElement.dataset.taskId = taskId;
-  taskElement.dataset.reward = task.reward;
-  taskElement.innerHTML = `<div class="task-item-header"><h3 class="task-title">${task.title}</h3><span class="task-reward">৳ ${task.reward.toFixed(2)}</span></div><p class="task-description">${task.description}</p>`;
-  taskListContainer.appendChild(taskElement);
-});
-} catch (error) {
-handleError('টাস্ক লোড করতে সমস্যা হয়েছে। সম্ভবত ডেটাবেস ইনডেক্স তৈরি করা হয়নি।', error);
-}
+    taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
+    try {
+        const { data: tasks, error } = await supabase.from('tasks').select('*').eq('isActive', true).order('createdAt', { ascending: false });
+        if (error) throw error;
+        if (tasks.length === 0) {
+            taskListContainer.innerHTML = '<p>নতুন টাস্ক শীঘ্রই আসছে...</p>';
+            return;
+        }
+        taskListContainer.innerHTML = '';
+        tasks.forEach(task => {
+            const taskId = task.id;
+            const isCompleted = userData.completedTasks && userData.completedTasks.includes(taskId);
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`;
+            taskElement.dataset.taskId = taskId;
+            taskElement.dataset.reward = task.reward;
+            taskElement.innerHTML = `<div class="task-item-header"><h3 class="task-title">${task.title}</h3><span class="task-reward">৳ ${task.reward.toFixed(2)}</span></div><p class="task-description">${task.description}</p>`;
+            taskListContainer.appendChild(taskElement);
+        });
+    } catch (error) {
+        handleError('টাস্ক লোড করতে সমস্যা হয়েছে।', error);
+    }
 }
 
 function handleTaskClick(e) {
-const taskItem = e.target.closest('.task-item');
-if (!taskItem || taskItem.classList.contains('completed')) {
-  if (taskItem) tg.showAlert('আপনি এই টাস্কটি ইতোমধ্যে সম্পন্ন করেছেন।');
-  return;
-}
-const taskId = taskItem.dataset.taskId;
-const reward = parseFloat(taskItem.dataset.reward);
-tg.HapticFeedback.impactOccurred('light');
-window.showGiga().then(() => {
-  tg.HapticFeedback.notificationOccurred('success');
-  awardEarnings(reward, { completed_tasks: [...(userData.completed_tasks || []), taskId] }).then(() => {
-    tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
-    taskItem.classList.add('completed');
-  });
-}).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e));
+    const taskItem = e.target.closest('.task-item');
+    if (!taskItem || taskItem.classList.contains('completed')) {
+        if (taskItem) tg.showAlert('আপনি এই টাস্কটি ইতোমধ্যে সম্পন্ন করেছেন।');
+        return;
+    }
+    const taskId = taskItem.dataset.taskId;
+    const reward = parseFloat(taskItem.dataset.reward);
+    tg.HapticFeedback.impactOccurred('light');
+    window.showGiga().then(() => {
+        tg.HapticFeedback.notificationOccurred('success');
+        const updatedCompletedTasks = [...(userData.completedTasks || []), taskId];
+        awardEarnings(reward, { completedTasks: updatedCompletedTasks }).then(() => {
+            tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
+            taskItem.classList.add('completed');
+        });
+    }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e));
 }
 
 async function startQuiz() {
-try {
-const { data: freshUserData } = await supabase.from('users').select('*').eq('telegram_id', telegramUser.id.toString()).single();
-if (!freshUserData) throw new Error("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
-const today = new Date().toISOString().slice(0, 10);
-let currentQuizProgress = freshUserData.quiz_progress || {};
-if (currentQuizProgress.date !== today) {
-  currentQuizProgress = { date: today, completed_today: 0, current_step: 0 };
-}
-if (currentQuizProgress.completed_today >= quizConfig.dailyLimit) {
-  tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
-  return;
-}
-currentQuizProgress.current_step = 0;
-await supabase.from('users').update({ quiz_progress: currentQuizProgress }).eq('telegram_id', telegramUser.id.toString());
-userData.quiz_progress = currentQuizProgress;
-showScreen('quiz-screen');
-quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
-quizScreenElements.optionsContainer.innerHTML = '';
-const { data: quizzes } = await supabase.from('quizzes').select('*');
-quizQuestions = quizzes.map(q => ({ id: q.id, ...q }));
-if (quizQuestions.length === 0) throw new Error('কোনো কুইজ পাওয়া যায়নি।');
-quizQuestions.sort(() => 0.5 - Math.random());
-currentQuizIndex = 0;
-displayCurrentQuiz();
-} catch (error) {
-handleError(error.message || 'কুইজ শুরু করতে একটি অপ্রত্যাশিত সমস্যা হয়েছে।', error);
-showScreen('home-screen');
-}
+    try {
+        const { data: freshUserData, error } = await supabase.from('users').select('*').eq('id', telegramUser.id.toString()).single();
+        if (error) throw new Error("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
+        const today = new Date().toISOString().slice(0, 10);
+        let currentQuizProgress = freshUserData.quizProgress || {};
+        if (currentQuizProgress.date !== today) {
+            currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
+        }
+        if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
+            tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
+            return;
+        }
+        currentQuizProgress.currentStep = 0;
+        await supabase.from('users').update({ quizProgress: currentQuizProgress }).eq('id', telegramUser.id.toString());
+        userData.quizProgress = currentQuizProgress;
+        showScreen('quiz-screen');
+        quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
+        quizScreenElements.optionsContainer.innerHTML = '';
+        const { data: quizzes, error: quizError } = await supabase.from('quizzes').select('*');
+        if (quizError) throw quizError;
+        quizQuestions = quizzes;
+        if (quizQuestions.length === 0) throw new Error('কোনো কুইজ পাওয়া যায়নি।');
+        quizQuestions.sort(() => 0.5 - Math.random());
+        currentQuizIndex = 0;
+        displayCurrentQuiz();
+    } catch (error) {
+        handleError(error.message || 'কুইজ শুরু করতে একটি অপ্রত্যাশিত সমস্যা হয়েছে।', error);
+        showScreen('home-screen');
+    }
 }
 
 function displayCurrentQuiz() {
-const { completed_today = 0, current_step = 0 } = userData.quiz_progress || {};
-const remaining = quizConfig.dailyLimit - completed_today;
-quizScreenElements.progressText.textContent = `দৈনিক কুইজ সেশন বাকি আছে: ${remaining}`;
-const clickTarget = quizConfig.clickTarget;
-quizScreenElements.stepText.textContent = `ধাপ: ${current_step}/${clickTarget}`;
-quizScreenElements.progressInner.style.width = `${(current_step / clickTarget) * 100}%`;
-
-if (current_step >= clickTarget) {
-  showScreen('home-screen');
-  return;
-}
-
-if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
-const quiz = quizQuestions[currentQuizIndex];
-quizScreenElements.questionText.textContent = quiz.question;
-quizScreenElements.optionsContainer.innerHTML = '';
-quiz.options.forEach(optionText => {
-  const optionDiv = document.createElement('div');
-  optionDiv.className = 'quiz-option';
-  optionDiv.textContent = optionText;
-  quizScreenElements.optionsContainer.appendChild(optionDiv);
-});
-
-selectedQuizOption = null;
-quizScreenElements.nextBtn.disabled = true;
-
-if (current_step === clickTarget - 1) {
-  quizScreenElements.instruction.textContent = 'এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।';
-  quizScreenElements.nextBtn.textContent = 'Claim Reward';
-} else {
-  quizScreenElements.instruction.textContent = 'সঠিক উত্তর দিয়ে পরবর্তী ধাপে যান';
-  quizScreenElements.nextBtn.textContent = 'পরবর্তী কুইজ';
-}
+    const { completedToday = 0, currentStep = 0 } = userData.quizProgress || {};
+    const remaining = quizConfig.dailyLimit - completedToday;
+    quizScreenElements.progressText.textContent = `দৈনিক কুইজ সেশন বাকি আছে: ${remaining}`;
+    const clickTarget = quizConfig.clickTarget;
+    quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
+    quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
+    
+    if (currentStep >= clickTarget) {
+        showScreen('home-screen');
+        return;
+    }
+    
+    if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
+    const quiz = quizQuestions[currentQuizIndex];
+    quizScreenElements.questionText.textContent = quiz.question;
+    quizScreenElements.optionsContainer.innerHTML = '';
+    quiz.options.forEach(optionText => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'quiz-option';
+        optionDiv.textContent = optionText;
+        quizScreenElements.optionsContainer.appendChild(optionDiv);
+    });
+    
+    selectedQuizOption = null;
+    quizScreenElements.nextBtn.disabled = true;
+    
+    if (currentStep === clickTarget - 1) {
+        quizScreenElements.instruction.textContent = 'এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।';
+        quizScreenElements.nextBtn.textContent = 'Claim Reward';
+    } else {
+        quizScreenElements.instruction.textContent = 'সঠিক উত্তর দিয়ে পরবর্তী ধাপে যান';
+        quizScreenElements.nextBtn.textContent = 'পরবর্তী কুইজ';
+    }
 }
 
 function handleOptionSelect(e) {
-const option = e.target.closest('.quiz-option');
-if (!option) return;
-document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
-option.classList.add('selected');
-selectedQuizOption = option;
-quizScreenElements.nextBtn.disabled = false;
+    const option = e.target.closest('.quiz-option');
+    if (!option) return;
+    document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+    option.classList.add('selected');
+    selectedQuizOption = option;
+    quizScreenElements.nextBtn.disabled = false;
 }
 
 function handleNextQuiz() {
-if (!selectedQuizOption) return;
-if (selectedQuizOption.textContent !== quizQuestions[currentQuizIndex].correct_answer) {
-  tg.showAlert('ভুল উত্তর! অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন।');
-  return;
-}
-quizScreenElements.nextBtn.disabled = true;
-const currentStep = userData.quiz_progress?.current_step || 0;
-const isClickTask = currentStep === quizConfig.clickTarget - 1;
-tg.HapticFeedback.impactOccurred('light');
-
-window.showGiga().then(() => {
-  if (isClickTask) {
-    adClicked = false;
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        adClicked = true;
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    if (!selectedQuizOption) return;
+    if (selectedQuizOption.textContent !== quizQuestions[currentQuizIndex].correctAnswer) {
+        tg.showAlert('ভুল উত্তর! অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন।');
+        return;
+    }
     
-    tg.showPopup({
-      title: 'গুরুত্বপূর্ণ নির্দেশনা',
-      message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
-      buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
-    });
+    quizScreenElements.nextBtn.disabled = true;
+    const currentStep = userData.quizProgress?.currentStep || 0;
+    const isClickTask = currentStep === quizConfig.clickTarget - 1;
+    tg.HapticFeedback.impactOccurred('light');
     
-    setTimeout(() => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (adClicked) {
-        tg.HapticFeedback.notificationOccurred('success');
-        awardEarnings(quizConfig.reward, { 
-          quiz_progress: { 
-            ...userData.quiz_progress, 
-            completed_today: (userData.quiz_progress.completed_today || 0) + 1,
-            current_step: 0 
-          } 
-        }).then(() => {
-          tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
-          showScreen('home-screen');
-        });
-      } else {
-        tg.HapticFeedback.notificationOccurred('error');
-        tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল।");
+    window.showGiga().then(() => {
+        if (isClickTask) {
+            adClicked = false;
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'hidden') {
+                    adClicked = true;
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                }
+            };
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            tg.showPopup({
+                title: 'গুরুত্বপূর্ণ নির্দেশনা',
+                message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
+                buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
+            });
+            
+            setTimeout(() => {
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                if (adClicked) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                    awardEarnings(quizConfig.reward, { 
+                        quizProgress: { ...userData.quizProgress, completedToday: (userData.quizProgress.completedToday || 0) + 1, currentStep: 0 } 
+                    }).then(() => {
+                        tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
+                        showScreen('home-screen');
+                    });
+                } else {
+                    tg.HapticFeedback.notificationOccurred('error');
+                    tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল।");
+                    quizScreenElements.nextBtn.disabled = false;
+                }
+            }, 3000);
+        } else {
+            tg.HapticFeedback.notificationOccurred('success');
+            supabase.from('users').update({ quizProgress: { ...userData.quizProgress, currentStep: currentStep + 1 } }).eq('id', telegramUser.id.toString())
+            .then(() => {
+                currentQuizIndex++;
+                displayCurrentQuiz();
+            });
+        }
+    }).catch(e => {
+        handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
         quizScreenElements.nextBtn.disabled = false;
-      }
-    }, 3000);
-  } else {
-    tg.HapticFeedback.notificationOccurred('success');
-    supabase.from('users').update({ quiz_progress: { ...userData.quiz_progress, current_step: currentStep + 1 } }).eq('telegram_id', telegramUser.id.toString())
-    .then(() => {
-      currentQuizIndex++;
-      displayCurrentQuiz();
     });
-  }
-}).catch(e => {
-  handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-  quizScreenElements.nextBtn.disabled = false;
-});
 }
 
 function handleSpin() {
-if (isSpinning) return;
-const spinsLeftCount = spinConfig.dailyLimit - (userData.spins_today?.count || 0);
-if (spinsLeftCount <= 0) {
-  tg.showAlert("আপনার আজকের জন্য আর কোনো স্পিন বাকি নেই।");
-  return;
-}
-isSpinning = true;
-spinScreenElements.triggerBtn.disabled = true;
+    if (isSpinning) return;
+    const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
+    if (spinsLeftCount <= 0) {
+        tg.showAlert("আপনার আজকের জন্য আর কোনো স্পিন বাকি নেই।");
+        return;
+    }
+    isSpinning = true;
+    spinScreenElements.triggerBtn.disabled = true;
 
-// Randomly select target segment
-const numSegments = spinConfig.rewards.length;
-const targetSegment = Math.floor(Math.random() * numSegments);
-const segmentAngle = 360 / numSegments;
-const randomInSegment = Math.random() * segmentAngle;
-const targetRotation = (targetSegment * segmentAngle) + randomInSegment + (360 * 5);
+    // Randomly select target segment
+    const numSegments = spinConfig.rewards.length;
+    const targetSegment = Math.floor(Math.random() * numSegments);
+    const segmentAngle = 360 / numSegments;
+    const randomInSegment = Math.random() * segmentAngle; // Random within segment for variety
+    const targetRotation = (targetSegment * segmentAngle) + randomInSegment + (360 * 5); // 5 full spins + target
 
-spinScreenElements.wheelGroup.style.transform = `rotate(${targetRotation}deg)`;
-currentRotation = targetRotation % 360;
+    spinScreenElements.wheelGroup.style.transform = `rotate(${targetRotation}deg)`;
+    currentRotation = targetRotation % 360;
 
-setTimeout(() => spinFinished(targetSegment), 5000);
+    setTimeout(() => spinFinished(targetSegment), 5000); // Pass target segment to finish
 }
 
 function spinFinished(targetSegment) {
-tg.HapticFeedback.impactOccurred('light');
-window.showGiga().then(() => {
-  tg.HapticFeedback.notificationOccurred('success');
-  const reward = spinConfig.rewards[targetSegment];
-  const today = new Date().toISOString().slice(0, 10);
-  awardEarnings(reward, {
-    spins_today: { date: today, count: (userData.spins_today?.count || 0) + 1 }
-  }).then(() => {
-    tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
-  });
-}).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
-  isSpinning = false;
-  spinScreenElements.triggerBtn.disabled = false;
-  spinScreenElements.wheelGroup.style.transition = 'none';
-  spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
-  setTimeout(() => {
-    spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
-  }, 50);
-});
+    tg.HapticFeedback.impactOccurred('light');
+    window.showGiga().then(() => {
+        tg.HapticFeedback.notificationOccurred('success');
+        const reward = spinConfig.rewards[targetSegment];
+        const today = new Date().toISOString().slice(0, 10);
+        awardEarnings(reward, { 
+            spinsToday: { date: today, count: (userData.spinsToday?.count || 0) + 1 }
+        }).then(() => {
+            tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
+        });
+    }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
+        isSpinning = false;
+        spinScreenElements.triggerBtn.disabled = false;
+        spinScreenElements.wheelGroup.style.transition = 'none';
+        spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
+        setTimeout(() => {
+            spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        }, 50);
+    });
 }
 
 function handleDailyCheckin() {
-const today = new Date().toISOString().slice(0, 10);
-const checkinsTodayCount = userData.checkins_today?.count || 0;
-if (userData.checkins_today?.date !== today) {
-  userData.checkins_today = { date: today, count: 0 };
-}
-if (checkinsTodayCount >= appConfig.dailyCheckinLimit) {
-  tg.showAlert("আপনি আজকের জন্য আপনার সব Daily Check সম্পন্ন করেছেন।");
-  return;
-}
-this.disabled = true;
-tg.HapticFeedback.impactOccurred('light');
-window.showGiga().then(() => {
-  tg.HapticFeedback.notificationOccurred('success');
-  awardEarnings(appConfig.dailyReward, {
-    checkins_today: { date: today, count: checkinsTodayCount + 1 },
-    last_checkin: today
-  }).then(() => {
-    tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
-  });
-}).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
-  this.disabled = false;
-});
+    const today = new Date().toISOString().slice(0, 10);
+    const checkinsTodayCount = userData.checkinsToday?.count || 0;
+    if (userData.checkinsToday?.date !== today) {
+        userData.checkinsToday = { date: today, count: 0 };
+    }
+    if (checkinsTodayCount >= appConfig.dailyCheckinLimit) {
+        tg.showAlert("আপনি আজকের জন্য আপনার সব Daily Check সম্পন্ন করেছেন।");
+        return;
+    }
+    this.disabled = true;
+    tg.HapticFeedback.impactOccurred('light');
+    window.showGiga().then(() => {
+        tg.HapticFeedback.notificationOccurred('success');
+        awardEarnings(appConfig.dailyReward, { 
+            checkinsToday: { date: today, count: checkinsTodayCount + 1 },
+            lastCheckin: today
+        }).then(() => {
+            tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
+        });
+    }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
+        this.disabled = false;
+    });
 }
 
 function handleSubmitWithdraw() {
-const methodSelect = document.getElementById('paymentMethodSelect');
-const accountNumberInput = document.getElementById('accountNumberInput');
-if (!methodSelect || !accountNumberInput) {
-  handleError("পেমেন্ট ফর্ম সঠিকভাবে লোড হয়নি।");
-  return;
-}
-const selectedMethod = paymentMethods.find(m => m.id === methodSelect.value);
-const accountNumber = accountNumberInput.value.trim();
-if (!selectedMethod) {
-  tg.showAlert("অনুগ্রহ করে একটি বৈধ পেমেন্ট পদ্ধতি নির্বাচন করুন।");
-  return;
-}
-if (accountNumber.length < (selectedMethod.minLength || 1)) {
-  tg.showAlert(`অনুগ্রহ করে একটি সঠিক ${selectedMethod.name} নম্বর দিন।`);
-  return;
-}
-if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) {
-  tg.showAlert(`আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।`);
-  return;
-}
-this.disabled = true;
-supabase.from('withdrawals').insert([{
-  user_id: telegramUser.id.toString(),
-  username: telegramUser.username || '',
-  amount: userData.balance,
-  method_id: selectedMethod.id,
-  method_name: selectedMethod.name,
-  account_number: accountNumber,
-  status: 'pending',
-  timestamp: new Date().toISOString()
-}]).then(() => {
-  supabase.from('users').update({ balance: 0 }).eq('telegram_id', telegramUser.id.toString()).then(() => {
-    tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
-    showScreen('home-screen');
-    accountNumberInput.value = '';
-  });
-}).catch(e => handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", e)).finally(() => {
-  this.disabled = false;
-});
+    const methodSelect = document.getElementById('paymentMethodSelect');
+    const accountNumberInput = document.getElementById('accountNumberInput');
+    if (!methodSelect || !accountNumberInput) {
+        handleError("পেমেন্ট ফর্ম সঠিকভাবে লোড হয়নি।");
+        return;
+    }
+    const selectedMethod = paymentMethods.find(m => m.id === methodSelect.value);
+    const accountNumber = accountNumberInput.value.trim();
+    if (!selectedMethod) {
+        tg.showAlert("অনুগ্রহ করে একটি বৈধ পেমেন্ট পদ্ধতি নির্বাচন করুন।");
+        return;
+    }
+    if (accountNumber.length < (selectedMethod.minLength || 1)) {
+        tg.showAlert(`অনুগ্রহ করে একটি সঠিক ${selectedMethod.name} নম্বর দিন।`);
+        return;
+    }
+    if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) {
+        tg.showAlert(`আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।`);
+        return;
+    }
+    this.disabled = true;
+    const withdrawal = {
+        userId: telegramUser.id.toString(),
+        username: telegramUser.username || '',
+        amount: userData.balance,
+        methodId: selectedMethod.id,
+        methodName: selectedMethod.name,
+        accountNumber: accountNumber,
+        status: 'pending',
+        timestamp: new Date().toISOString()
+    };
+    supabase.from('withdrawals').insert(withdrawal).then(async ({ error }) => {
+        if (error) throw error;
+        await supabase.from('users').update({ balance: 0 }).eq('id', telegramUser.id.toString());
+        tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
+        showScreen('home-screen');
+        accountNumberInput.value = '';
+    }).catch(e => handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", e)).finally(() => {
+        this.disabled = false;
+    });
 }
 
 function handleShareReferral() {
-const link = referElements.linkInput.value;
-const text = `এখানে প্রতিদিন আয় করুন! আমার অ্যাফিলিয়েট লিংক দিয়ে জয়েন করুন: ${link}`;
-tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+    const link = referElements.linkInput.value;
+    const text = `এখানে প্রতিদিন আয় করুন! আমার অ্যাফিলিয়েট লিংক দিয়ে জয়েন করুন: ${link}`;
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
 }
 
 function handleError(message, error) {
-if (error) console.error("Error:", error);
-tg.showAlert(typeof message === 'string' ? message : "একটি অপ্রত্যাশিত সমস্যা হয়েছে।");
+    if (error) console.error("Error:", error);
+    tg.showAlert(typeof message === 'string' ? message : "একটি অপ্রত্যাশিত সমস্যা হয়েছে।");
 }
 
 function getInitials(fullName) {
-if (!fullName) return '';
-const names = fullName.split(' ');
-return `${names[0]?.[0] || ''}${names.length > 1 ? names[names.length - 1][0] : ''}`.toUpperCase();
+    if (!fullName) return '';
+    const names = fullName.split(' ');
+    return `${names[0]?.[0] || ''}${names.length > 1 ? names[names.length - 1][0] : ''}`.toUpperCase();
 }
 
 function createSvgWheel() {
-const wheelGroup = spinScreenElements.wheelGroup;
-if (!wheelGroup) return;
-wheelGroup.innerHTML = '';
-const numSegments = spinConfig.rewards.length;
-const angle = 360 / numSegments;
-const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'].slice(0, numSegments);
-const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-  return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
-};
-for (let i = 0; i < numSegments; i++) {
-  const startAngle = i * angle;
-  const endAngle = startAngle + angle;
-  const start = polarToCartesian(250, 250, 210, endAngle);
-  const end = polarToCartesian(250, 250, 210, startAngle);
-  const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", pathData);
-  path.setAttribute("fill", colors[i]);
-  path.setAttribute("stroke", "#8d6e63");
-  path.setAttribute("stroke-width", "4");
-  wheelGroup.appendChild(path);
+    const wheelGroup = spinScreenElements.wheelGroup;
+    if (!wheelGroup) return;
+    wheelGroup.innerHTML = '';
+    const numSegments = spinConfig.rewards.length;
+    const angle = 360 / numSegments;
+    const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'].slice(0, numSegments);
+    const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
+        const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+        return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
+    };
+    for (let i = 0; i < numSegments; i++) {
+        const startAngle = i * angle;
+        const endAngle = startAngle + angle;
+        const start = polarToCartesian(250, 250, 210, endAngle);
+        const end = polarToCartesian(250, 250, 210, startAngle);
+        const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathData);
+        path.setAttribute("fill", colors[i]);
+        path.setAttribute("stroke", "#8d6e63");
+        path.setAttribute("stroke-width", "4");
+        wheelGroup.appendChild(path);
 
-  // Add reward text labels to segments
-  const textAngle = startAngle + (angle / 2);
-  const textPos = polarToCartesian(250, 250, 150, textAngle);
-  const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  text.setAttribute("x", textPos.x);
-  text.setAttribute("y", textPos.y);
-  text.setAttribute("fill", "white");
-  text.setAttribute("font-size", "20");
-  text.setAttribute("font-weight", "bold");
-  text.setAttribute("text-anchor", "middle");
-  text.setAttribute("dominant-baseline", "middle");
-  text.setAttribute("transform", `rotate(${textAngle + 90}, ${textPos.x}, ${textPos.y})`);
-  text.textContent = `৳${spinConfig.rewards[i].toFixed(1)}`;
-  wheelGroup.appendChild(text);
-}
-for (let i = 0; i < numSegments; i++) {
-  const sparkleAngle = (i * angle) + (angle / 2);
-  const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
-  const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-  sparkle.setAttribute("cx", sparklePos.x);
-  sparkle.setAttribute("cy", sparklePos.y);
-  sparkle.setAttribute("r", "5");
-  sparkle.setAttribute("fill", "white");
-  sparkle.setAttribute("filter", "url(#glow)");
-  wheelGroup.appendChild(sparkle);
-}
+        // Add reward text labels to segments
+        const textAngle = startAngle + (angle / 2);
+        const textPos = polarToCartesian(250, 250, 150, textAngle); // Position text inside segment
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", textPos.x);
+        text.setAttribute("y", textPos.y);
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-size", "20");
+        text.setAttribute("font-weight", "bold");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.setAttribute("transform", `rotate(${textAngle + 90}, ${textPos.x}, ${textPos.y})`); // Rotate text to align with wheel
+        text.textContent = `৳${spinConfig.rewards[i].toFixed(1)}`;
+        wheelGroup.appendChild(text);
+    }
+    for (let i = 0; i < numSegments; i++) {
+        const sparkleAngle = (i * angle) + (angle / 2);
+        const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
+        const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        sparkle.setAttribute("cx", sparklePos.x);
+        sparkle.setAttribute("cy", sparklePos.y);
+        sparkle.setAttribute("r", "5");
+        sparkle.setAttribute("fill", "white");
+        sparkle.setAttribute("filter", "url(#glow)");
+        wheelGroup.appendChild(sparkle);
+    }
 }
 
 // New: Generate unique affiliate code
 function generateUniqueAffiliateCode(base) {
-return base.slice(0, 8).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return base.slice(0, 8).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0'); // Simple unique code
 }
 
 // New: Handle affiliate signup and initial bonus
 async function handleAffiliateSignup(affiliateCode, newUserId) {
-const { data: referrer } = await supabase.from('users').select('*').eq('affiliate_code', affiliateCode).single();
-if (!referrer) return;
-if (!referrer.referrals.includes(newUserId)) {
-  const bonus = appConfig.referralBonus || 0;
-  await supabase.from('users').update({
-    balance: referrer.balance + bonus,
-    referrals: [...referrer.referrals, newUserId],
-    referral_earnings: referrer.referral_earnings + bonus
-  }).eq('telegram_id', referrer.telegram_id);
-}
+    const { data: referrer, error } = await supabase.from('users').select('*').eq('affiliateCode', affiliateCode).single();
+    if (error || !referrer) return;
+    if (!referrer.referrals.includes(newUserId)) {
+        const bonus = appConfig.referralBonus || 0;
+        await supabase.from('users').update({
+            balance: referrer.balance + bonus,
+            referrals: [...referrer.referrals, newUserId],
+            referralEarnings: referrer.referralEarnings + bonus
+        }).eq('id', referrer.id);
+    }
 }
 
 // New: Award earnings and propagate affiliate commissions
 async function awardEarnings(amount, additionalUpdates = {}) {
-if (amount <= 0) {
-  await supabase.from('users').update(additionalUpdates).eq('telegram_id', telegramUser.id.toString());
-  return;
-}
-
-const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegramUser.id.toString()).single();
-if (!user) throw new Error('User not found');
-
-await supabase.from('users').update({
-  balance: user.balance + amount,
-  ...additionalUpdates
-}).eq('telegram_id', telegramUser.id.toString());
-
-let currentUserId = telegramUser.id.toString();
-let commissionAmount = amount;
-while (currentUserId && commissionAmount > 0) {
-  const { data: currentUser } = await supabase.from('users').select('*').eq('telegram_id', currentUserId).single();
-  if (!currentUser) break;
-  const referrerId = currentUser.referred_by;
-  if (!referrerId) break;
-  
-  commissionAmount *= appConfig.affiliateCommissionRate;
-  if (commissionAmount < 0.01) break;
-  
-  const { data: referrer } = await supabase.from('users').select('*').eq('telegram_id', referrerId).single();
-  await supabase.from('users').update({
-    balance: referrer.balance + commissionAmount,
-    referral_earnings: referrer.referral_earnings + commissionAmount
-  }).eq('telegram_id', referrerId);
-  
-  currentUserId = referrerId;
-}
+    if (amount <= 0) {
+        await supabase.from('users').update(additionalUpdates).eq('id', telegramUser.id.toString());
+        return;
+    }
+    
+    const { data: currentUser, error: fetchErr } = await supabase.from('users').select('*').eq('id', telegramUser.id.toString()).single();
+    if (fetchErr) {
+        handleError('User not found', fetchErr);
+        return;
+    }
+    
+    await supabase.from('users').update({
+        balance: currentUser.balance + amount,
+        ...additionalUpdates
+    }).eq('id', telegramUser.id.toString());
+    
+    let currentUserId = telegramUser.id.toString();
+    let commissionAmount = amount;
+    while (currentUserId && commissionAmount > 0) {
+        const { data: currUser, error } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+        if (error || !currUser.referredBy) break;
+        
+        commissionAmount *= appConfig.affiliateCommissionRate;
+        if (commissionAmount < 0.01) break;
+        
+        const { data: referrer, error: refErr } = await supabase.from('users').select('*').eq('id', currUser.referredBy).single();
+        if (refErr) break;
+        
+        await supabase.from('users').update({
+            balance: referrer.balance + commissionAmount,
+            referralEarnings: referrer.referralEarnings + commissionAmount
+        }).eq('id', currUser.referredBy);
+        
+        currentUserId = currUser.referredBy;
+    }
 }
 
 function handleReferralBonus(referrerId, newUserId) {
-// Deprecated: Use handleAffiliateSignup instead
+    // Deprecated: Use handleAffiliateSignup instead
 }
 
 });
