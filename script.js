@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', function() {const firebaseConfig = {
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Firebase & Telegram Setup ---
+   const firebaseConfig = {
   apiKey: "AIzaSyB30yhNEJ9YWdeNIFVsBcA57DIpl3TgU3k",
   authDomain: "bkash-mini-bot.firebaseapp.com",
   projectId: "bkash-mini-bot",
