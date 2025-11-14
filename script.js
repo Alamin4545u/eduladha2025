@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- Firebase & Telegram Setup ---
     const firebaseConfig = {
-        apiKey: "AIzaSyB30yhNEJ9YWdeNIFVsBcA57DIpl3TgU3k",
-        authDomain: "bkash-mini-bot.firebaseapp.com",
-        projectId: "bkash-mini-bot",
-        storageBucket: "bkash-mini-bot.firebasestorage.app",
-        messagingSenderId: "517103882878",
-        appId: "1:517103882878:web:15b89d8a83951596e67e2f",
-        measurementId: "G-F4FT22EG6Y"
-    };
+  apiKey: "AIzaSyB30yhNEJ9YWdeNIFVsBcA57DIpl3TgU3k",
+  authDomain: "bkash-mini-bot.firebaseapp.com",
+  projectId: "bkash-mini-bot",
+  storageBucket: "bkash-mini-bot.firebasestorage.app",
+  messagingSenderId: "517103882878",
+  appId: "1:517103882878:web:8311ae8d14330697e67e2f",
+  measurementId: "G-CYTSLKV4LB"
+};
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
