@@ -87,7 +87,22 @@
         </div>
 
         <!-- Wallet Screen -->
-        <div id="wallet-screen" class="screen"><h2>ওয়ালেট</h2><div class="wallet-box"><p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p><p>সর্বনিম্ন উইথড্র: <strong>৳ 10.00</strong></p></div><div class="form-group"><label for="bkashNumber">আপনার বিকাশ নম্বর দিন:</label><input type="tel" id="bkashNumber" placeholder="e.g., 01700000000" inputmode="numeric"></div><button id="submitWithdrawBtn" class="action-btn">উইথড্র সাবমিট করুন</button></div>
+        <div id="wallet-screen" class="screen">
+            <h2>ওয়ালেট</h2>
+            <div class="wallet-box">
+                <p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p>
+                <p id="minWithdrawText">সর্বনিম্ন উইথড্র: <strong>...</strong></p>
+            </div>
+            <div class="form-group">
+                <label for="paymentMethodSelector">পেমেন্ট মেথড বেছে নিন:</label>
+                <select id="paymentMethodSelector"></select>
+            </div>
+            <div class="form-group">
+                <label for="paymentNumberInput" id="paymentNumberLabel">আপনার নম্বর দিন:</label>
+                <input type="tel" id="paymentNumberInput" placeholder="নম্বর লিখুন" inputmode="numeric">
+            </div>
+            <button id="submitWithdrawBtn" class="action-btn">উইথড্র সাবমিট করুন</button>
+        </div>
         
         <!-- Refer Screen -->
         <div id="refer-screen" class="screen">
@@ -114,4 +129,4 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="script.js"></script>
 </body>
-            </html>
+                    </html>
