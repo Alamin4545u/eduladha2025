@@ -55,9 +55,11 @@ if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
 
 function initializeApp() {
     fetchAdminSettings();
-    fetchUserData();
     setupEventListeners();
     createSvgWheel();
+    fetchUserData().then(() => {
+        setupSubscription();
+    });
 }
 
 async function fetchUserData() {
@@ -104,8 +106,10 @@ async function fetchUserData() {
         }
     }
     updateUI();
+}
 
-    // Realtime subscription
+function setupSubscription() {
+    const userId = telegramUser.id.toString();
     supabase.channel('user-updates').on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
@@ -292,6 +296,7 @@ function handleTaskClick(e) {
         awardEarnings(reward, { completedTasks: updatedCompletedTasks }).then(() => {
             tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
             taskItem.classList.add('completed');
+            fetchUserData();
         });
     }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e));
 }
@@ -411,6 +416,7 @@ function handleNextQuiz() {
                     }).then(() => {
                         tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
                         showScreen('home-screen');
+                        fetchUserData();
                     });
                 } else {
                     tg.HapticFeedback.notificationOccurred('error');
@@ -424,6 +430,7 @@ function handleNextQuiz() {
             .then(() => {
                 currentQuizIndex++;
                 displayCurrentQuiz();
+                fetchUserData();
             });
         }
     }).catch(e => {
@@ -465,6 +472,7 @@ function spinFinished(targetSegment) {
             spinsToday: { date: today, count: (userData.spinsToday?.count || 0) + 1 }
         }).then(() => {
             tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
+            fetchUserData();
         });
     }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
         isSpinning = false;
@@ -496,6 +504,7 @@ function handleDailyCheckin() {
             lastCheckin: today
         }).then(() => {
             tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
+            fetchUserData();
         });
     }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
         this.disabled = false;
@@ -540,6 +549,7 @@ function handleSubmitWithdraw() {
         tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
         showScreen('home-screen');
         accountNumberInput.value = '';
+        fetchUserData();
     }).catch(e => handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", e)).finally(() => {
         this.disabled = false;
     });
