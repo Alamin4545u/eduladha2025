@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +24,7 @@
     </header>
 
     <!-- Main Content Area -->
+
     <main class="content-container">
         <!-- Home Screen -->
         <div id="home-screen" class="screen active">
@@ -87,23 +89,8 @@
         </div>
 
         <!-- Wallet Screen -->
-        <div id="wallet-screen" class="screen">
-            <h2>ওয়ালেট</h2>
-            <div class="wallet-box">
-                <p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p>
-                <p id="minWithdrawText">সর্বনিম্ন উইথড্র: <strong>...</strong></p>
-            </div>
-            <div class="form-group">
-                <label for="paymentMethodSelector">পেমেন্ট মেথড বেছে নিন:</label>
-                <select id="paymentMethodSelector"></select>
-            </div>
-            <div class="form-group">
-                <label for="paymentNumberInput" id="paymentNumberLabel">আপনার নম্বর দিন:</label>
-                <input type="tel" id="paymentNumberInput" placeholder="নম্বর লিখুন" inputmode="numeric">
-            </div>
-            <button id="submitWithdrawBtn" class="action-btn">উইথড্র সাবমিট করুন</button>
-        </div>
-        
+        <div id="wallet-screen" class="screen"><h2>ওয়ালেট</h2><div class="wallet-box"><p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p><p>সর্বনিম্ন উইথড্র: <strong>৳ 10.00</strong></p></div><div class="form-group"><label for="withdrawMethod">উইথড্র মেথড:</label><select id="withdrawMethod"></select></div><div class="form-group"><label for="accountNumber">অ্যাকাউন্ট নম্বর:</label><input type="tel" id="accountNumber" placeholder="e.g., 01700000000" inputmode="numeric"></div><button id="submitWithdrawBtn" class="action-btn">উইথড্র সাবমিট করুন</button></div>
+
         <!-- Refer Screen -->
         <div id="refer-screen" class="screen">
             <h2>বন্ধুদের রেফার করুন</h2>
@@ -116,17 +103,23 @@
     </main>
 
     <!-- Bottom Navigation Bar -->
+
     <nav id="bottom-nav">
         <button class="nav-btn active" data-screen="home-screen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>হোম</span></button>
         <button class="nav-btn" data-screen="task-screen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 7h-6V5h6v2zm-8-2h-2v2h2V5zm-4 0H8v2h2V5zM22 11h-6V9h6v2zm-8 0h-2v2h2v-2zm-4 0H8v2h2v-2zM22 15h-6v-2h6v2zm-8 0h-2v2h2v-2zm-4 0H8v2h2v-2zM22 19h-6v-2h6v2zm-8 0h-2v2h2v-2zm-4 0H8v2h2v-2zM6 7H4v14h14v-2H6V7z"/></svg><span>টাস্ক</span></button>
         <button class="nav-btn" data-screen="wallet-screen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg><span>ওয়ালেট</span></button>
         <button class="nav-btn" data-screen="refer-screen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/></svg><span>রেফার</span></button>
     </nav>
-    
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <script src="https://ad.gigapub.tech/script?id=4203"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <script src="script.js"></script>
+
 </body>
-                    </html>
+                                                                                                                                                                                                                                                                                                                                                                                                       </html>
