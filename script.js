@@ -1,10 +1,10 @@
-// SUPABASE VERSION (FULLY CORRECTED AND UPDATED)
+// SUPABASE VERSION (FINAL CORRECTED CODE)
 document.addEventListener('DOMContentLoaded', function() {
     // --- Supabase Setup ---
-    // সমাধান: Supabase ক্লায়েন্ট সঠিকভাবে ইনিশিয়ালাইজ করা হয়েছে।
+    // সমাধান: Supabase ক্লায়েন্ট তৈরির গুরুতর ভুলটি সংশোধন করা হয়েছে।
     const supabaseUrl = "https://fwikhcittcaadwziitdv.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aWtoY2l0dGNhYWR3emlpdGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzY0MjIsImV4cCI6MjA3ODcxMjQyMn0.wLBcy29HNFPZ5dRzJ11CaIjD_zQvBi3vNLE66HlI2es";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     const tg = window.Telegram.WebApp;
 
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
     tg.ready();
     tg.expand();
 
-    // সমাধান: অপ্রয়োজনীয় Firebase Authentication সরানো হয়েছে।
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         telegramUser = tg.initDataUnsafe.user;
         initializeApp();
@@ -52,8 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
         createSvgWheel();
         
-        // রিয়েল-টাইম আপডেটের জন্য চ্যানেল সাবস্ক্রিপশন
-        supabase.channel('public:users:telegram_id=eq.' + telegramUser.id.toString())
+        supabaseClient.channel('public:users:telegram_id=eq.' + telegramUser.id.toString())
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: 'telegram_id=eq.' + telegramUser.id.toString() }, payload => {
                 userData = payload.new;
                 updateUI();
@@ -62,8 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchUserData() {
-        // সমাধান: সঠিক কলামের নাম `telegram_id` ব্যবহার করা হয়েছে।
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('users')
             .select('*')
             .eq('telegram_id', telegramUser.id.toString())
@@ -71,16 +68,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (data) {
             userData = data;
-        } else if (error && error.code === 'PGRST116') { // ব্যবহারকারী না থাকলে নতুন তৈরি হবে
+        } else if (error && error.code === 'PGRST116') {
             const referrerCode = tg.initDataUnsafe.start_param;
             let referrerId = null;
 
             if(referrerCode) {
-                const { data: refUser } = await supabase.from('users').select('telegram_id').eq('affiliate_code', referrerCode).single();
+                const { data: refUser } = await supabaseClient.from('users').select('telegram_id').eq('affiliate_code', referrerCode).single();
                 if(refUser) referrerId = refUser.telegram_id;
             }
 
-            // সমাধান: ডেটাবেসের কলাম অনুযায়ী `snake_case` ব্যবহার করা হয়েছে।
             const newUser = {
                 telegram_id: telegramUser.id.toString(),
                 username: telegramUser.username || '',
@@ -89,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 referred_by: referrerId
             };
 
-            const { data: createdUser, error: createError } = await supabase.from('users').insert(newUser).select().single();
+            const { data: createdUser, error: createError } = await supabaseClient.from('users').insert(newUser).select().single();
             if (createError) return handleError("নতুন ব্যবহারকারী তৈরিতে সমস্যা হয়েছে।", createError);
             
             userData = createdUser;
@@ -104,8 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchAdminSettings() {
         try {
-            // সমাধান: সেটিংস টেবিলের সঠিক গঠন (key, value) অনুযায়ী কোড লেখা হয়েছে।
-            const { data, error } = await supabase.from('settings').select('key, value');
+            const { data, error } = await supabaseClient.from('settings').select('key, value');
             if (error) throw error;
             
             data.forEach(setting => {
@@ -121,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateUI() {
-        // সমাধান: `userData`-এর সকল প্রোপার্টি `snake_case` এ পরিবর্তন করা হয়েছে।
         const balance = userData.balance || 0;
         const fullName = userData.full_name || telegramUser.first_name;
         const username = userData.username || telegramUser.id;
@@ -149,10 +143,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Data Logic Functions (Rewritten for Supabase) ---
     async function loadAndDisplayTasks() {
         taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
-        const { data, error } = await supabase.from('tasks').select('*').eq('is_active', true).order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient.from('tasks').select('*').eq('is_active', true).order('created_at', { ascending: false });
 
         if (error) return handleError('টাস্ক লোড করতে সমস্যা হয়েছে।', error);
         if (data.length === 0) return taskListContainer.innerHTML = '<p>নতুন টাস্ক শীঘ্রই আসছে...</p>';
@@ -201,12 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         currentQuizProgress.currentStep = 0;
-        const { error } = await supabase.from('users').update({ quiz_progress: currentQuizProgress }).eq('telegram_id', telegramUser.id.toString());
+        const { error } = await supabaseClient.from('users').update({ quiz_progress: currentQuizProgress }).eq('telegram_id', telegramUser.id.toString());
         if(error) return handleError('কুইজ শুরু করতে সমস্যা হয়েছে।', error);
 
         showScreen('quiz-screen');
         quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
-        const { data, error: quizError } = await supabase.from('quizzes').select('*');
+        const { data, error: quizError } = await supabaseClient.from('quizzes').select('*');
         if(quizError || data.length === 0) return handleError('কোনো কুইজ পাওয়া যায়নি।', quizError);
         
         quizQuestions = data.sort(() => 0.5 - Math.random());
@@ -240,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 tg.HapticFeedback.notificationOccurred('success');
                 const newProgress = { ...currentProgress, currentStep: currentProgress.currentStep + 1 };
-                await supabase.from('users').update({ quiz_progress: newProgress }).eq('telegram_id', telegramUser.id.toString());
+                await supabaseClient.from('users').update({ quiz_progress: newProgress }).eq('telegram_id', telegramUser.id.toString());
                 currentQuizIndex++;
                 displayCurrentQuiz();
                 quizScreenElements.nextBtn.disabled = false;
@@ -328,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         this.disabled = true;
-        const { error } = await supabase.from('withdrawals').insert({
+        const { error } = await supabaseClient.from('withdrawals').insert({
             user_id: telegramUser.id.toString(),
             username: telegramUser.username || '',
             amount: userData.balance,
@@ -342,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", error);
         }
         
-        const { error: updateError } = await supabase.from('users').update({ balance: 0 }).eq('telegram_id', telegramUser.id.toString());
+        const { error: updateError } = await supabaseClient.from('users').update({ balance: 0 }).eq('telegram_id', telegramUser.id.toString());
         if(updateError) {
              handleError("ব্যালেন্স আপডেট করতে সমস্যা হয়েছে।", updateError);
         } else {
@@ -353,11 +346,10 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = false;
     }
 
-    // সমাধান: নিরাপদ RPC ফাংশন ব্যবহার করা হচ্ছে।
     async function awardEarnings(amount, additionalUpdates = {}) {
         if (amount <= 0 && Object.keys(additionalUpdates).length === 0) return;
 
-        const { error } = await supabase.rpc('award_earnings', {
+        const { error } = await supabaseClient.rpc('award_earnings', {
             user_id: telegramUser.id.toString(),
             earn_amount: amount,
             additional_updates: additionalUpdates
@@ -371,12 +363,11 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleAffiliateSignup(referrerId, newUserId) {
         const bonus = appConfig.referralBonus || 0;
         if(bonus <= 0) return;
-        // This logic is now handled inside the award_earnings RPC for the referrer's commission.
-        // For the initial bonus to the referrer upon signup:
-        const { error } = await supabase.rpc('award_earnings', {
+        
+        const { error } = await supabaseClient.rpc('award_earnings', {
             user_id: referrerId,
             earn_amount: bonus,
-            additional_updates: { referrals: newUserId } // Custom logic may be needed in RPC to handle array append
+            additional_updates: { referrals: newUserId }
         });
         if(error) handleError("রেফারেল বোনাস যোগ করতে সমস্যা হয়েছে।", error);
     }
@@ -454,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     function generateUniqueAffiliateCode(base) {
-        return base.slice(0, 8).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return (base || 'USER').slice(0, 8).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     }
     function displayCurrentQuiz() {
         const today = new Date().toISOString().slice(0, 10);
