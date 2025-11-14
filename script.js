@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
     const MINIMUM_WITHDRAW_AMOUNT = 10;
-    let appConfig = { dailyReward: 1, referralBonus: 5 };
-    let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
+    let appConfig = { dailyReward: 1, referralBonus: 5, affiliateCommissionRate: 0.1 }; // New: 10% commission on affiliates' earnings
+    let spinConfig = { dailyLimit: 5, rewards: [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
     let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
     let paymentMethods = [];
     let telegramUser, userRef, userData = {};
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn'), quiz: document.getElementById('quizBtn') };
     const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft'), wheelGroup: document.getElementById('wheelGroup') };
     const walletElements = { balance: document.getElementById('withdrawBalance'), submitBtn: document.getElementById('submitWithdrawBtn'), paymentContainer: document.getElementById('payment-method-container') };
-    const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn'), notice: document.getElementById('referral-notice') };
+    const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn'), notice: document.getElementById('referral-notice'), count: document.getElementById('referral-count'), earnings: document.getElementById('referral-earnings') };
     const taskListContainer = document.getElementById('task-list');
     const quizScreenElements = { backBtn: document.getElementById('quizBackBtn'), progressText: document.getElementById('quiz-progress-text'), stepText: document.getElementById('quiz-step-text'), progressInner: document.getElementById('quiz-progress-inner'), instruction: document.getElementById('quiz-instruction'), questionText: document.getElementById('quiz-question-text'), optionsContainer: document.getElementById('quiz-options-container'), nextBtn: document.getElementById('next-quiz-btn') };
 
@@ -85,11 +85,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     completedTasks: [],
                     quizProgress: { date: today, completedToday: 0, currentStep: 0 },
                     referredBy: referrerId || null,
+                    referrals: [], // Track referred users
+                    referralEarnings: 0, // Track total referral earnings
+                    affiliateCode: generateUniqueAffiliateCode(telegramUser.username || telegramUser.id.toString()), // New: Generate unique affiliate code
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 userRef.set(newUser).then(() => {
                     userData = newUser;
-                    if (referrerId) handleReferralBonus(referrerId);
+                    if (referrerId && referrerId !== newUser.affiliateCode) { // Prevent self-referral using code
+                        handleAffiliateSignup(referrerId, newUser.telegramId);
+                    }
                 }).catch(err => handleError("নতুন ব্যবহারকারী তৈরিতে সমস্যা হয়েছে।", err));
             }
             updateUI();
@@ -109,8 +114,18 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
             const [appConfigDoc, spinConfigDoc, quizConfigDoc, paymentMethodsDoc] = await Promise.all(settingsPromises);
 
-            if (appConfigDoc.exists) appConfig = appConfigDoc.data();
-            if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
+            if (appConfigDoc.exists) {
+                const data = appConfigDoc.data();
+                appConfig = { 
+                    dailyReward: data.dailyReward || 1, 
+                    referralBonus: data.referralBonus || 5,
+                    affiliateCommissionRate: data.affiliateCommissionRate || 0.1 // New: Fetch from admin
+                };
+            }
+            if (spinConfigDoc.exists) {
+                const data = spinConfigDoc.data();
+                spinConfig = { dailyLimit: data.dailyLimit || 5, rewards: data.rewards || [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
+            }
             if (quizConfigDoc.exists) {
                 quizConfig = quizConfigDoc.data();
                 quizConfig.clickTarget = quizConfig.clickTarget || 3;
@@ -136,10 +151,23 @@ document.addEventListener('DOMContentLoaded', function() {
         walletElements.balance.innerText = formattedBalance;
         walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
         walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
-        referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}!`;
-        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${telegramUser.id}`;
+        referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}! অ্যাফিলিয়েট কমিশন: ${(appConfig.affiliateCommissionRate * 100).toFixed(0)}%`; // Updated notice
+        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${userData.affiliateCode || telegramUser.id}`; // Use affiliateCode
         const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
         spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
+
+        // Display referral/affiliate stats
+        if (referElements.count) {
+            referElements.count.textContent = userData.referrals ? userData.referrals.length : 0;
+        }
+        if (referElements.earnings) {
+            referElements.earnings.textContent = `৳ ${(userData.referralEarnings || 0).toFixed(2)}`;
+        }
+
+        // Fix: Update quiz UI if quiz screen is active
+        if (document.getElementById('quiz-screen').classList.contains('active')) {
+            displayCurrentQuiz();
+        }
     }
 
     function updateWalletUI() {
@@ -185,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupEventListeners() {
-        navButtons.forEach(btn => btn.addEventListener('click', (e) => { const screenId = e.currentTarget.dataset.screen; showScreen(screenId); if (screenId === 'task-screen') { loadAndDisplayTasks(); } }));
+        navButtons.forEach(btn => btn.addEventListener('click', (e) => { const screenId = e.currentTarget.dataset.screen; showScreen(screenId); if (screenId === 'task-screen') { loadAndDisplayTasks(); } else if (screenId === 'refer-screen') { updateUI(); } }));
         homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
         homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
         homeButtons.quiz.addEventListener('click', startQuiz);
@@ -241,10 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tg.HapticFeedback.impactOccurred('light');
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
-            userRef.update({
-                balance: firebase.firestore.FieldValue.increment(reward),
-                completedTasks: firebase.firestore.FieldValue.arrayUnion(taskId)
-            }).then(() => {
+            awardEarnings(reward, { completedTasks: firebase.firestore.FieldValue.arrayUnion(taskId) }).then(() => { // Updated: Use awardEarnings
                 tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
                 taskItem.classList.add('completed');
             });
@@ -319,6 +344,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function handleOptionSelect(e) {
+        const option = e.target.closest('.quiz-option');
+        if (!option) return;
+        document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedQuizOption = option;
+        quizScreenElements.nextBtn.disabled = false;
+    }
+
     function handleNextQuiz() {
         if (!selectedQuizOption) return;
         if (selectedQuizOption.textContent !== quizQuestions[currentQuizIndex].correctAnswer) {
@@ -352,11 +386,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.removeEventListener('visibilitychange', handleVisibilityChange);
                     if (adClicked) {
                         tg.HapticFeedback.notificationOccurred('success');
-                        userRef.update({
-                            balance: firebase.firestore.FieldValue.increment(quizConfig.reward),
+                        awardEarnings(quizConfig.reward, { 
                             'quizProgress.completedToday': firebase.firestore.FieldValue.increment(1),
-                            'quizProgress.currentStep': 0
-                        }).then(() => {
+                            'quizProgress.currentStep': 0 
+                        }).then(() => { // Updated: Use awardEarnings
                             tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
                             showScreen('home-screen');
                         });
@@ -371,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
                 .then(() => {
                     currentQuizIndex++;
-                    // displayCurrentQuiz() এখন onSnapshot থেকে কল হবে
+                    displayCurrentQuiz();
                 });
             }
         }).catch(e => {
@@ -389,32 +422,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
-        const randomExtraRotation = Math.floor(Math.random() * 360);
-        const totalRotation = currentRotation + (360 * 5) + randomExtraRotation;
-        spinScreenElements.wheelGroup.style.transform = `rotate(${totalRotation}deg)`;
-        currentRotation = totalRotation;
-        setTimeout(spinFinished, 5000);
+
+        // Randomly select target segment
+        const numSegments = spinConfig.rewards.length;
+        const targetSegment = Math.floor(Math.random() * numSegments);
+        const segmentAngle = 360 / numSegments;
+        const randomInSegment = Math.random() * segmentAngle; // Random within segment for variety
+        const targetRotation = (targetSegment * segmentAngle) + randomInSegment + (360 * 5); // 5 full spins + target
+
+        spinScreenElements.wheelGroup.style.transform = `rotate(${targetRotation}deg)`;
+        currentRotation = targetRotation % 360;
+
+        setTimeout(() => spinFinished(targetSegment), 5000); // Pass target segment to finish
     }
 
-    function spinFinished() {
+    function spinFinished(targetSegment) {
         tg.HapticFeedback.impactOccurred('light');
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
+            const reward = spinConfig.rewards[targetSegment];
             const today = new Date().toISOString().slice(0, 10);
-            userRef.update({
-                balance: firebase.firestore.FieldValue.increment(spinConfig.rewardAmount),
+            awardEarnings(reward, { // Updated: Use awardEarnings
                 'spinsToday.date': today,
                 'spinsToday.count': firebase.firestore.FieldValue.increment(1)
             }).then(() => {
-                tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${spinConfig.rewardAmount.toFixed(2)} পেয়েছেন।`);
+                tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
             });
         }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
             isSpinning = false;
             spinScreenElements.triggerBtn.disabled = false;
-            const finalRotation = currentRotation % 360;
             spinScreenElements.wheelGroup.style.transition = 'none';
-            spinScreenElements.wheelGroup.style.transform = `rotate(${finalRotation}deg)`;
-            currentRotation = finalRotation;
+            spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
             setTimeout(() => {
                 spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
             }, 50);
@@ -431,10 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tg.HapticFeedback.impactOccurred('light');
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
-            userRef.update({
-                balance: firebase.firestore.FieldValue.increment(appConfig.dailyReward),
-                lastCheckin: today
-            }).then(() => {
+            awardEarnings(appConfig.dailyReward, { lastCheckin: today }).then(() => { // Updated: Use awardEarnings
                 tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
             });
         }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
@@ -486,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleShareReferral() {
         const link = referElements.linkInput.value;
-        const text = `এখানে প্রতিদিন আয় করুন! আমার রেফারেল লিংক দিয়ে জয়েন করুন: ${link}`;
+        const text = `এখানে প্রতিদিন আয় করুন! আমার অ্যাফিলিয়েট লিংক দিয়ে জয়েন করুন: ${link}`;
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
     }
 
@@ -505,9 +540,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const wheelGroup = spinScreenElements.wheelGroup;
         if (!wheelGroup) return;
         wheelGroup.innerHTML = '';
-        const numSegments = 10;
+        const numSegments = spinConfig.rewards.length;
         const angle = 360 / numSegments;
-        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
+        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'].slice(0, numSegments);
         const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
             const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
             return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
@@ -524,6 +559,21 @@ document.addEventListener('DOMContentLoaded', function() {
             path.setAttribute("stroke", "#8d6e63");
             path.setAttribute("stroke-width", "4");
             wheelGroup.appendChild(path);
+
+            // Add reward text labels to segments
+            const textAngle = startAngle + (angle / 2);
+            const textPos = polarToCartesian(250, 250, 150, textAngle); // Position text inside segment
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", textPos.x);
+            text.setAttribute("y", textPos.y);
+            text.setAttribute("fill", "white");
+            text.setAttribute("font-size", "20");
+            text.setAttribute("font-weight", "bold");
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "middle");
+            text.setAttribute("transform", `rotate(${textAngle + 90}, ${textPos.x}, ${textPos.y})`); // Rotate text to align with wheel
+            text.textContent = `৳${spinConfig.rewards[i].toFixed(1)}`;
+            wheelGroup.appendChild(text);
         }
         for (let i = 0; i < numSegments; i++) {
             const sparkleAngle = (i * angle) + (angle / 2);
@@ -538,16 +588,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function handleReferralBonus(referrerId) {
-        const referrerRef = db.collection('users').doc(referrerId);
-        db.runTransaction((transaction) => {
-            return transaction.get(referrerRef).then((doc) => {
-                if (doc.exists) {
-                    transaction.update(referrerRef, {
-                        balance: firebase.firestore.FieldValue.increment(appConfig.referralBonus || 0)
-                    });
-                }
+    // New: Generate unique affiliate code
+    function generateUniqueAffiliateCode(base) {
+        return base.slice(0, 8).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0'); // Simple unique code
+    }
+
+    // New: Handle affiliate signup and initial bonus
+    async function handleAffiliateSignup(affiliateCode, newUserId) {
+        const referrerQuery = await db.collection('users').where('affiliateCode', '==', affiliateCode).limit(1).get();
+        if (referrerQuery.empty) return;
+        const referrerDoc = referrerQuery.docs[0];
+        const referrerRef = referrerDoc.ref;
+        const referrerData = referrerDoc.data();
+        if (!referrerData.referrals.includes(newUserId)) {
+            const bonus = appConfig.referralBonus || 0;
+            referrerRef.update({
+                balance: firebase.firestore.FieldValue.increment(bonus),
+                referrals: firebase.firestore.FieldValue.arrayUnion(newUserId),
+                referralEarnings: firebase.firestore.FieldValue.increment(bonus)
             });
-        }).catch(err => console.error("Referral bonus error:", err));
+        }
+    }
+
+    // New: Award earnings and propagate affiliate commissions
+    async function awardEarnings(amount, additionalUpdates = {}) {
+        if (amount <= 0) return userRef.update(additionalUpdates);
+        
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists) throw new Error('User not found');
+            
+            transaction.update(userRef, {
+                balance: firebase.firestore.FieldValue.increment(amount),
+                ...additionalUpdates
+            });
+            
+            let currentUserId = telegramUser.id.toString();
+            let commissionAmount = amount;
+            while (currentUserId && commissionAmount > 0) {
+                const currentUserDoc = await transaction.get(db.collection('users').doc(currentUserId));
+                if (!currentUserDoc.exists) break;
+                const currentData = currentUserDoc.data();
+                const referrerId = currentData.referredBy;
+                if (!referrerId) break;
+                
+                commissionAmount *= appConfig.affiliateCommissionRate;
+                if (commissionAmount < 0.01) break; // Minimum commission threshold
+                
+                const referrerRef = db.collection('users').doc(referrerId);
+                transaction.update(referrerRef, {
+                    balance: firebase.firestore.FieldValue.increment(commissionAmount),
+                    referralEarnings: firebase.firestore.FieldValue.increment(commissionAmount)
+                });
+                
+                currentUserId = referrerId;
+            }
+        });
+    }
+
+    function handleReferralBonus(referrerId, newUserId) {
+        // Deprecated: Use handleAffiliateSignup instead
     }
 });
