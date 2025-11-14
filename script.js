@@ -80,15 +80,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
                     balance: 0,
                     lastCheckin: null,
-                    checkinsToday: { date: today, count: 0 }, // Updated: Added for daily checkin limit tracking
+                    checkinsToday: { date: today, count: 0 },
                     spinsToday: { date: today, count: 0 },
                     completedTasks: [],
                     quizProgress: { date: today, completedToday: 0, currentStep: 0 },
                     referredBy: referrerId || null,
-                    referrals: [], // Track referred users
-                    referralEarnings: 0, // Track total referral earnings
-                    affiliateCode: generateUniqueAffiliateCode(telegramUser.username || telegramUser.id.toString()), // New: Generate unique affiliate code
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    referrals: [], 
+                    referralEarnings: 0, 
+                    affiliateCode: generateUniqueAffiliateCode(telegramUser.username || telegramUser.id.toString()), 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    uid: firebaseUid  // Added uid field
                 };
                 userRef.set(newUser).then(() => {
                     userData = newUser;
