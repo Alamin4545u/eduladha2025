@@ -1,16 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- Firebase & Telegram Setup ---
-   const firebaseConfig = {
-  apiKey: "AIzaSyB30yhNEJ9YWdeNIFVsBcA57DIpl3TgU3k",
-  authDomain: "bkash-mini-bot.firebaseapp.com",
-  projectId: "bkash-mini-bot",
-  storageBucket: "bkash-mini-bot.firebasestorage.app",
-  messagingSenderId: "517103882878",
-  appId: "1:517103882878:web:15b89d8a83951596e67e2f",
-  measurementId: "G-F4FT22EG6Y"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyB30yhNEJ9YWdeNIFVsBcA57DIpl3TgU3k",
+        authDomain: "bkash-mini-bot.firebaseapp.com",
+        projectId: "bkash-mini-bot",
+        storageBucket: "bkash-mini-bot.firebasestorage.app",
+        messagingSenderId: "517103882878",
+        appId: "1:517103882878:web:15b89d8a83951596e67e2f",
+        measurementId: "G-F4FT22EG6Y"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth(); // Auth service যোগ করা হয়েছে
     const tg = window.Telegram.WebApp;
 
     // --- Constants & Global Variables ---
@@ -19,8 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let appConfig = { dailyReward: 1, referralBonus: 5 };
     let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
     let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 2 };
-    let paymentMethods = []; // New variable for payment methods
-    let currentUser, userRef, userData = {};
+    let paymentMethods = [];
+    let telegramUser, userRef, userData = {};
+    let firebaseUid = null; // Firebase Auth UID সেভ করার জন্য
     let isSpinning = false;
     let currentRotation = 0;
     let quizQuestions = [];
@@ -42,97 +44,53 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Main Logic ---
     tg.ready();
     tg.expand();
+
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        currentUser = tg.initDataUnsafe.user;
-        userRef = db.collection('users').doc(currentUser.id.toString());
+        telegramUser = tg.initDataUnsafe.user;
+        
+        // ধাপ ১: Firebase এ বেনামে সাইন-ইন করুন
+        auth.signInAnonymously()
+            .then((userCredential) => {
+                firebaseUid = userCredential.user.uid; // সাইন-ইন করার পর পাওয়া UID
+                console.log("Signed in anonymously with UID:", firebaseUid);
+                
+                // ধাপ ২: সাইন-ইন সফল হলে অ্যাপ চালু করুন
+                initializeApp();
+            })
+            .catch((error) => {
+                console.error("Anonymous sign-in failed:", error);
+                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে।", error);
+            });
+            
+    } else {
+        document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
+    }
+
+    // অ্যাপ চালু করার মূল ফাংশন
+    function initializeApp() {
+        userRef = db.collection('users').doc(telegramUser.id.toString());
         fetchAdminSettings();
         fetchUserData();
         setupEventListeners();
         createSvgWheel();
-    } else { document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>"; }
-
-    function createSvgWheel() {
-        const wheelGroup = spinScreenElements.wheelGroup;
-        if (!wheelGroup) return;
-        wheelGroup.innerHTML = '';
-        const numSegments = 10;
-        const angle = 360 / numSegments;
-        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
-        const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-            return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
-        };
-        for (let i = 0; i < numSegments; i++) {
-            const startAngle = i * angle;
-            const endAngle = startAngle + angle;
-            const start = polarToCartesian(250, 250, 210, endAngle);
-            const end = polarToCartesian(250, 250, 210, startAngle);
-            const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("d", pathData);
-            path.setAttribute("fill", colors[i]);
-            path.setAttribute("stroke", "#8d6e63");
-            path.setAttribute("stroke-width", "4");
-            wheelGroup.appendChild(path);
-        }
-        for (let i = 0; i < numSegments; i++) {
-            const sparkleAngle = (i * angle) + (angle / 2);
-            const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
-            const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            sparkle.setAttribute("cx", sparklePos.x);
-            sparkle.setAttribute("cy", sparklePos.y);
-            sparkle.setAttribute("r", "5");
-            sparkle.setAttribute("fill", "white");
-            sparkle.setAttribute("filter", "url(#glow)");
-            wheelGroup.appendChild(sparkle);
-        }
     }
-
-    async function fetchAdminSettings() {
-        try {
-            const settingsPromises = [
-                db.collection('settings').doc('appConfig').get(),
-                db.collection('settings').doc('spinConfig').get(),
-                db.collection('settings').doc('quizConfig').get(),
-                db.collection('settings').doc('paymentMethods').get() // Fetch payment methods
-            ];
-
-            const [appConfigDoc, spinConfigDoc, quizConfigDoc, paymentMethodsDoc] = await Promise.all(settingsPromises);
-
-            if (appConfigDoc.exists) appConfig = appConfigDoc.data();
-            if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
-            if (quizConfigDoc.exists) quizConfig = quizConfigDoc.data();
-            if (paymentMethodsDoc.exists) {
-                // Filter only enabled methods
-                paymentMethods = paymentMethodsDoc.data().methods.filter(method => method.enabled);
-            }
-            updateWalletUI(); // Update wallet UI with fetched methods
-
-        } catch (error) {
-            console.error("Error fetching settings:", error);
-            handleError("অ্যাপ সেটিংস লোড করা যায়নি।", error);
-        }
-    }
-
+    
     function fetchUserData() {
         userRef.onSnapshot((doc) => {
             const today = new Date().toISOString().slice(0, 10);
             if (doc.exists) {
                 userData = doc.data();
-                if (!userData.spinsToday || userData.spinsToday.date !== today) {
-                    userData.spinsToday = { date: today, count: 0 };
-                    userRef.update({ 'spinsToday': userData.spinsToday });
-                }
-                if (!userData.completedTasks) userData.completedTasks = [];
-                if (!userData.quizProgress || userData.quizProgress.date !== today) {
-                    userData.quizProgress = { date: today, completedToday: 0, currentStep: 0 };
-                    userRef.update({ 'quizProgress': userData.quizProgress });
+                // পুরোনো ব্যবহারকারীর জন্য firebaseUid আপডেট (যদি না থাকে)
+                if (!userData.firebaseUid) {
+                    userRef.update({ firebaseUid: firebaseUid });
                 }
             } else {
+                // নতুন ব্যবহারকারী তৈরির সময় firebaseUid যোগ করা হয়েছে
                 const referrerId = tg.initDataUnsafe.start_param;
                 const newUser = {
-                    username: currentUser.username || '',
-                    fullName: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim(),
+                    firebaseUid: firebaseUid, // এখানে UID যোগ করা হয়েছে
+                    username: telegramUser.username || '',
+                    fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
                     balance: 0,
                     lastCheckin: null,
                     spinsToday: { date: today, count: 0 },
@@ -146,62 +104,64 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (referrerId) {
                         handleReferralBonus(referrerId);
                     }
-                });
+                }).catch(err => handleError("নতুন ব্যবহারকারী তৈরিতে সমস্যা হয়েছে।", err));
             }
             updateUI();
         }, (error) => handleError("Failed to fetch user data.", error));
     }
-
-    function handleReferralBonus(referrerId) {
-        const referrerRef = db.collection('users').doc(referrerId);
-        db.runTransaction((transaction) => {
-            return transaction.get(referrerRef).then((doc) => {
-                if (doc.exists) {
-                    transaction.update(referrerRef, {
-                        balance: firebase.firestore.FieldValue.increment(appConfig.referralBonus || 0)
-                    });
-                }
-            });
-        }).catch(err => console.error("Referral bonus error:", err));
-    }
-
-    function getInitials(fullName) {
-        if (!fullName) return '';
-        const names = fullName.split(' ');
-        const firstInitial = names[0] ? names[0][0] : '';
-        const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
-        return `${firstInitial}${lastInitial}`.toUpperCase();
-    }
     
-    // --- UI Update Functions ---
+    async function fetchAdminSettings() {
+        try {
+            const settingsPromises = [
+                db.collection('settings').doc('appConfig').get(),
+                db.collection('settings').doc('spinConfig').get(),
+                db.collection('settings').doc('quizConfig').get(),
+                db.collection('settings').doc('paymentMethods').get()
+            ];
+
+            const [appConfigDoc, spinConfigDoc, quizConfigDoc, paymentMethodsDoc] = await Promise.all(settingsPromises);
+
+            if (appConfigDoc.exists) appConfig = appConfigDoc.data();
+            if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
+            if (quizConfigDoc.exists) quizConfig = quizConfigDoc.data();
+            if (paymentMethodsDoc.exists) {
+                paymentMethods = paymentMethodsDoc.data().methods.filter(method => method.enabled);
+            }
+            updateWalletUI();
+
+        } catch (error) {
+            console.error("Error fetching settings:", error);
+            handleError("অ্যাপ সেটিংস লোড করা যায়নি।", error);
+        }
+    }
+
     function updateUI() {
         const balance = userData.balance || 0;
-        const fullName = userData.fullName || currentUser.first_name;
-        const username = userData.username || currentUser.id;
+        const fullName = userData.fullName || telegramUser.first_name;
+        const username = userData.username || telegramUser.id;
         const formattedBalance = `৳ ${balance.toFixed(2)}`;
         headerElements.balance.innerText = formattedBalance;
         headerElements.fullName.innerText = fullName;
-        headerElements.username.innerText = username ? `@${username}` : `#${currentUser.id}`;
+        headerElements.username.innerText = username ? `@${username}` : `#${telegramUser.id}`;
         headerElements.pic.innerText = getInitials(fullName);
         walletElements.balance.innerText = formattedBalance;
         walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
         walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
         referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus || 0).toFixed(2)}!`;
-        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${currentUser.id}`;
+        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${telegramUser.id}`;
         const spinsLeftCount = spinConfig.dailyLimit - (userData.spinsToday?.count || 0);
         spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
     }
     
     function updateWalletUI() {
         const container = walletElements.paymentContainer;
-        container.innerHTML = ''; // Clear previous content
+        container.innerHTML = '';
     
         if (paymentMethods.length === 0) {
             container.innerHTML = '<p>কোনো পেমেন্ট পদ্ধতি উপলব্ধ নেই।</p>';
             return;
         }
     
-        // Create Select Dropdown
         const selectLabel = document.createElement('label');
         selectLabel.setAttribute('for', 'paymentMethodSelect');
         selectLabel.textContent = 'পেমেন্ট পদ্ধতি নির্বাচন করুন:';
@@ -217,18 +177,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         container.appendChild(select);
     
-        // Create Account Number Input
         const inputLabel = document.createElement('label');
         inputLabel.setAttribute('for', 'accountNumberInput');
         inputLabel.id = 'accountNumberLabel';
         container.appendChild(inputLabel);
     
         const input = document.createElement('input');
-        input.type = 'text'; // Use text to be more flexible
+        input.type = 'text';
         input.id = 'accountNumberInput';
         container.appendChild(input);
     
-        // Function to update input based on selection
         const updateInputForMethod = () => {
             const selectedMethodId = select.value;
             const selectedMethod = paymentMethods.find(m => m.id === selectedMethodId);
@@ -239,9 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     
-        // Add event listener and trigger once
         select.addEventListener('change', updateInputForMethod);
-        updateInputForMethod(); // Initial call
+        updateInputForMethod();
     }
     
     function setupEventListeners() {
@@ -265,8 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
         navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
     }
     
-    // --- Task, Quiz, Spin, Checkin handlers (No changes needed here) ---
-
     async function loadAndDisplayTasks() {
         taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
         try {
@@ -532,9 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- UPDATED WITHDRAWAL FUNCTION ---
     function handleSubmitWithdraw() {
-        // Find the selected method from the UI
         const methodSelect = document.getElementById('paymentMethodSelect');
         const accountNumberInput = document.getElementById('accountNumberInput');
         
@@ -551,16 +504,14 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.showAlert("অনুগ্রহ করে একটি বৈধ পেমেন্ট পদ্ধতি নির্বাচন করুন।");
             return;
         }
-
-        // Validate account number
+        
         if (accountNumber.length < (selectedMethod.minLength || 1)) {
-            tg.showAlert(`অনুগ্রহ করে একটি সঠিক ${selectedMethod.name} নম্বর দিন। এটি কমপক্ষে ${selectedMethod.minLength} সংখ্যার হতে হবে।`);
+            tg.showAlert(`অনুগ্রহ করে একটি সঠিক ${selectedMethod.name} নম্বর দিন।`);
             return;
         }
         
-        // Validate balance
         if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) {
-            tg.showAlert(`আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই। সর্বনিম্ন ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন।`);
+            tg.showAlert(`আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।`);
             return;
         }
 
@@ -568,19 +519,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const amountToWithdraw = userData.balance;
 
         db.collection('withdrawals').add({
-            userId: currentUser.id.toString(),
-            username: currentUser.username || '',
+            userId: telegramUser.id.toString(),
+            username: telegramUser.username || '',
             amount: amountToWithdraw,
-            methodId: selectedMethod.id, // e.g., 'bkash'
-            methodName: selectedMethod.name, // e.g., 'বিকাশ'
-            accountNumber: accountNumber, // The number user entered
+            methodId: selectedMethod.id,
+            methodName: selectedMethod.name,
+            accountNumber: accountNumber,
             status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             userRef.update({ balance: 0 }).then(() => {
                 tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
                 showScreen('home-screen');
-                accountNumberInput.value = ''; // Clear input after submission
+                accountNumberInput.value = '';
             });
         }).catch(e => handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", e)).finally(() => {
             this.disabled = false;
@@ -603,5 +554,64 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Snapshot Error:", message);
             tg.showAlert("একটি অপ্রত্যাশিত সমস্যা হয়েছে।");
         }
+    }
+    
+    // --- Helper Functions ---
+    function getInitials(fullName) {
+        if (!fullName) return '';
+        const names = fullName.split(' ');
+        const firstInitial = names[0] ? names[0][0] : '';
+        const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
+        return `${firstInitial}${lastInitial}`.toUpperCase();
+    }
+    
+    function createSvgWheel() {
+        const wheelGroup = spinScreenElements.wheelGroup;
+        if (!wheelGroup) return;
+        wheelGroup.innerHTML = '';
+        const numSegments = 10;
+        const angle = 360 / numSegments;
+        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
+        const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
+        };
+        for (let i = 0; i < numSegments; i++) {
+            const startAngle = i * angle;
+            const endAngle = startAngle + angle;
+            const start = polarToCartesian(250, 250, 210, endAngle);
+            const end = polarToCartesian(250, 250, 210, startAngle);
+            const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 0 0 ${end.x} ${end.y} z`;
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pathData);
+            path.setAttribute("fill", colors[i]);
+            path.setAttribute("stroke", "#8d6e63");
+            path.setAttribute("stroke-width", "4");
+            wheelGroup.appendChild(path);
+        }
+        for (let i = 0; i < numSegments; i++) {
+            const sparkleAngle = (i * angle) + (angle / 2);
+            const sparklePos = polarToCartesian(250, 250, 180, sparkleAngle);
+            const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            sparkle.setAttribute("cx", sparklePos.x);
+            sparkle.setAttribute("cy", sparklePos.y);
+            sparkle.setAttribute("r", "5");
+            sparkle.setAttribute("fill", "white");
+            sparkle.setAttribute("filter", "url(#glow)");
+            wheelGroup.appendChild(sparkle);
+        }
+    }
+    
+    function handleReferralBonus(referrerId) {
+        const referrerRef = db.collection('users').doc(referrerId);
+        db.runTransaction((transaction) => {
+            return transaction.get(referrerRef).then((doc) => {
+                if (doc.exists) {
+                    transaction.update(referrerRef, {
+                        balance: firebase.firestore.FieldValue.increment(appConfig.referralBonus || 0)
+                    });
+                }
+            });
+        }).catch(err => console.error("Referral bonus error:", err));
     }
 });
