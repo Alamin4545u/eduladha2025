@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const clickTarget = quizConfig.clickTarget;
         quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
         quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
-        if (currentStep >= clickTarget) { userRef.update({'quizProgress.currentStep': 0}); handleError('একটি অপ্রত্যাশিত সমস্যা হয়েছে, অনুগ্রহ করে আবার শুরু করুন।'); showScreen('home-screen'); return; }
+        if (currentStep >= clickTarget) { userRef.update({'quizProgress.currentStep': 0}); handleError('আপনার আজকের লিমিট শেষ অনুগ্রহ করে আগামীকাল আবার ট্রাই করুন ।'); showScreen('home-screen'); return; }
         if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
         const quiz = quizQuestions[currentQuizIndex];
         quizScreenElements.questionText.textContent = quiz.question;
