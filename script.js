@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
     let paymentMethods = [];
     let telegramUser, userRef, userData = {};
-    let firebaseUid = null; // এটি এখন শুধুমাত্র অভ্যন্তরীণভাবে ব্যবহৃত হবে
+    let firebaseUid = null;
     let isSpinning = false;
     let currentRotation = 0;
     let quizQuestions = [];
@@ -53,22 +53,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 initializeApp();
             })
             .catch((error) => {
-                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে। অনুগ্রহ করে অ্যাপটি রিস্টার্ট করুন।");
+                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে।", error);
             });
     } else {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
     }
 
     function initializeApp() {
-        // ### শুরু: সমস্যার মূল সমাধান ###
-        // ব্যবহারকারীকে শনাক্ত করার জন্য নির্ভরযোগ্য টেলিগ্রাম আইডি আবার ব্যবহার করা হচ্ছে।
         userRef = db.collection('users').doc(telegramUser.id.toString());
-        // ### শেষ: সমস্যার মূল সমাধান ###
-        
         fetchAdminSettings();
         fetchUserData();
         setupEventListeners();
-        createSvgWheel(); // স্পিন হুইল ডিজাইন আবার তৈরি হবে
+        createSvgWheel();
     }
 
     function fetchUserData() {
@@ -79,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 const referrerId = tg.initDataUnsafe.start_param;
                 const newUser = {
-                    firebaseUid: firebaseUid, // Firebase UID এখনও সেভ করা হচ্ছে
+                    firebaseUid: firebaseUid,
                     telegramId: telegramUser.id.toString(),
                     username: telegramUser.username || '',
                     fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
@@ -114,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
             if (quizConfigDoc.exists) {
                 quizConfig = quizConfigDoc.data();
-                quizConfig.clickTarget = quizConfig.clickTarget || 3; 
+                quizConfig.clickTarget = quizConfig.clickTarget || 3;
             }
             if (paymentMethodsDoc.exists) {
                 paymentMethods = paymentMethodsDoc.data().methods.filter(method => method.enabled);
@@ -155,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selectLabel.textContent = 'পেমেন্ট পদ্ধতি নির্বাচন করুন:';
         container.appendChild(selectLabel);
         const select = document.createElement('select');
+        select.id = "paymentMethodSelect";
         paymentMethods.forEach(method => {
             const option = document.createElement('option');
             option.value = method.id;
@@ -163,9 +160,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         container.appendChild(select);
         const inputLabel = document.createElement('label');
+        inputLabel.id = "accountNumberLabel";
         container.appendChild(inputLabel);
         const input = document.createElement('input');
         input.type = 'text';
+        input.id = "accountNumberInput";
         container.appendChild(input);
 
         const updateInputForMethod = () => {
@@ -253,17 +252,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!doc.exists) throw new Error("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
             const freshUserData = doc.data();
             const today = new Date().toISOString().slice(0, 10);
-            let currentQuizProgress = freshUserData.quizProgress || { date: today, completedToday: 0, currentStep: 0 };
+            let currentQuizProgress = freshUserData.quizProgress || {};
             if (currentQuizProgress.date !== today) {
                 currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
+                await userRef.update({ quizProgress: currentQuizProgress });
             }
             if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
                 tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
                 return;
             }
-            currentQuizProgress.currentStep = 0;
             userData.quizProgress = currentQuizProgress;
-            await userRef.update({ quizProgress: currentQuizProgress });
             showScreen('quiz-screen');
             quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
             quizScreenElements.optionsContainer.innerHTML = '';
@@ -286,13 +284,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const clickTarget = quizConfig.clickTarget;
         quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
         quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
-
+        
         if (currentStep >= clickTarget) {
             showScreen('home-screen');
             return;
         }
-
-        currentQuizIndex = Math.floor(Math.random() * quizQuestions.length);
+        
+        if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
         const quiz = quizQuestions[currentQuizIndex];
         quizScreenElements.questionText.textContent = quiz.question;
         quizScreenElements.optionsContainer.innerHTML = '';
@@ -302,10 +300,10 @@ document.addEventListener('DOMContentLoaded', function() {
             optionDiv.textContent = optionText;
             quizScreenElements.optionsContainer.appendChild(optionDiv);
         });
-
+        
         selectedQuizOption = null;
         quizScreenElements.nextBtn.disabled = true;
-
+        
         if (currentStep === clickTarget - 1) {
             quizScreenElements.instruction.textContent = 'এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।';
             quizScreenElements.nextBtn.textContent = 'Claim Reward';
@@ -321,12 +319,12 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.showAlert('ভুল উত্তর! অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন।');
             return;
         }
-
+        
         quizScreenElements.nextBtn.disabled = true;
         const currentStep = userData.quizProgress?.currentStep || 0;
         const isClickTask = currentStep === quizConfig.clickTarget - 1;
         tg.HapticFeedback.impactOccurred('light');
-
+        
         window.showGiga().then(() => {
             if (isClickTask) {
                 adClicked = false;
@@ -337,13 +335,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 document.addEventListener('visibilitychange', handleVisibilityChange);
-
+                
                 tg.showPopup({
                     title: 'গুরুত্বপূর্ণ নির্দেশনা',
-                    message: 'পুরস্কার পেতে, বিজ্ঞাপনে ক্লিক করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
+                    message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
                     buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
                 });
-
+                
                 setTimeout(() => {
                     document.removeEventListener('visibilitychange', handleVisibilityChange);
                     if (adClicked) {
@@ -364,7 +362,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 3000);
             } else {
                 tg.HapticFeedback.notificationOccurred('success');
-                userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) });
+                userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
+                .then(() => {
+                    currentQuizIndex++;
+                    displayCurrentQuiz();
+                });
             }
         }).catch(e => {
             handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
@@ -457,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         this.disabled = true;
         db.collection('withdrawals').add({
-            userId: telegramUser.id.toString(), // এখানেও টেলিগ্রাম আইডি ব্যবহার করা নিরাপদ
+            userId: telegramUser.id.toString(),
             username: telegramUser.username || '',
             amount: userData.balance,
             methodId: selectedMethod.id,
