@@ -19,10 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const MINIMUM_WITHDRAW_AMOUNT = 10;
     let appConfig = { dailyReward: 1, referralBonus: 5 };
     let spinConfig = { dailyLimit: 5, rewardAmount: 1 };
-    let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 }; // লক্ষ্য করুন, আমি এটাকে ৩ করে দিয়েছি আপনার ভিডিও অনুযায়ী
+    let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
     let paymentMethods = [];
     let telegramUser, userRef, userData = {};
-    let firebaseUid = null;
+    let firebaseUid = null; // এটি এখন শুধুমাত্র অভ্যন্তরীণভাবে ব্যবহৃত হবে
     let isSpinning = false;
     let currentRotation = 0;
     let quizQuestions = [];
@@ -53,18 +53,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 initializeApp();
             })
             .catch((error) => {
-                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে।", error);
+                handleError("ব্যবহারকারী যাচাইকরণে সমস্যা হয়েছে। অনুগ্রহ করে অ্যাপটি রিস্টার্ট করুন।");
             });
     } else {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
     }
 
     function initializeApp() {
-        userRef = db.collection('users').doc(firebaseUid);
+        // ### শুরু: সমস্যার মূল সমাধান ###
+        // ব্যবহারকারীকে শনাক্ত করার জন্য নির্ভরযোগ্য টেলিগ্রাম আইডি আবার ব্যবহার করা হচ্ছে।
+        userRef = db.collection('users').doc(telegramUser.id.toString());
+        // ### শেষ: সমস্যার মূল সমাধান ###
+        
         fetchAdminSettings();
         fetchUserData();
         setupEventListeners();
-        createSvgWheel();
+        createSvgWheel(); // স্পিন হুইল ডিজাইন আবার তৈরি হবে
     }
 
     function fetchUserData() {
@@ -75,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 const referrerId = tg.initDataUnsafe.start_param;
                 const newUser = {
-                    firebaseUid: firebaseUid,
+                    firebaseUid: firebaseUid, // Firebase UID এখনও সেভ করা হচ্ছে
                     telegramId: telegramUser.id.toString(),
                     username: telegramUser.username || '',
                     fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
@@ -97,7 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchAdminSettings() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         try {
             const settingsPromises = [
                 db.collection('settings').doc('appConfig').get(),
@@ -111,20 +114,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (spinConfigDoc.exists) spinConfig = spinConfigDoc.data();
             if (quizConfigDoc.exists) {
                 quizConfig = quizConfigDoc.data();
-                quizConfig.clickTarget = quizConfig.clickTarget || 3; // একটি সেফগার্ড
+                quizConfig.clickTarget = quizConfig.clickTarget || 3; 
             }
             if (paymentMethodsDoc.exists) {
                 paymentMethods = paymentMethodsDoc.data().methods.filter(method => method.enabled);
             }
             updateWalletUI();
         } catch (error) {
-            console.error("Error fetching settings:", error);
             handleError("অ্যাপ সেটিংস লোড করা যায়নি।", error);
         }
     }
 
     function updateUI() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         const balance = userData.balance || 0;
         const fullName = userData.fullName || telegramUser.first_name;
         const username = userData.username || telegramUser.id;
@@ -143,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateWalletUI() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         const container = walletElements.paymentContainer;
         container.innerHTML = '';
         if (paymentMethods.length === 0) {
@@ -152,12 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const selectLabel = document.createElement('label');
-        selectLabel.setAttribute('for', 'paymentMethodSelect');
         selectLabel.textContent = 'পেমেন্ট পদ্ধতি নির্বাচন করুন:';
         container.appendChild(selectLabel);
-
         const select = document.createElement('select');
-        select.id = 'paymentMethodSelect';
         paymentMethods.forEach(method => {
             const option = document.createElement('option');
             option.value = method.id;
@@ -165,33 +162,25 @@ document.addEventListener('DOMContentLoaded', function() {
             select.appendChild(option);
         });
         container.appendChild(select);
-
         const inputLabel = document.createElement('label');
-        inputLabel.setAttribute('for', 'accountNumberInput');
-        inputLabel.id = 'accountNumberLabel';
         container.appendChild(inputLabel);
-
         const input = document.createElement('input');
         input.type = 'text';
-        input.id = 'accountNumberInput';
         container.appendChild(input);
 
         const updateInputForMethod = () => {
-            const selectedMethodId = select.value;
-            const selectedMethod = paymentMethods.find(m => m.id === selectedMethodId);
+            const selectedMethod = paymentMethods.find(m => m.id === select.value);
             if (selectedMethod) {
                 inputLabel.textContent = `আপনার ${selectedMethod.name} নম্বর দিন:`;
                 input.placeholder = selectedMethod.placeholder || '';
                 input.inputMode = selectedMethod.inputMode || 'text';
             }
         };
-
         select.addEventListener('change', updateInputForMethod);
         updateInputForMethod();
     }
 
     function setupEventListeners() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         navButtons.forEach(btn => btn.addEventListener('click', (e) => { const screenId = e.currentTarget.dataset.screen; showScreen(screenId); if (screenId === 'task-screen') { loadAndDisplayTasks(); } }));
         homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
         homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
@@ -207,14 +196,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showScreen(screenId) {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         screens.forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
     }
 
     async function loadAndDisplayTasks() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
         try {
             const taskSnapshot = await db.collection('tasks').where('isActive', '==', true).orderBy('createdAt', 'desc').get();
@@ -235,14 +222,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskListContainer.appendChild(taskElement);
             });
         } catch (error) {
-            console.error("টাস্ক লোড করার সময় Firestore ত্রুটি:", error);
             handleError('টাস্ক লোড করতে সমস্যা হয়েছে। সম্ভবত ডেটাবেস ইনডেক্স তৈরি করা হয়নি।', error);
-            taskListContainer.innerHTML = '<p>টাস্ক লোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।</p>';
         }
     }
 
     function handleTaskClick(e) {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         const taskItem = e.target.closest('.task-item');
         if (!taskItem || taskItem.classList.contains('completed')) {
             if (taskItem) tg.showAlert('আপনি এই টাস্কটি ইতোমধ্যে সম্পন্ন করেছেন।');
@@ -262,82 +246,53 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e));
     }
-    
-    // ### শুরু: কুইজের সমস্ত বাগ সমাধানের জন্য নতুন ফাংশন ###
+
     async function startQuiz() {
         try {
-            // Firestore থেকে লেটেস্ট ডেটা আনা হচ্ছে
             const doc = await userRef.get();
-            if (!doc.exists) {
-                handleError("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
-                return;
-            }
-            
+            if (!doc.exists) throw new Error("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
             const freshUserData = doc.data();
             const today = new Date().toISOString().slice(0, 10);
-            
             let currentQuizProgress = freshUserData.quizProgress || { date: today, completedToday: 0, currentStep: 0 };
-    
-            // দিন পরিবর্তন হলে কুইজের অগ্রগতি রিসেট করা
             if (currentQuizProgress.date !== today) {
                 currentQuizProgress = { date: today, completedToday: 0, currentStep: 0 };
             }
-    
-            // ব্যবহারকারী আজকের দৈনিক সীমা পূরণ করেছে কিনা তা পরীক্ষা করা
             if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
                 tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
                 return;
             }
-    
-            // প্রতিবার কুইজ শুরু করার সময় ধাপ ০ থেকে শুরু করা হবে
             currentQuizProgress.currentStep = 0;
-            
-            // লোকাল এবং Firestore উভয় জায়গায় ডেটা আপডেট করা
             userData.quizProgress = currentQuizProgress;
             await userRef.update({ quizProgress: currentQuizProgress });
-            
             showScreen('quiz-screen');
             quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
             quizScreenElements.optionsContainer.innerHTML = '';
-            
             const snapshot = await db.collection('quizzes').get();
             quizQuestions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            
-            if (quizQuestions.length === 0) {
-                handleError('কোনো কুইজ পাওয়া যায়নি।');
-                showScreen('home-screen');
-                return;
-            }
-            
+            if (quizQuestions.length === 0) throw new Error('কোনো কুইজ পাওয়া যায়নি।');
             quizQuestions.sort(() => 0.5 - Math.random());
             currentQuizIndex = 0;
             displayCurrentQuiz();
-    
         } catch (error) {
-            handleError('কুইজ শুরু করতে একটি অপ্রত্যাশিত সমস্যা হয়েছে।', error);
+            handleError(error.message || 'কুইজ শুরু করতে একটি অপ্রত্যাশিত সমস্যা হয়েছে।', error);
             showScreen('home-screen');
         }
     }
 
     function displayCurrentQuiz() {
-        const completedToday = userData.quizProgress?.completedToday || 0;
+        const { completedToday = 0, currentStep = 0 } = userData.quizProgress || {};
         const remaining = quizConfig.dailyLimit - completedToday;
         quizScreenElements.progressText.textContent = `দৈনিক কুইজ সেশন বাকি আছে: ${remaining}`;
-
-        const currentStep = userData.quizProgress?.currentStep || 0;
         const clickTarget = quizConfig.clickTarget;
         quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
         quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
 
-        // অপ্রত্যাশিত ত্রুটি এড়ানোর জন্য এই চেকটি এখন আরও নিরাপদ
         if (currentStep >= clickTarget) {
-            console.error("Error: currentStep is greater or equal to clickTarget.", {currentStep, clickTarget});
-            // এই ক্ষেত্রে ব্যবহারকারীকে কোনো বার্তা না দেখিয়ে শুধু হোম স্ক্রিনে পাঠানো হবে
             showScreen('home-screen');
             return;
         }
 
-        if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
+        currentQuizIndex = Math.floor(Math.random() * quizQuestions.length);
         const quiz = quizQuestions[currentQuizIndex];
         quizScreenElements.questionText.textContent = quiz.question;
         quizScreenElements.optionsContainer.innerHTML = '';
@@ -351,7 +306,6 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedQuizOption = null;
         quizScreenElements.nextBtn.disabled = true;
 
-        // শেষ ধাপের জন্য বাটন এবং নির্দেশনা পরিবর্তন করা
         if (currentStep === clickTarget - 1) {
             quizScreenElements.instruction.textContent = 'এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।';
             quizScreenElements.nextBtn.textContent = 'Claim Reward';
@@ -363,9 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleNextQuiz() {
         if (!selectedQuizOption) return;
-
-        const isCorrect = selectedQuizOption.textContent === quizQuestions[currentQuizIndex].correctAnswer;
-        if (!isCorrect) {
+        if (selectedQuizOption.textContent !== quizQuestions[currentQuizIndex].correctAnswer) {
             tg.showAlert('ভুল উত্তর! অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন।');
             return;
         }
@@ -375,27 +327,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const isClickTask = currentStep === quizConfig.clickTarget - 1;
         tg.HapticFeedback.impactOccurred('light');
 
-        if (isClickTask) {
-            adClicked = false; 
+        window.showGiga().then(() => {
+            if (isClickTask) {
+                adClicked = false;
+                const handleVisibilityChange = () => {
+                    if (document.visibilityState === 'hidden') {
+                        adClicked = true;
+                        document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    }
+                };
+                document.addEventListener('visibilitychange', handleVisibilityChange);
 
-            const handleVisibilityChange = () => {
-                if (document.visibilityState === 'hidden') {
-                    adClicked = true;
-                    document.removeEventListener('visibilitychange', handleVisibilityChange);
-                }
-            };
-            document.addEventListener('visibilitychange', handleVisibilityChange);
+                tg.showPopup({
+                    title: 'গুরুত্বপূর্ণ নির্দেশনা',
+                    message: 'পুরস্কার পেতে, বিজ্ঞাপনে ক্লিক করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
+                    buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
+                });
 
-            tg.showPopup({
-                title: 'গুরুত্বপূর্ণ নির্দেশনা',
-                message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন এবং কমপক্ষে ৩০ সেকেন্ড অপেক্ষা করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
-                buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
-            });
-
-            window.showGiga().then(() => {
                 setTimeout(() => {
                     document.removeEventListener('visibilitychange', handleVisibilityChange);
-
                     if (adClicked) {
                         tg.HapticFeedback.notificationOccurred('success');
                         userRef.update({
@@ -408,33 +358,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     } else {
                         tg.HapticFeedback.notificationOccurred('error');
-                        tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল। আপনি ক্লিক করেননি।");
+                        tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল।");
                         quizScreenElements.nextBtn.disabled = false;
                     }
-                }, 3000); 
-
-            }).catch(e => {
-                document.removeEventListener('visibilitychange', handleVisibilityChange);
-                handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-                quizScreenElements.nextBtn.disabled = false;
-            });
-        } else {
-            window.showGiga().then(() => {
+                }, 3000);
+            } else {
                 tg.HapticFeedback.notificationOccurred('success');
-                userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) })
-                    .then(() => {
-                        currentQuizIndex++;
-                        // onSnapshot স্বয়ংক্রিয়ভাবে UI আপডেট করবে, তাই এখানে displayCurrentQuiz কল করার প্রয়োজন নেই
-                    });
-            }).catch(e => {
-                handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-                quizScreenElements.nextBtn.disabled = false;
-            });
-        }
+                userRef.update({ 'quizProgress.currentStep': firebase.firestore.FieldValue.increment(1) });
+            }
+        }).catch(e => {
+            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
+            quizScreenElements.nextBtn.disabled = false;
+        });
     }
-    // ### শেষ: কুইজের সমস্ত বাগ সমাধানের জন্য নতুন ফাংশন ###
-    
-    // ... বাকি সব ফাংশন অপরিবর্তিত ...
 
     function handleSpin() {
         if (isSpinning) return;
@@ -505,8 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
             handleError("পেমেন্ট ফর্ম সঠিকভাবে লোড হয়নি।");
             return;
         }
-        const selectedMethodId = methodSelect.value;
-        const selectedMethod = paymentMethods.find(m => m.id === selectedMethodId);
+        const selectedMethod = paymentMethods.find(m => m.id === methodSelect.value);
         const accountNumber = accountNumberInput.value.trim();
         if (!selectedMethod) {
             tg.showAlert("অনুগ্রহ করে একটি বৈধ পেমেন্ট পদ্ধতি নির্বাচন করুন।");
@@ -521,12 +456,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         this.disabled = true;
-        const amountToWithdraw = userData.balance;
         db.collection('withdrawals').add({
-            userId: firebaseUid,
-            telegramId: telegramUser.id.toString(),
+            userId: telegramUser.id.toString(), // এখানেও টেলিগ্রাম আইডি ব্যবহার করা নিরাপদ
             username: telegramUser.username || '',
-            amount: amountToWithdraw,
+            amount: userData.balance,
             methodId: selectedMethod.id,
             methodName: selectedMethod.name,
             accountNumber: accountNumber,
@@ -557,13 +490,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function getInitials(fullName) {
         if (!fullName) return '';
         const names = fullName.split(' ');
-        const firstInitial = names[0] ? names[0][0] : '';
-        const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
-        return `${firstInitial}${lastInitial}`.toUpperCase();
+        return `${names[0]?.[0] || ''}${names.length > 1 ? names[names.length - 1][0] : ''}`.toUpperCase();
     }
 
     function createSvgWheel() {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         const wheelGroup = spinScreenElements.wheelGroup;
         if (!wheelGroup) return;
         wheelGroup.innerHTML = '';
@@ -601,7 +531,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleReferralBonus(referrerId) {
-        // ... এই ফাংশনটি অপরিবর্তিত ...
         const referrerRef = db.collection('users').doc(referrerId);
         db.runTransaction((transaction) => {
             return transaction.get(referrerRef).then((doc) => {
