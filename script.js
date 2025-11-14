@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
     const MINIMUM_WITHDRAW_AMOUNT = 10;
-    let appConfig = { dailyReward: 1, referralBonus: 5, affiliateCommissionRate: 0.1 }; // New: 10% commission on affiliates' earnings
+    let appConfig = { dailyReward: 1, dailyCheckinLimit: 1, referralBonus: 5, affiliateCommissionRate: 0.1 }; // Updated: Added dailyCheckinLimit
     let spinConfig = { dailyLimit: 5, rewards: [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
     let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
     let paymentMethods = [];
@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
                     balance: 0,
                     lastCheckin: null,
+                    checkinsToday: { date: today, count: 0 }, // Updated: Added for daily checkin limit tracking
                     spinsToday: { date: today, count: 0 },
                     completedTasks: [],
                     quizProgress: { date: today, completedToday: 0, currentStep: 0 },
@@ -117,6 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = appConfigDoc.data();
                 appConfig = { 
                     dailyReward: data.dailyReward || 1, 
+                    dailyCheckinLimit: data.dailyCheckinLimit || 1, // Updated: Fetch dailyCheckinLimit from admin
                     referralBonus: data.referralBonus || 5,
                     affiliateCommissionRate: data.affiliateCommissionRate || 0.1 // New: Fetch from admin
                 };
@@ -460,15 +462,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleDailyCheckin() {
         const today = new Date().toISOString().slice(0, 10);
-        if (userData.lastCheckin === today) {
-            tg.showAlert("আপনি আজকের বোনাস ইতোমধ্যে সংগ্রহ করেছেন।");
+        const checkinsTodayCount = userData.checkinsToday?.count || 0;
+        if (userData.checkinsToday?.date !== today) {
+            userData.checkinsToday = { date: today, count: 0 };
+        }
+        if (checkinsTodayCount >= appConfig.dailyCheckinLimit) {
+            tg.showAlert("আপনি আজকের জন্য আপনার সব Daily Check সম্পন্ন করেছেন।");
             return;
         }
         this.disabled = true;
         tg.HapticFeedback.impactOccurred('light');
         window.showGiga().then(() => {
             tg.HapticFeedback.notificationOccurred('success');
-            awardEarnings(appConfig.dailyReward, { lastCheckin: today }).then(() => { // Updated: Use awardEarnings
+            awardEarnings(appConfig.dailyReward, { // Updated: Use awardEarnings
+                'checkinsToday.date': today,
+                'checkinsToday.count': firebase.firestore.FieldValue.increment(1),
+                lastCheckin: today
+            }).then(() => {
                 tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
             });
         }).catch(e => handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e)).finally(() => {
