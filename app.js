@@ -1,5 +1,5 @@
 const SUPABASE_URL = 'https://wcmgdhyizhykqblndnhx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjbWdkaHlpemh5a3FibG5kbmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzM0MjAsImV4cCI6MjA3ODgwOTQyMH0.XuBmH3m0IMgdKen-By42CYlMMC9hhiijr_kDRqWJrp4wOTQyMH0.XuBmH3m0IMgdKen-By42CYlMMC9hhiijr_kDRqWJrp4';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjbWdkaHlpemh5a3FibG5kbmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzM0MjAsImV4cCI6MjA3ODgwOTQyMH0.XuBmH3m0IMgdKen-By42CYlMMC9hhiijr_kDRqWJrp4';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const tg = window.Telegram.WebApp;
@@ -36,13 +36,17 @@ async function saveUserData(userData) {
             });
 
         if (error) {
-            statusElement.innerText = 'Error saving data.';
+            // আসল error মেসেজটি স্ক্রিনে দেখানোর জন্য কোড
+            statusElement.innerText = `Error: ${error.message}`;
+            statusElement.style.color = 'red';
             console.error('Error saving user data:', error);
         } else {
             statusElement.innerText = 'Data saved successfully!';
+            statusElement.style.color = 'green';
         }
     } catch (err) {
-        statusElement.innerText = 'An unexpected error occurred.';
+        statusElement.innerText = `Unexpected Error: ${err.message}`;
+        statusElement.style.color = 'red';
         console.error('An unexpected error occurred:', err);
     }
 }
