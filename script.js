@@ -5,11 +5,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
     const MINIMUM_WITHDRAW_AMOUNT = 10;
-    let appConfig = { dailyReward: 1, dailyCheckinLimit: 1, referralBonus: 5, affiliateCommissionRate: 0.1 };
-    let spinConfig = { dailyLimit: 5, rewards: [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
-    let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
+    let appConfig = { dailyReward: 1, dailyCheckinLimit:1, referralBonus:5, affiliateCommissionRate:0.1 };
+    let spinConfig = { dailyLimit:5, rewards:[0.5,1,2,0.5,1.5,1,0.5,2,1,1.5] };
+    let quizConfig = { dailyLimit:3, reward:2, clickTarget:3 };
     let paymentMethods = [];
-    let telegramUser, userData = {};
+    let telegramUser = tg.initDataUnsafe?.user;
+    let userData = {};
     let isSpinning = false;
     let currentRotation = 0;
     let quizQuestions = [];
@@ -20,23 +21,54 @@ document.addEventListener('DOMContentLoaded', async function () {
     // --- UI Elements ---
     const screens = document.querySelectorAll('.screen');
     const navButtons = document.querySelectorAll('.nav-btn');
-    const headerElements = { pic: document.getElementById('profilePic'), fullName: document.getElementById('headerFullName'), username: document.getElementById('headerUsername'), balance: document.getElementById('headerBalance') };
-    const homeButtons = { dailyCheckin: document.getElementById('dailyCheckinBtn'), spin: document.getElementById('spinWheelBtn'), quiz: document.getElementById('quizBtn') };
-    const spinScreenElements = { backBtn: document.getElementById('spinBackBtn'), triggerBtn: document.getElementById('spinTriggerBtn'), spinsLeft: document.getElementById('spinsLeft'), wheelGroup: document.getElementById('wheelGroup') };
-    const walletElements = { balance: document.getElementById('withdrawBalance'), submitBtn: document.getElementById('submitWithdrawBtn'), paymentContainer: document.getElementById('payment-method-container') };
-    const referElements = { linkInput: document.getElementById('referralLink'), shareBtn: document.getElementById('shareReferralBtn'), notice: document.getElementById('referral-notice'), count: document.getElementById('referral-count'), earnings: document.getElementById('referral-earnings') };
+    const headerElements = {
+        pic: document.getElementById('profilePic'),
+        fullName: document.getElementById('headerFullName'),
+        username: document.getElementById('headerUsername'),
+        balance: document.getElementById('headerBalance')
+    };
+    const homeButtons = {
+        dailyCheckin: document.getElementById('dailyCheckinBtn'),
+        spin: document.getElementById('spinWheelBtn'),
+        quiz: document.getElementById('quizBtn')
+    };
+    const spinScreenElements = {
+        backBtn: document.getElementById('spinBackBtn'),
+        triggerBtn: document.getElementById('spinTriggerBtn'),
+        spinsLeft: document.getElementById('spinsLeft'),
+        wheelGroup: document.getElementById('wheelGroup')
+    };
+    const walletElements = {
+        balance: document.getElementById('withdrawBalance'),
+        submitBtn: document.getElementById('submitWithdrawBtn'),
+        paymentContainer: document.getElementById('payment-method-container')
+    };
+    const referElements = {
+        linkInput: document.getElementById('referralLink'),
+        shareBtn: document.getElementById('shareReferralBtn'),
+        notice: document.getElementById('referral-notice'),
+        count: document.getElementById('referral-count'),
+        earnings: document.getElementById('referral-earnings')
+    };
     const taskListContainer = document.getElementById('task-list');
-    const quizScreenElements = { backBtn: document.getElementById('quizBackBtn'), progressText: document.getElementById('quiz-progress-text'), stepText: document.getElementById('quiz-step-text'), progressInner: document.getElementById('quiz-progress-inner'), instruction: document.getElementById('quiz-instruction'), questionText: document.getElementById('quiz-question-text'), optionsContainer: document.getElementById('quiz-options-container'), nextBtn: document.getElementById('next-quiz-btn') };
+    const quizScreenElements = {
+        backBtn: document.getElementById('quizBackBtn'),
+        progressText: document.getElementById('quiz-progress-text'),
+        stepText: document.getElementById('quiz-step-text'),
+        progressInner: document.getElementById('quiz-progress-inner'),
+        instruction: document.getElementById('quiz-instruction'),
+        questionText: document.getElementById('quiz-question-text'),
+        optionsContainer: document.getElementById('quiz-options-container'),
+        nextBtn: document.getElementById('next-quiz-btn')
+    };
 
     tg.ready();
     tg.expand();
 
-    if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+    if (!telegramUser) {
         document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
         return;
     }
-
-    telegramUser = tg.initDataUnsafe.user;
 
     // --- Init ---
     await fetchAdminSettings();
@@ -59,8 +91,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         let { data: user, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
 
-        if (!user) {
-            const affiliateCodeFromStart = tg.initDataUnsafe.start_param || null;
+        if (!user || error) {
+            const affiliateCodeFromStart = tg.initDataUnsafe.start_param;
+            const affiliateCode = await generateUniqueAffiliateCode(telegramUser.username || userId);
+
             const newUser = {
                 id: userId,
                 username: telegramUser.username || '',
@@ -73,15 +107,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 referred_by: null,
                 referrals: [],
                 referral_earnings: 0,
-                affiliate_code: await generateUniqueAffiliateCode(telegramUser.username || userId)
+                affiliate_code: affiliateCode
             };
 
             const { error: insertErr } = await supabase.from('users').insert(newUser);
-            if (insertErr) return handleError("ইউজার তৈরি করতে সমস্যা", insertErr);
+            if (insertErr) console.error("User insert error:", insertErr);
 
             userData = newUser;
 
-            if (affiliateCodeFromStart && affiliateCodeFromStart !== newUser.affiliate_code) {
+            if (affiliateCodeFromStart && affiliateCodeFromStart !== affiliateCode) {
                 await handleAffiliateSignup(affiliateCodeFromStart, userId);
             }
         } else {
@@ -91,7 +125,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function fetchAdminSettings() {
-        const { data } = await supabase.from('app_settings').select('key,value');
+        const { data, error } = await supabase.from('app_settings').select('key,value');
+        if (error) {
+            console.error("Settings load error:", error);
+            return;
+        }
         data.forEach(row => {
             if (row.key === 'appConfig') Object.assign(appConfig, row.value);
             if (row.key === 'spinConfig') spinConfig = row.value;
@@ -101,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         updateWalletUI();
     }
 
-    // --- Core Earnings + Affiliate ---
+    // --- Earnings + Affiliate ---
     async function awardEarnings(amount, additionalUpdates = {}) {
         if (amount <= 0) {
             await supabase.from('users').update(additionalUpdates).eq('id', telegramUser.id.toString());
@@ -112,20 +150,20 @@ document.addEventListener('DOMContentLoaded', async function () {
         const { data: user } = await supabase.from('users').select('balance,referred_by').eq('id', userId).single();
 
         await supabase.from('users').update({
-            balance: user.balance + amount,
+            balance: (user?.balance || 0) + amount,
             ...additionalUpdates
         }).eq('id', userId);
 
         let commission = amount * appConfig.affiliateCommissionRate;
-        let referrerId = user.referred_by;
+        let referrerId = user?.referred_by;
 
         while (referrerId && commission >= 0.01) {
             const { data: ref } = await supabase.from('users').select('balance,referral_earnings,referred_by').eq('id', referrerId).single();
             if (!ref) break;
 
             await supabase.from('users').update({
-                balance: ref.balance + commission,
-                referral_earnings: ref.referral_earnings + commission
+                balance: (ref.balance || 0) + commission,
+                referral_earnings: (ref.referral_earnings || 0) + commission
             }).eq('id', referrerId);
 
             commission *= appConfig.affiliateCommissionRate;
@@ -139,9 +177,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const bonus = appConfig.referralBonus || 0;
         await supabase.from('users').update({
-            balance: referrer.balance + bonus,
-            referral_earnings: referrer.referral_earnings + bonus,
-            referrals: [...referrer.referrals, newUserId]
+            balance: (referrer.balance || 0) + bonus,
+            referral_earnings: (referrer.referral_earnings || 0) + bonus,
+            referrals: [...(referrer.referrals || []), newUserId]
         }).eq('id', referrer.id);
 
         await supabase.from('users').update({ referred_by: referrer.id }).eq('id', newUserId);
@@ -151,13 +189,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         let code;
         do {
             code = (base || 'USER').slice(0, 8).toUpperCase() + Math.floor(Math.random() * 999).toString().padStart(3, '0');
-            const { data } = await supabase.from('users').select('id').eq('affiliate_code', code).limit(1);
+            const { data } = await supabase.from('users').select('id').eq('affiliate_code', code);
             if (!data || data.length === 0) break;
         } while (true);
         return code;
     }
 
-    // --- UI Functions ---
+    // --- UI Update ---
     function updateUI() {
         const balance = userData.balance || 0;
         const formattedBalance = `৳ ${balance.toFixed(2)}`;
@@ -227,11 +265,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         navButtons.forEach(b => b.classList.toggle('active', b.dataset.screen === id));
     }
 
-    function handleError(msg, err) {
-        console.error(err);
-        tg.showAlert(msg || "একটি সমস্যা হয়েছে");
-    }
-
     function getInitials(name) {
         if (!name) return '';
         const parts = name.split(' ');
@@ -262,13 +295,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         const taskItem = e.target.closest('.task-item');
         if (!taskItem || taskItem.classList.contains('completed')) return tg.showAlert('ইতোমধ্যে সম্পন্ন');
         const taskId = taskItem.dataset.taskId;
-        const reward = parseFloat(taskItem.dataset.reward);
+        const reward = parseFloat(taskItem.dataset.reward); // <-- এখানে Other ছিল, এটা ঠিক করা হয়েছে
         tg.HapticFeedback.impactOccurred('light');
         window.showGiga().then(async () => {
             await awardEarnings(reward, { completed_tasks: [...(userData.completed_tasks || []), taskId] });
             tg.showAlert(`অভিনন্দন! ৳${reward.toFixed(2)} পেয়েছেন`);
             taskItem.classList.add('completed');
-        }).catch(() => handleError("বিজ্ঞাপন সমস্যা"));
+        }).catch(() => tg.showAlert("বিজ্ঞাপন দেখাতে সমস্যা"));
     }
 
     // --- Quiz ---
@@ -277,6 +310,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         let progress = userData.quiz_progress || { date: today, completedToday: 0, currentStep: 0 };
         if (progress.date !== today) progress = { date: today, completedToday: 0, currentStep: 0 };
         if (progress.completedToday >= quizConfig.dailyLimit) return tg.showAlert("আজকের কুইজ শেষ");
+
         progress.currentStep = 0;
         await supabase.from('users').update({ quiz_progress: progress }).eq('id', telegramUser.id.toString());
         userData.quiz_progress = progress;
@@ -346,7 +380,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 currentQuizIndex++;
                 displayCurrentQuiz();
             }
-        });
+        }).catch(() => tg.showAlert("বিজ্ঞাপন সমস্যা"));
     }
 
     // --- Spin ---
@@ -385,7 +419,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             spinScreenElements.wheelGroup.style.transition = 'none';
             spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
             setTimeout(() => spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)', 50);
-        });
+        }).catch(() => tg.showAlert("বিজ্ঞাপন সমস্যা"));
     }
 
     // --- Daily Checkin ---
@@ -402,14 +436,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 last_checkin: today
             });
             tg.showAlert(`Daily Check বোনাস ৳${appConfig.dailyReward.toFixed(2)}`);
-        }).finally(() => this.disabled = false);
+        }).finally(() => this.disabled = false).catch(() => tg.showAlert("বিজ্ঞাপন সমস্যা"));
     }
 
     // --- Withdraw ---
     async function handleSubmitWithdraw() {
         const select = document.getElementById('paymentMethodSelect');
         const input = document.getElementById('accountNumberInput');
-        if (!select || !input) return handleError("ফর্ম লোড হয়নি");
+        if (!select || !input) return tg.showAlert("ফর্ম লোড হয়নি");
 
         const method = paymentMethods.find(m => m.id === select.value);
         const number = input.value.trim();
