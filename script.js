@@ -1,23 +1,6 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // --- Supabase Setup ---
-    const supabaseUrl = "https://fwikhcittcaadwziitdv.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aWtoY2l0dGNhYWR3emlpdGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzY0MjIsImV4cCI6MjA3ODcxMjQyMn0.wLBcy29HNFPZ5dRzJ11CaIjD_zQvBi3vNLE66HlI2es";
-    const { createClient } = supabase;
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
-    const sb = supabaseClient;
+document.addEventListener('DOMContentLoaded', async function () {
+    const supabase = window.supabase;
     const tg = window.Telegram.WebApp;
-
-    // --- GU-RU-TW-PO-OR-N-NO- ---
-    // এই ফাংশনটি আপনার index.html ফাইলে অবশ্যই থাকতে হবে।
-    // এটি ছাড়া কোনো টাস্ক, স্পিন বা চেক-ইন কাজ করবে না।
-    // window.showGiga = function() {
-    //     return new Promise((resolve, reject) => {
-    //         console.log("Ad function called");
-    //         setTimeout(() => {
-    //             resolve();
-    //         }, 1500);
-    //     });
-    // };
 
     // --- Constants & Global Variables ---
     const BOT_USERNAME = "Bkash_earn_free_TkBot";
@@ -26,8 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let spinConfig = { dailyLimit: 5, rewards: [0.5, 1, 2, 0.5, 1.5, 1, 0.5, 2, 1, 1.5] };
     let quizConfig = { dailyLimit: 3, reward: 2, clickTarget: 3 };
     let paymentMethods = [];
-    let telegramUser, userData = null; // Initially null to ensure it's loaded before use
-    let supabaseUid = null;
+    let telegramUser, userData = {};
     let isSpinning = false;
     let currentRotation = 0;
     let quizQuestions = [];
@@ -46,697 +28,439 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskListContainer = document.getElementById('task-list');
     const quizScreenElements = { backBtn: document.getElementById('quizBackBtn'), progressText: document.getElementById('quiz-progress-text'), stepText: document.getElementById('quiz-step-text'), progressInner: document.getElementById('quiz-progress-inner'), instruction: document.getElementById('quiz-instruction'), questionText: document.getElementById('quiz-question-text'), optionsContainer: document.getElementById('quiz-options-container'), nextBtn: document.getElementById('next-quiz-btn') };
 
-    // --- Main Logic ---
+    tg.ready();
+    tg.expand();
 
-    // [FIXED] মূল ফাংশনটিকে async করা হয়েছে যাতে ধাপগুলো সঠিকভাবে সম্পন্ন হয়।
-    async function main() {
-        try {
-            if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-                document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
-                return;
-            }
-            
-            tg.ready();
-            tg.expand();
-            telegramUser = tg.initDataUnsafe.user;
-
-            // Step 1: Supabase-এর সাথে সংযোগ স্থাপন। এটি অবশ্যই ডেটা লোড করার আগে হতে হবে।
-            const { data: authData, error: authError } = await sb.auth.signInAnonymously();
-            if (authError || !authData || !authData.user) {
-                // যদি সাইন-ইন ব্যর্থ হয়, তবে অ্যাপটি আর এগোবে না।
-                throw new Error("Supabase authentication failed.");
-            }
-            supabaseUid = authData.user.id;
-            
-            // Step 2: সফলভাবে সাইন-ইন করার পর অ্যাপ চালু করা।
-            await initializeApp();
-
-        } catch (error) {
-            // কোনো গুরুতর সমস্যা হলে ব্যবহারকারীকে জানানো হবে।
-            handleError("অ্যাপ চালু করার সময় একটি গুরুতর সমস্যা হয়েছে। অনুগ্রহ করে অ্যাপটি রিস্টার্ট করুন।", error, true);
-        }
+    if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+        document.body.innerHTML = "<h1>অনুগ্রহ করে টেলিগ্রাম অ্যাপ থেকে খুলুন।</h1>";
+        return;
     }
 
-    // [FIXED] অ্যাপ চালু করার ধাপগুলো এখানে সাজানো হয়েছে।
-    async function initializeApp() {
-        await fetchAdminSettings();
-        await fetchUserData();
-        
-        // userData সফলভাবে লোড হলেই বাকি কাজগুলো হবে।
-        if (userData) {
-            createSvgWheel();
-            setupEventListeners();
-            setupSubscription();
-            updateUI(); // প্রাথমিক UI আপডেট
-        } else {
-             throw new Error("User data could not be initialized.");
-        }
-    }
-    
-    // [FIXED] ব্যবহারকারীর ডেটা লোড এবং নতুন ব্যবহারকারী তৈরির প্রক্রিয়া উন্নত করা হয়েছে।
-    async function fetchUserData() {
+    telegramUser = tg.initDataUnsafe.user;
+
+    // --- Init ---
+    await fetchAdminSettings();
+    await setupUserAndRealtime();
+    setupEventListeners();
+    createSvgWheel();
+
+    // --- User + Realtime ---
+    async function setupUserAndRealtime() {
+        const userId = telegramUser.id.toString();
         const today = new Date().toISOString().slice(0, 10);
-        const userId = telegramUser.id.toString();
 
-        try {
-            let { data: user, error: fetchError } = await sb.from('users').select('*').eq('id', userId).single();
+        // Realtime
+        supabase.channel('user-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
+                userData = payload.new;
+                updateUI();
+            })
+            .subscribe();
 
-            // Case 1: ব্যবহারকারী নতুন হলে, একটি নতুন অ্যাকাউন্ট তৈরি করা হবে।
-            if (fetchError && fetchError.code === 'PGRST116') { // 'PGRST116' মানে Supabase-এ কোনো সারি পাওয়া যায়নি।
-                const referrerId = tg.initDataUnsafe.start_param;
-                const newUser = {
-                    id: userId,
-                    telegramId: userId,
-                    username: telegramUser.username || '',
-                    fullName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
-                    balance: 0,
-                    checkinsToday: { date: today, count: 0 },
-                    spinsToday: { date: today, count: 0 },
-                    completedTasks: [],
-                    quizProgress: { date: today, completedToday: 0, currentStep: 0 },
-                    referredBy: referrerId || null,
-                    referrals: [],
-                    referralEarnings: 0,
-                    affiliateCode: generateUniqueAffiliateCode(telegramUser.username || userId),
-                    createdAt: new Date().toISOString(),
-                    uid: supabaseUid
-                };
-                
-                const { data: createdUser, error: insertError } = await sb.from('users').insert(newUser).select().single();
-                if (insertError) throw insertError;
-                
-                userData = createdUser;
-                // নতুন ব্যবহারকারীর জন্য অ্যাফিলিয়েট প্রক্রিয়া চালানো।
-                if (referrerId && referrerId !== userData.affiliateCode) {
-                    await handleAffiliateSignup(referrerId, userData.id);
-                }
+        let { data: user, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
 
-            } else if (fetchError) {
-                // Case 2: অন্য কোনো ডাটাবেজ সমস্যা হলে।
-                throw fetchError;
+        if (!user) {
+            const affiliateCodeFromStart = tg.initDataUnsafe.start_param || null;
+            const newUser = {
+                id: userId,
+                username: telegramUser.username || '',
+                full_name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
+                balance: 0,
+                checkins_today: { date: today, count: 0 },
+                spins_today: { date: today, count: 0 },
+                completed_tasks: [],
+                quiz_progress: { date: today, completedToday: 0, currentStep: 0 },
+                referred_by: null,
+                referrals: [],
+                referral_earnings: 0,
+                affiliate_code: await generateUniqueAffiliateCode(telegramUser.username || userId)
+            };
 
-            } else {
-                // Case 3: ব্যবহারকারী আগে থেকেই থাকলে তার ডেটা ব্যবহার করা হবে।
-                userData = {
-                    ...user,
-                    checkinsToday: user.checkinsToday?.date === today ? user.checkinsToday : { date: today, count: 0 },
-                    spinsToday: user.spinsToday?.date === today ? user.spinsToday : { date: today, count: 0 },
-                    quizProgress: user.quizProgress?.date === today ? user.quizProgress : { date: today, completedToday: 0, currentStep: 0 },
-                    referrals: user.referrals ?? [],
-                    completedTasks: user.completedTasks ?? []
-                };
+            const { error: insertErr } = await supabase.from('users').insert(newUser);
+            if (insertErr) return handleError("ইউজার তৈরি করতে সমস্যা", insertErr);
+
+            userData = newUser;
+
+            if (affiliateCodeFromStart && affiliateCodeFromStart !== newUser.affiliate_code) {
+                await handleAffiliateSignup(affiliateCodeFromStart, userId);
             }
-
-        } catch (error) {
-            // ডেটা লোড করতে ব্যর্থ হলে অ্যাপটি আর এগোবে না।
-            handleError("ব্যবহারকারীর ডেটা লোড করতে ব্যর্থ হয়েছে। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।", error, true);
+        } else {
+            userData = user;
         }
-    }
-
-    function setupSubscription() {
-        const userId = telegramUser.id.toString();
-        try {
-            sb.channel('user-updates')
-              .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'users',
-                    filter: `id=eq.${userId}`
-                }, payload => {
-                    userData = { ...userData, ...payload.new };
-                    updateUI();
-                })
-              .subscribe((status, err) => {
-                    if (err) console.error("Subscription error:", err);
-                });
-        } catch (error) {
-            console.error("Subscription setup failed:", error);
-        }
+        updateUI();
     }
 
     async function fetchAdminSettings() {
-        try {
-            const { data: settings, error } = await sb.from('settings').select('*');
-            if (error) throw error;
+        const { data } = await supabase.from('app_settings').select('key,value');
+        data.forEach(row => {
+            if (row.key === 'appConfig') Object.assign(appConfig, row.value);
+            if (row.key === 'spinConfig') spinConfig = row.value;
+            if (row.key === 'quizConfig') Object.assign(quizConfig, row.value);
+            if (row.key === 'paymentMethods') paymentMethods = (row.value.methods || []).filter(m => m.enabled);
+        });
+        updateWalletUI();
+    }
 
-            const getSetting = (id, defaultConfig) => {
-                const doc = settings.find(s => s.id === id);
-                return doc ? { ...defaultConfig, ...(doc.config || {}) } : defaultConfig;
-            };
+    // --- Core Earnings + Affiliate ---
+    async function awardEarnings(amount, additionalUpdates = {}) {
+        if (amount <= 0) {
+            await supabase.from('users').update(additionalUpdates).eq('id', telegramUser.id.toString());
+            return;
+        }
 
-            appConfig = getSetting('appConfig', appConfig);
-            spinConfig = getSetting('spinConfig', spinConfig);
-            quizConfig = getSetting('quizConfig', { ...quizConfig, clickTarget: quizConfig.clickTarget || 3 });
+        const userId = telegramUser.id.toString();
+        const { data: user } = await supabase.from('users').select('balance,referred_by').eq('id', userId).single();
 
-            const paymentMethodsDoc = settings.find(s => s.id === 'paymentMethods');
-            if (paymentMethodsDoc && paymentMethodsDoc.config?.methods) {
-                paymentMethods = paymentMethodsDoc.config.methods.filter(method => method.enabled);
-            }
+        await supabase.from('users').update({
+            balance: user.balance + amount,
+            ...additionalUpdates
+        }).eq('id', userId);
 
-            updateWalletUI();
-        } catch (error) {
-            handleError("অ্যাপ সেটিংস লোড করা যায়নি।", error);
+        let commission = amount * appConfig.affiliateCommissionRate;
+        let referrerId = user.referred_by;
+
+        while (referrerId && commission >= 0.01) {
+            const { data: ref } = await supabase.from('users').select('balance,referral_earnings,referred_by').eq('id', referrerId).single();
+            if (!ref) break;
+
+            await supabase.from('users').update({
+                balance: ref.balance + commission,
+                referral_earnings: ref.referral_earnings + commission
+            }).eq('id', referrerId);
+
+            commission *= appConfig.affiliateCommissionRate;
+            referrerId = ref.referred_by;
         }
     }
 
+    async function handleAffiliateSignup(affiliateCode, newUserId) {
+        const { data: referrer } = await supabase.from('users').select('id,balance,referral_earnings,referrals').eq('affiliate_code', affiliateCode).single();
+        if (!referrer) return;
+
+        const bonus = appConfig.referralBonus || 0;
+        await supabase.from('users').update({
+            balance: referrer.balance + bonus,
+            referral_earnings: referrer.referral_earnings + bonus,
+            referrals: [...referrer.referrals, newUserId]
+        }).eq('id', referrer.id);
+
+        await supabase.from('users').update({ referred_by: referrer.id }).eq('id', newUserId);
+    }
+
+    async function generateUniqueAffiliateCode(base) {
+        let code;
+        do {
+            code = (base || 'USER').slice(0, 8).toUpperCase() + Math.floor(Math.random() * 999).toString().padStart(3, '0');
+            const { data } = await supabase.from('users').select('id').eq('affiliate_code', code).limit(1);
+            if (!data || data.length === 0) break;
+        } while (true);
+        return code;
+    }
+
+    // --- UI Functions ---
     function updateUI() {
-        if (!userData) return;
-
-        const balance = userData.balance ?? 0;
-        const fullName = userData.fullName || telegramUser.first_name || 'ব্যবহারকারী';
-        const username = userData.username || telegramUser.id;
+        const balance = userData.balance || 0;
         const formattedBalance = `৳ ${balance.toFixed(2)}`;
-
         headerElements.balance.innerText = formattedBalance;
-        headerElements.fullName.innerText = fullName;
-        headerElements.username.innerText = username ? `@${username}` : `#${telegramUser.id}`;
-        headerElements.pic.innerText = getInitials(fullName);
-
+        headerElements.fullName.innerText = userData.full_name || telegramUser.first_name;
+        headerElements.username.innerText = userData.username ? `@${userData.username}` : `#${telegramUser.id}`;
+        headerElements.pic.innerText = getInitials(userData.full_name || telegramUser.first_name);
         walletElements.balance.innerText = formattedBalance;
-        const canWithdraw = balance >= MINIMUM_WITHDRAW_AMOUNT;
-        walletElements.submitBtn.disabled = !canWithdraw;
-        walletElements.submitBtn.innerText = canWithdraw ? "উইথড্র সাবমিট করুন" : `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন`;
+        walletElements.submitBtn.disabled = balance < MINIMUM_WITHDRAW_AMOUNT;
+        walletElements.submitBtn.innerText = balance < MINIMUM_WITHDRAW_AMOUNT ? `ন্যূনতম ৳${MINIMUM_WITHDRAW_AMOUNT} প্রয়োজন` : "উইথড্র সাবমিট করুন";
 
-        referElements.notice.textContent = `প্রতি সফল রেফারে আপনি পাবেন ৳${(appConfig.referralBonus ?? 0).toFixed(2)}! অ্যাফিলিয়েট কমিশন: ${((appConfig.affiliateCommissionRate ?? 0) * 100).toFixed(0)}%`;
-        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${userData.affiliateCode || telegramUser.id}`;
-        
-        const today = new Date().toISOString().slice(0, 10);
-        const spinsTodayCount = userData.spinsToday?.date === today ? (userData.spinsToday?.count ?? 0) : 0;
-        const spinsLeftCount = spinConfig.dailyLimit - spinsTodayCount;
-        spinScreenElements.spinsLeft.innerText = spinsLeftCount > 0 ? spinsLeftCount : 0;
+        referElements.notice.textContent = `প্রতি রেফারে ৳${appConfig.referralBonus} + ${(appConfig.affiliateCommissionRate * 100).toFixed(0)}% কমিশন`;
+        referElements.linkInput.value = `https://t.me/${BOT_USERNAME}?start=${userData.affiliate_code || telegramUser.id}`;
+        referElements.count.textContent = userData.referrals?.length || 0;
+        referElements.earnings.textContent = `৳ ${(userData.referral_earnings || 0).toFixed(2)}`;
 
-        if (referElements.count) referElements.count.textContent = userData.referrals?.length ?? 0;
-        if (referElements.earnings) referElements.earnings.textContent = `৳ ${(userData.referralEarnings ?? 0).toFixed(2)}`;
-        
+        const spinsLeft = spinConfig.dailyLimit - (userData.spins_today?.count || 0);
+        spinScreenElements.spinsLeft.innerText = spinsLeft > 0 ? spinsLeft : 0;
+
         if (document.getElementById('quiz-screen').classList.contains('active')) displayCurrentQuiz();
     }
 
     function updateWalletUI() {
         const container = walletElements.paymentContainer;
-        container.innerHTML = '';
-        if (paymentMethods.length === 0) {
-            container.innerHTML = '<p>কোনো পেমেন্ট পদ্ধতি উপলব্ধ নেই।</p>';
-            return;
-        }
-
-        container.innerHTML = `
-            <label for="paymentMethodSelect">পেমেন্ট পদ্ধতি নির্বাচন করুন:</label>
-            <select id="paymentMethodSelect">
-                ${paymentMethods.map(method => `<option value="${method.id}">${method.name}</option>`).join('')}
-            </select>
-            <label for="accountNumberInput" id="accountNumberLabel"></label>
-            <input type="text" id="accountNumberInput">
-        `;
+        container.innerHTML = paymentMethods.length === 0
+            ? '<p>কোনো পেমেন্ট মেথড নেই</p>'
+            : `
+                <label for="paymentMethodSelect">পেমেন্ট মেথড:</label>
+                <select id="paymentMethodSelect">${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}</select>
+                <label id="accountNumberLabel">নম্বর দিন:</label>
+                <input type="text" id="accountNumberInput">
+            `;
 
         const select = document.getElementById('paymentMethodSelect');
-        const input = document.getElementById('accountNumberInput');
-        const label = document.getElementById('accountNumberLabel');
-
-        const updateInputForMethod = () => {
-            const selectedMethod = paymentMethods.find(m => m.id === select.value);
-            if (selectedMethod) {
-                label.textContent = `আপনার ${selectedMethod.name} নম্বর দিন:`;
-                input.placeholder = selectedMethod.placeholder || '';
-                input.inputMode = selectedMethod.inputMode || 'text';
-            }
-        };
-        select.addEventListener('change', updateInputForMethod);
-        updateInputForMethod();
+        if (select) {
+            select.addEventListener('change', () => {
+                const method = paymentMethods.find(m => m.id === select.value);
+                document.getElementById('accountNumberLabel').textContent = `আপনার ${method.name} নম্বর দিন:`;
+                document.getElementById('accountNumberInput').placeholder = method.placeholder || '';
+            });
+            select.dispatchEvent(new Event('change'));
+        }
     }
 
     function setupEventListeners() {
-        navButtons.forEach(btn => btn.addEventListener('click', (e) => {
+        navButtons.forEach(btn => btn.addEventListener('click', e => {
             const screenId = e.currentTarget.dataset.screen;
             showScreen(screenId);
             if (screenId === 'task-screen') loadAndDisplayTasks();
-            else if (screenId === 'refer-screen') updateUI();
         }));
-
-        homeButtons.dailyCheckin.addEventListener('click', () => handleDailyCheckin(homeButtons.dailyCheckin));
+        homeButtons.dailyCheckin.addEventListener('click', handleDailyCheckin);
         homeButtons.spin.addEventListener('click', () => showScreen('spin-screen'));
         homeButtons.quiz.addEventListener('click', startQuiz);
-
         spinScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
         quizScreenElements.backBtn.addEventListener('click', () => showScreen('home-screen'));
         spinScreenElements.triggerBtn.addEventListener('click', handleSpin);
-
-        walletElements.submitBtn.addEventListener('click', () => handleSubmitWithdraw(walletElements.submitBtn));
+        walletElements.submitBtn.addEventListener('click', handleSubmitWithdraw);
         referElements.shareBtn.addEventListener('click', handleShareReferral);
-
         taskListContainer.addEventListener('click', handleTaskClick);
         quizScreenElements.optionsContainer.addEventListener('click', handleOptionSelect);
         quizScreenElements.nextBtn.addEventListener('click', handleNextQuiz);
     }
 
-    function showScreen(screenId) {
+    function showScreen(id) {
         screens.forEach(s => s.classList.remove('active'));
-        const activeScreen = document.getElementById(screenId);
-        if (activeScreen) activeScreen.classList.add('active');
-        navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
+        document.getElementById(id).classList.add('active');
+        navButtons.forEach(b => b.classList.toggle('active', b.dataset.screen === id));
     }
 
+    function handleError(msg, err) {
+        console.error(err);
+        tg.showAlert(msg || "একটি সমস্যা হয়েছে");
+    }
+
+    function getInitials(name) {
+        if (!name) return '';
+        const parts = name.split(' ');
+        return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    }
+
+    // --- Tasks ---
     async function loadAndDisplayTasks() {
-        taskListContainer.innerHTML = '<p>টাস্ক লোড হচ্ছে...</p>';
-        try {
-            const { data: tasks, error } = await sb.from('tasks').select('*').eq('isActive', true).order('createdAt', { ascending: false });
-            if (error) throw error;
-            if (tasks.length === 0) {
-                taskListContainer.innerHTML = '<p>নতুন টাস্ক শীঘ্রই আসছে...</p>';
-                return;
-            }
-            taskListContainer.innerHTML = '';
-            const completedTasks = userData.completedTasks ?? [];
-            tasks.forEach(task => {
-                const isCompleted = completedTasks.includes(task.id);
-                const taskElement = document.createElement('div');
-                taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`;
-                taskElement.dataset.taskId = task.id;
-                taskElement.dataset.reward = task.reward;
-                taskElement.innerHTML = `
-                    <div class="task-item-header">
-                        <h3 class="task-title">${task.title}</h3>
-                        <span class="task-reward">৳ ${task.reward.toFixed(2)}</span>
-                    </div>
-                    <p class="task-description">${task.description}</p>`;
-                taskListContainer.appendChild(taskElement);
-            });
-        } catch (error) {
-            handleError('টাস্ক লোড করতে সমস্যা হয়েছে।', error);
+        taskListContainer.innerHTML = '<p>লোড হচ্ছে...</p>';
+        const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('created_at', { ascending: false });
+        if (!tasks || tasks.length === 0) {
+            taskListContainer.innerHTML = '<p>নতুন টাস্ক শীঘ্রই আসবে...</p>';
+            return;
         }
+        taskListContainer.innerHTML = '';
+        tasks.forEach(task => {
+            const isCompleted = userData.completed_tasks?.includes(task.id);
+            const el = document.createElement('div');
+            el.className = `task-item ${isCompleted ? 'completed' : ''}`;
+            el.dataset.taskId = task.id;
+            el.dataset.reward = task.reward;
+            el.innerHTML = `<div class="task-item-header"><h3 class="task-title">${task.title}</h3><span class="task-reward">৳ ${task.reward.toFixed(2)}</span></div><p class="task-description">${task.description}</p>`;
+            taskListContainer.appendChild(el);
+        });
     }
 
     async function handleTaskClick(e) {
         const taskItem = e.target.closest('.task-item');
-        if (!taskItem || taskItem.classList.contains('completed')) {
-            if (taskItem) tg.showAlert('আপনি এই টাস্কটি ইতোমধ্যে সম্পন্ন করেছেন।');
-            return;
-        }
-        
-        if (typeof window.showGiga !== 'function') {
-            handleError("বিজ্ঞাপন ফাংশন (showGiga) পাওয়া যায়নি।");
-            return;
-        }
-
-        const taskId = parseInt(taskItem.dataset.taskId, 10);
+        if (!taskItem || taskItem.classList.contains('completed')) return tg.showAlert('ইতোমধ্যে সম্পন্ন');
+        const taskId = taskItem.dataset.taskId;
         const reward = parseFloat(taskItem.dataset.reward);
         tg.HapticFeedback.impactOccurred('light');
-
-        try {
-            await window.showGiga();
-            tg.HapticFeedback.notificationOccurred('success');
-            const updatedCompletedTasks = [...(userData.completedTasks ?? []), taskId];
-            await awardEarnings(reward, { completedTasks: updatedCompletedTasks });
-            
-            tg.showAlert(`অভিনন্দন! টাস্ক সম্পন্ন করে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
+        window.showGiga().then(async () => {
+            await awardEarnings(reward, { completed_tasks: [...(userData.completed_tasks || []), taskId] });
+            tg.showAlert(`অভিনন্দন! ৳${reward.toFixed(2)} পেয়েছেন`);
             taskItem.classList.add('completed');
-        } catch (e) {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-        }
+        }).catch(() => handleError("বিজ্ঞাপন সমস্যা"));
     }
 
+    // --- Quiz ---
     async function startQuiz() {
-        try {
-            const { data: freshUserData, error } = await sb.from('users').select('quizProgress').eq('id', telegramUser.id.toString()).single();
-            if (error) throw new Error("ব্যবহারকারীর তথ্য পাওয়া যায়নি।");
+        const today = new Date().toISOString().slice(0, 10);
+        let progress = userData.quiz_progress || { date: today, completedToday: 0, currentStep: 0 };
+        if (progress.date !== today) progress = { date: today, completedToday: 0, currentStep: 0 };
+        if (progress.completedToday >= quizConfig.dailyLimit) return tg.showAlert("আজকের কুইজ শেষ");
+        progress.currentStep = 0;
+        await supabase.from('users').update({ quiz_progress: progress }).eq('id', telegramUser.id.toString());
+        userData.quiz_progress = progress;
 
-            const today = new Date().toISOString().slice(0, 10);
-            let currentQuizProgress = (freshUserData.quizProgress?.date === today)
-                ? freshUserData.quizProgress
-                : { date: today, completedToday: 0, currentStep: 0 };
-            
-            if (currentQuizProgress.completedToday >= quizConfig.dailyLimit) {
-                tg.showAlert(`আপনি আজকের জন্য আপনার সব কুইজ সম্পন্ন করেছেন।`);
-                return;
-            }
-
-            currentQuizProgress.currentStep = 0;
-            const { error: updateError } = await sb.from('users').update({ quizProgress: currentQuizProgress }).eq('id', telegramUser.id.toString());
-            if (updateError) throw updateError;
-
-            userData.quizProgress = currentQuizProgress;
-
-            showScreen('quiz-screen');
-            quizScreenElements.questionText.textContent = 'প্রশ্ন লোড হচ্ছে...';
-            quizScreenElements.optionsContainer.innerHTML = '';
-
-            const { data: quizzes, error: quizError } = await sb.from('quizzes').select('*');
-            if (quizError) throw quizError;
-            if (quizzes.length === 0) throw new Error('কোনো কুইজ পাওয়া যায়নি।');
-
-            quizQuestions = quizzes.sort(() => 0.5 - Math.random());
-            currentQuizIndex = 0;
-            displayCurrentQuiz();
-        } catch (error) {
-            handleError(error.message || 'কুইজ শুরু করতে একটি অপ্রত্যাশিত সমস্যা হয়েছে।', error);
-            showScreen('home-screen');
-        }
+        showScreen('quiz-screen');
+        const { data: quizzes } = await supabase.from('quizzes').select('*');
+        quizQuestions = quizzes.sort(() => 0.5 - Math.random());
+        currentQuizIndex = 0;
+        displayCurrentQuiz();
     }
 
     function displayCurrentQuiz() {
-        const { completedToday = 0, currentStep = 0 } = userData.quizProgress ?? {};
-        const remaining = quizConfig.dailyLimit - completedToday;
-        quizScreenElements.progressText.textContent = `দৈনিক কুইজ সেশন বাকি আছে: ${remaining}`;
-        
-        const clickTarget = quizConfig.clickTarget || 3;
-        quizScreenElements.stepText.textContent = `ধাপ: ${currentStep}/${clickTarget}`;
-        quizScreenElements.progressInner.style.width = `${(currentStep / clickTarget) * 100}%`;
+        const progress = userData.quiz_progress;
+        quizScreenElements.progressText.textContent = `বাকি: ${quizConfig.dailyLimit - progress.completedToday}`;
+        quizScreenElements.stepText.textContent = `ধাপ: ${progress.currentStep}/${quizConfig.clickTarget}`;
+        quizScreenElements.progressInner.style.width = `${(progress.currentStep / quizConfig.clickTarget) * 100}%`;
 
-        if (currentStep >= clickTarget) {
-            showScreen('home-screen');
-            return;
-        }
+        if (progress.currentStep >= quizConfig.clickTarget) return showScreen('home-screen');
 
-        if (currentQuizIndex >= quizQuestions.length) currentQuizIndex = 0;
         const quiz = quizQuestions[currentQuizIndex];
-        
-        if (!quiz) {
-            handleError("কুইজের প্রশ্ন লোড করা যায়নি।");
-            showScreen('home-screen');
-            return;
-        }
-
         quizScreenElements.questionText.textContent = quiz.question;
-        quizScreenElements.optionsContainer.innerHTML = '';
-        quiz.options.forEach(optionText => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'quiz-option';
-            optionDiv.textContent = optionText;
-            quizScreenElements.optionsContainer.appendChild(optionDiv);
-        });
-
+        quizScreenElements.optionsContainer.innerHTML = quiz.options.map(opt => `<div class="quiz-option">${opt}</div>`).join('');
         selectedQuizOption = null;
         quizScreenElements.nextBtn.disabled = true;
 
-        if (currentStep === clickTarget - 1) {
-            quizScreenElements.instruction.textContent = 'এটি শেষ ধাপ! পুরস্কার জিততে বিজ্ঞাপনে ক্লিক করুন।';
-            quizScreenElements.nextBtn.textContent = 'Claim Reward';
-        } else {
-            quizScreenElements.instruction.textContent = 'সঠিক উত্তর দিয়ে পরবর্তী ধাপে যান';
-            quizScreenElements.nextBtn.textContent = 'পরবর্তী কুইজ';
-        }
+        quizScreenElements.instruction.textContent = progress.currentStep === quizConfig.clickTarget - 1
+            ? 'শেষ ধাপ! বিজ্ঞাপনে ক্লিক করুন'
+            : 'সঠিক উত্তর দিন';
+        quizScreenElements.nextBtn.textContent = progress.currentStep === quizConfig.clickTarget - 1 ? 'Claim Reward' : 'পরবর্তী';
     }
 
     function handleOptionSelect(e) {
-        const option = e.target.closest('.quiz-option');
-        if (!option) return;
-        document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
-        option.classList.add('selected');
-        selectedQuizOption = option;
+        const opt = e.target.closest('.quiz-option');
+        if (!opt) return;
+        document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedQuizOption = opt;
         quizScreenElements.nextBtn.disabled = false;
     }
 
-    function handleNextQuiz() {
-        if (!selectedQuizOption) return;
-        if (selectedQuizOption.textContent !== quizQuestions[currentQuizIndex].correctAnswer) {
-            tg.showAlert('ভুল উত্তর! অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন।');
-            return;
-        }
-        
-        if (typeof window.showGiga !== 'function') {
-            handleError("বিজ্ঞাপন ফাংশন (showGiga) পাওয়া যায়নি।");
-            return;
+    async function handleNextQuiz() {
+        if (!selectedQuizOption || selectedQuizOption.textContent !== quizQuestions[currentQuizIndex].correct_answer) {
+            return tg.showAlert('ভুল উত্তর!');
         }
 
-        quizScreenElements.nextBtn.disabled = true;
-        const currentStep = userData.quizProgress?.currentStep ?? 0;
-        const clickTarget = quizConfig.clickTarget || 3;
-        const isClickTask = currentStep === clickTarget - 1;
-        tg.HapticFeedback.impactOccurred('light');
+        const step = userData.quiz_progress.currentStep;
+        const isLast = step === quizConfig.clickTarget - 1;
 
-        window.showGiga().then(() => {
-            if (isClickTask) {
+        window.showGiga().then(async () => {
+            if (isLast) {
                 adClicked = false;
-                const handleVisibilityChange = () => {
-                    if (document.visibilityState === 'hidden') {
-                        adClicked = true;
-                        document.removeEventListener('visibilitychange', handleVisibilityChange);
-                    }
-                };
-                document.addEventListener('visibilitychange', handleVisibilityChange);
-
-                tg.showPopup({
-                    title: 'গুরুত্বপূর্ণ নির্দেশনা',
-                    message: 'পুরস্কার পেতে, অনুগ্রহ করে পরবর্তী বিজ্ঞাপনে ক্লিক করুন। ক্লিক না করলে ব্যালেন্স যোগ হবে না।',
-                    buttons: [{ type: 'ok', text: 'ঠিক আছে' }]
-                });
-
+                document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') adClicked = true; }, { once: true });
                 setTimeout(async () => {
-                    document.removeEventListener('visibilitychange', handleVisibilityChange);
                     if (adClicked) {
-                        tg.HapticFeedback.notificationOccurred('success');
-                        const updatedProgress = { 
-                            ...userData.quizProgress, 
-                            completedToday: (userData.quizProgress.completedToday ?? 0) + 1, 
-                            currentStep: 0 
-                        };
-                        try {
-                            await awardEarnings(quizConfig.reward, { quizProgress: updatedProgress });
-                            tg.showAlert(`অভিনন্দন! কুইজ সম্পন্ন করে ৳ ${quizConfig.reward.toFixed(2)} পেয়েছেন।`);
-                            showScreen('home-screen');
-                        } catch (e) {
-                            handleError("পুরস্কার দিতে সমস্যা হয়েছে।", e);
-                            quizScreenElements.nextBtn.disabled = false;
-                        }
+                        await awardEarnings(quizConfig.reward, {
+                            'quiz_progress.completedToday': userData.quiz_progress.completedToday + 1,
+                            'quiz_progress.currentStep': 0
+                        });
+                        tg.showAlert(`কুইজ পুরস্কার ৳${quizConfig.reward}`);
+                        showScreen('home-screen');
                     } else {
-                        tg.HapticFeedback.notificationOccurred('error');
-                        tg.showAlert("পুরস্কার পেতে বিজ্ঞাপনে ক্লিক করা আবশ্যক ছিল।");
-                        quizScreenElements.nextBtn.disabled = false;
+                        tg.showAlert("বিজ্ঞাপনে ক্লিক করতে হবে");
                     }
                 }, 3000);
-
             } else {
-                tg.HapticFeedback.notificationOccurred('success');
-                const updatedProgress = { ...userData.quizProgress, currentStep: currentStep + 1 };
-                sb.from('users').update({ quizProgress: updatedProgress }).eq('id', telegramUser.id.toString())
-                  .then(({ error }) => {
-                    if (error) throw error;
-                    // userData will be updated by subscription, but we can update it locally too
-                    userData.quizProgress = updatedProgress;
-                    currentQuizIndex++;
-                    displayCurrentQuiz();
-                  })
-                  .catch(e => {
-                      handleError("পরবর্তী ধাপে যেতে সমস্যা হয়েছে।", e);
-                      quizScreenElements.nextBtn.disabled = false;
-                  });
+                await supabase.from('users').update({ 'quiz_progress.currentStep': step + 1 }).eq('id', telegramUser.id.toString());
+                currentQuizIndex++;
+                displayCurrentQuiz();
             }
-        }).catch(e => {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-            quizScreenElements.nextBtn.disabled = false;
         });
     }
 
+    // --- Spin ---
     function handleSpin() {
         if (isSpinning) return;
-
-        const today = new Date().toISOString().slice(0, 10);
-        const spinsTodayCount = userData.spinsToday?.date === today ? (userData.spinsToday?.count ?? 0) : 0;
-        const spinsLeftCount = spinConfig.dailyLimit - spinsTodayCount;
-
-        if (spinsLeftCount <= 0) {
-            tg.showAlert("আপনার আজকের জন্য আর কোনো স্পিন বাকি নেই।");
-            return;
-        }
-        
-        if (typeof window.showGiga !== 'function') {
-            handleError("বিজ্ঞাপন ফাংশন (showGiga) পাওয়া যায়নি।");
-            return;
-        }
+        const spinsLeft = spinConfig.dailyLimit - (userData.spins_today?.count || 0);
+        if (spinsLeft <= 0) return tg.showAlert("আজকের স্পিন শেষ");
 
         isSpinning = true;
         spinScreenElements.triggerBtn.disabled = true;
-        tg.HapticFeedback.impactOccurred('light');
 
-        window.showGiga().then(() => {
-            tg.HapticFeedback.notificationOccurred('success');
-            
-            const numSegments = spinConfig.rewards.length;
-            const targetSegment = Math.floor(Math.random() * numSegments);
-            const segmentAngle = 360 / numSegments;
-            const randomInSegment = (Math.random() * 0.8 + 0.1) * segmentAngle;
-            const targetRotation = (targetSegment * segmentAngle) + randomInSegment + (360 * 5);
+        const numSegments = spinConfig.rewards.length;
+        const targetSegment = Math.floor(Math.random() * numSegments);
+        const segmentAngle = 360 / numSegments;
+        const randomInSegment = Math.random() * segmentAngle;
+        const targetRotation = (targetSegment * segmentAngle) + randomInSegment + (360 * 5);
 
-            spinScreenElements.wheelGroup.style.transform = `rotate(${targetRotation}deg)`;
-            currentRotation = targetRotation % 360;
+        spinScreenElements.wheelGroup.style.transform = `rotate(${targetRotation}deg)`;
+        currentRotation = targetRotation % 360;
 
-            setTimeout(() => spinFinished(targetSegment, today, spinsTodayCount), 5000);
+        setTimeout(() => spinFinished(targetSegment), 5000);
+    }
 
-        }).catch(e => {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
+    async function spinFinished(segment) {
+        window.showGiga().then(async () => {
+            const reward = spinConfig.rewards[segment];
+            const today = new Date().toISOString().slice(0, 10);
+            await awardEarnings(reward, {
+                'spins_today.date': today,
+                'spins_today.count': (userData.spins_today?.count || 0) + 1
+            });
+            tg.showAlert(`স্পিন থেকে ৳${reward.toFixed(2)} পেয়েছেন`);
+        }).finally(() => {
             isSpinning = false;
             spinScreenElements.triggerBtn.disabled = false;
+            spinScreenElements.wheelGroup.style.transition = 'none';
+            spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
+            setTimeout(() => spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)', 50);
         });
     }
 
-    async function spinFinished(targetSegment, today, spinsTodayCount) {
-        try {
-            const reward = spinConfig.rewards[targetSegment];
-            await awardEarnings(reward, {
-                spinsToday: { date: today, count: spinsTodayCount + 1 }
-            });
-            tg.showAlert(`অভিনন্দন! স্পিন থেকে ৳ ${reward.toFixed(2)} পেয়েছেন।`);
-        } catch (e) {
-            handleError("স্পিনের পুরস্কার দিতে সমস্যা হয়েছে।", e);
-        } finally {
-            isSpinning = false;
-            spinScreenElements.triggerBtn.disabled = false;
-            
-            spinScreenElements.wheelGroup.style.transition = 'none';
-            spinScreenElements.wheelGroup.style.transform = `rotate(${currentRotation}deg)`;
-            setTimeout(() => {
-                spinScreenElements.wheelGroup.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
-            }, 50);
-        }
-    }
-
-    async function handleDailyCheckin(buttonElement) {
+    // --- Daily Checkin ---
+    async function handleDailyCheckin() {
         const today = new Date().toISOString().slice(0, 10);
-        const checkinsTodayCount = userData.checkinsToday?.date === today ? (userData.checkinsToday?.count ?? 0) : 0;
-        
-        if (checkinsTodayCount >= appConfig.dailyCheckinLimit) {
-            tg.showAlert("আপনি আজকের জন্য আপনার সব Daily Check সম্পন্ন করেছেন।");
-            return;
-        }
-        
-        if (typeof window.showGiga !== 'function') {
-            handleError("বিজ্ঞাপন ফাংশন (showGiga) পাওয়া যায়নি।");
-            return;
-        }
+        let count = userData.checkins_today?.date === today ? userData.checkins_today.count : 0;
+        if (count >= appConfig.dailyCheckinLimit) return tg.showAlert("আজকের চেকইন শেষ");
 
-        buttonElement.disabled = true;
-        tg.HapticFeedback.impactOccurred('light');
-
-        try {
-            await window.showGiga();
-            tg.HapticFeedback.notificationOccurred('success');
+        this.disabled = true;
+        window.showGiga().then(async () => {
             await awardEarnings(appConfig.dailyReward, {
-                checkinsToday: { date: today, count: checkinsTodayCount + 1 }
+                'checkins_today.date': today,
+                'checkins_today.count': count + 1,
+                last_checkin: today
             });
-            tg.showAlert(`অভিনন্দন! Daily Check বোনাস হিসেবে ৳ ${appConfig.dailyReward.toFixed(2)} পেয়েছেন।`);
-        } catch (e) {
-            handleError("বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।", e);
-        } finally {
-            buttonElement.disabled = false;
-        }
+            tg.showAlert(`Daily Check বোনাস ৳${appConfig.dailyReward.toFixed(2)}`);
+        }).finally(() => this.disabled = false);
     }
 
-    async function handleSubmitWithdraw(buttonElement) {
-        const methodSelect = document.getElementById('paymentMethodSelect');
-        const accountNumberInput = document.getElementById('accountNumberInput');
-        if (!methodSelect || !accountNumberInput) {
-            handleError("পেমেন্ট ফর্ম সঠিকভাবে লোড হয়নি।");
-            return;
-        }
+    // --- Withdraw ---
+    async function handleSubmitWithdraw() {
+        const select = document.getElementById('paymentMethodSelect');
+        const input = document.getElementById('accountNumberInput');
+        if (!select || !input) return handleError("ফর্ম লোড হয়নি");
 
-        const selectedMethod = paymentMethods.find(m => m.id === methodSelect.value);
-        const accountNumber = accountNumberInput.value.trim();
+        const method = paymentMethods.find(m => m.id === select.value);
+        const number = input.value.trim();
+        if (userData.balance < MINIMUM_WITHDRAW_AMOUNT) return tg.showAlert("পর্যাপ্ত ব্যালেন্স নেই");
 
-        if (!selectedMethod) {
-            tg.showAlert("অনুগ্রহ করে একটি বৈধ পেমেন্ট পদ্ধতি নির্বাচন করুন।");
-            return;
-        }
-        if (accountNumber.length < (selectedMethod.minLength || 1)) {
-            tg.showAlert(`অনুগ্রহ করে একটি সঠিক ${selectedMethod.name} নম্বর দিন।`);
-            return;
-        }
-        if ((userData.balance ?? 0) < MINIMUM_WITHDRAW_AMOUNT) {
-            tg.showAlert(`আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।`);
-            return;
-        }
-
-        buttonElement.disabled = true;
-        const withdrawalAmount = userData.balance ?? 0;
-
-        const withdrawal = {
-            userId: telegramUser.id.toString(),
+        this.disabled = true;
+        await supabase.from('withdrawals').insert({
+            user_id: telegramUser.id.toString(),
             username: telegramUser.username || '',
-            amount: withdrawalAmount,
-            methodId: selectedMethod.id,
-            methodName: selectedMethod.name,
-            accountNumber: accountNumber,
-            status: 'pending',
-            timestamp: new Date().toISOString()
-        };
-
-        try {
-            await sb.from('users').update({ balance: 0 }).eq('id', telegramUser.id.toString());
-            
-            const { error: insertError } = await sb.from('withdrawals').insert(withdrawal);
-            if (insertError) {
-                await sb.from('users').update({ balance: withdrawalAmount }).eq('id', telegramUser.id.toString());
-                throw insertError;
-            }
-
-            tg.showAlert("আপনার উইথড্র অনুরোধ সফলভাবে জমা হয়েছে।");
-            showScreen('home-screen');
-            accountNumberInput.value = '';
-        } catch (e) {
-            handleError("উইথড্র অনুরোধে সমস্যা হয়েছে।", e);
-            buttonElement.disabled = false;
-        }
+            amount: userData.balance,
+            method_id: method.id,
+            method_name: method.name,
+            account_number: number
+        });
+        await supabase.from('users').update({ balance: 0 }).eq('id', telegramUser.id.toString());
+        tg.showAlert("উইথড্র অনুরোধ জমা হয়েছে");
+        showScreen('home-screen');
+        input.value = '';
+        this.disabled = false;
     }
 
     function handleShareReferral() {
         const link = referElements.linkInput.value;
-        const text = `এখানে প্রতিদিন আয় করুন! আমার অ্যাফিলিয়েট লিংক দিয়ে জয়েন করুন: ${link}`;
+        const text = `প্রতিদিন আয় করুন! আমার লিংক: ${link}`;
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
     }
 
-    // [FIXED] ত্রুটি দেখানোর ফাংশনটিকে আরও তথ্যবহুল করা হয়েছে।
-    function handleError(message, error, isFatal = false) {
-        console.error("Error Details:", error);
-        
-        // গুরুতর সমস্যার জন্য অ্যাপের স্ক্রিনে বার্তা দেখানো হবে।
-        if (isFatal) {
-            document.body.innerHTML = `<div style="text-align: center; padding: 20px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
-                                           <h1>একটি সমস্যা হয়েছে</h1>
-                                           <p>${message}</p>
-                                           <p>অনুগ্রহ করে অ্যাপটি বন্ধ করে আবার চেষ্টা করুন।</p>
-                                       </div>`;
-        } else {
-            tg.showAlert(typeof message === 'string' ? message : "একটি অপ্রত্যাশিত সমস্যা হয়েছে।");
-        }
-    }
-
-    function getInitials(fullName) {
-        if (!fullName) return '?';
-        const names = fullName.split(' ').filter(Boolean);
-        if (names.length === 0) return '?';
-        const firstInitial = names[0][0] || '';
-        const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
-        return `${firstInitial}${lastInitial}`.toUpperCase();
-    }
-
+    // --- Wheel SVG ---
     function createSvgWheel() {
         const wheelGroup = spinScreenElements.wheelGroup;
-        if (!wheelGroup) return;
         wheelGroup.innerHTML = '';
         const numSegments = spinConfig.rewards.length;
-        if (numSegments === 0) return;
-
         const angle = 360 / numSegments;
-        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'];
-        const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-            return { x: centerX + (radius * Math.cos(angleInRadians)), y: centerY + (radius * Math.sin(angleInRadians)) };
+        const colors = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#d81b60', '#00acc1', '#fb8c00', '#5e35b1', '#6d4c41'].slice(0, numSegments);
+
+        const polarToCartesian = (cx, cy, r, deg) => {
+            const rad = (deg - 90) * Math.PI / 180;
+            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
         };
 
         for (let i = 0; i < numSegments; i++) {
-            const startAngle = i * angle;
-            const endAngle = startAngle + angle;
-            const start = polarToCartesian(250, 250, 210, endAngle);
-            const end = polarToCartesian(250, 250, 210, startAngle);
-            const largeArcFlag = angle > 180 ? "1" : "0";
-            const pathData = `M 250 250 L ${start.x} ${start.y} A 210 210 0 ${largeArcFlag} 0 ${end.x} ${end.y} z`;
-            
+            const start = polarToCartesian(250, 250, 210, i * angle + angle);
+            const end = polarToCartesian(250, 250, 210, i * angle);
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("d", pathData);
-            path.setAttribute("fill", colors[i % colors.length]);
+            path.setAttribute("d", `M250,250 L${start.x},${start.y} A210,210 0 0,0 ${end.x},${end.y} Z`);
+            path.setAttribute("fill", colors[i]);
             path.setAttribute("stroke", "#8d6e63");
             path.setAttribute("stroke-width", "4");
             wheelGroup.appendChild(path);
 
-            const textAngle = startAngle + (angle / 2);
+            const textAngle = i * angle + angle / 2;
             const textPos = polarToCartesian(250, 250, 150, textAngle);
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", textPos.x);
@@ -751,74 +475,4 @@ document.addEventListener('DOMContentLoaded', function() {
             wheelGroup.appendChild(text);
         }
     }
-
-    function generateUniqueAffiliateCode(base) {
-        const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        const cleanBase = base.replace(/[^a-zA-Z0-9]/g, '');
-        return cleanBase.slice(0, 8).toUpperCase() + randomPart;
-    }
-
-    async function handleAffiliateSignup(affiliateCode, newUserId) {
-        try {
-            const { data: referrer, error } = await sb.from('users').select('*').eq('affiliateCode', affiliateCode).single();
-            if (error || !referrer) {
-                if(error) console.error("Referrer fetch error:", error);
-                return;
-            }
-            if (!referrer.referrals || !referrer.referrals.includes(newUserId)) {
-                const bonus = appConfig.referralBonus ?? 0;
-                await sb.from('users').update({
-                    balance: (referrer.balance ?? 0) + bonus,
-                    referrals: [...(referrer.referrals ?? []), newUserId],
-                    referralEarnings: (referrer.referralEarnings ?? 0) + bonus
-                }).eq('id', referrer.id);
-            }
-        } catch (error) {
-            console.error("Affiliate signup handling failed:", error);
-        }
-    }
-
-    async function awardEarnings(amount, additionalUpdates = {}) {
-        if (!userData || !userData.id) {
-            throw new Error("User data not available for awarding earnings.");
-        }
-    
-        const currentUserId = userData.id;
-        const newBalance = (userData.balance ?? 0) + amount;
-        
-        const { error: selfUpdateError } = await sb.from('users').update({
-            balance: newBalance,
-            ...additionalUpdates
-        }).eq('id', currentUserId);
-        
-        if (selfUpdateError) throw selfUpdateError;
-    
-        // Local data is updated via subscription, but updating here gives instant UI feedback
-        userData = { ...userData, balance: newBalance, ...additionalUpdates };
-        updateUI();
-    
-        if (!userData.referredBy || (appConfig.affiliateCommissionRate ?? 0) <= 0) {
-            return;
-        }
-    
-        try {
-            const commissionAmount = amount * appConfig.affiliateCommissionRate;
-            if (commissionAmount < 0.01) return;
-    
-            const { data: referrer, error: refErr } = await sb.from('users').select('id, balance, referralEarnings').eq('id', userData.referredBy).single();
-            
-            if (refErr || !referrer) return;
-    
-            await sb.from('users').update({
-                balance: (referrer.balance ?? 0) + commissionAmount,
-                referralEarnings: (referrer.referralEarnings ?? 0) + commissionAmount
-            }).eq('id', referrer.id);
-            
-        } catch (e) {
-            console.error("Affiliate commission processing error:", e);
-        }
-    }
-
-    // --- App Start ---
-    main();
 });
