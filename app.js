@@ -5,15 +5,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram.WebApp;
 
     // DOM
+    const mainScreen = document.getElementById('main-screen');
+    const tasksScreen = document.getElementById('tasks-screen');
+    const tasksTab = document.getElementById('tasks-tab');
+    const backBtn = document.getElementById('back-btn');
+    const taskList = document.getElementById('task-list');
     const profilePic = document.getElementById('profile-pic');
     const usernameElem = document.getElementById('username');
     const userIdElem = document.getElementById('user-id');
     const balanceElem = document.getElementById('balance');
     const adViewsElem = document.getElementById('ad-views');
     const watchAdBtn = document.getElementById('watch-ad-btn');
-    const statusElem = document.getElementById('status');
-    const taskList = document.getElementById('task-list');
     const withdrawBtn = document.getElementById('withdraw-btn');
+    const mainEarnBtn = document.getElementById('main-earn-btn');
+    const statusElem = document.getElementById('status');
+    const checkinCard = document.getElementById('daily-checkin');
+    const checkinBtn = document.getElementById('checkin-btn');
+    const checkinReward = document.getElementById('checkin-reward');
+    const confetti = document.getElementById('confetti');
+
+    // Modal
     const modal = document.getElementById('withdraw-modal');
     const closeBtn = document.querySelector('.close');
     const withdrawForm = document.getElementById('withdraw-form');
@@ -21,10 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const amountSelect = document.getElementById('amount');
     const numberInput = document.getElementById('number');
     const withdrawStatus = document.getElementById('withdraw-status');
-    const checkinCard = document.getElementById('daily-checkin');
-    const checkinBtn = document.getElementById('checkin-btn');
-    const checkinReward = document.getElementById('checkin-reward');
-    const confetti = document.getElementById('confetti');
 
     let currentUser = null;
     let settings = {};
@@ -40,32 +47,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Confetti
     function showConfetti() {
         confetti.innerHTML = '';
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 30; i++) {
             const p = document.createElement('div');
             p.className = 'confetti-piece';
             p.style.left = Math.random() * 100 + 'vw';
             p.style.background = `hsl(${Math.random()*360}, 70%, 60%)`;
-            p.style.animationDelay = Math.random() * 3 + 's';
+            p.style.animationDelay = Math.random() * 2 + 's';
             confetti.appendChild(p);
         }
-        setTimeout(() => confetti.innerHTML = '', 3000);
+        setTimeout(() => confetti.innerHTML = '', 2500);
     }
 
     // Initialize
     async function init() {
         tg.ready(); tg.expand(); initTheme();
-        tg.MainButton.setText('Earn More').show().onClick(() => watchAdBtn.click());
+        tg.MainButton.hide();
 
         const tgUser = tg.initDataUnsafe?.user;
         if (!tgUser) return showError('User not found');
 
-        // Profile
         profilePic.src = tgUser.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(tgUser.first_name)}&background=3b82f6&color=fff&size=128`;
         usernameElem.textContent = `${tgUser.first_name} ${tgUser.last_name || ''}`.trim();
         userIdElem.textContent = `@${tgUser.username || tgUser.id}`;
 
         try {
-            // Fixed: fromfrom → from
             let { data: user } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
             if (!user) {
                 const { data: newUser } = await supabase.from('users').insert({
@@ -76,15 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).select().single();
                 user = newUser;
             }
-            if (user.is_banned) return document.body.innerHTML = '<h1 style="text-align:center;color:red;">Banned</h1>';
+            if (user.is_banned) return document.body.innerHTML = '<h1 style="text-align:center;color:red;padding:20px;">Banned</h1>';
             currentUser = user;
             updateUI();
 
             await Promise.all([loadSettings(), loadWithdrawMethods(), loadAdService(), loadDailyCheckin()]);
             startRealtimeUpdates();
         } catch (err) {
-            showError(`Init error: ${err.message}`);
+            showError(`Init: ${err.message}`);
         }
+    }
+
+    function updateUI() {
+        balanceElem.textContent = `৳${parseFloat(currentUser.balance || 0).toFixed(2)}`;
+        adViewsElem.textContent = currentUser.ad_views || 0;
+        mainEarnBtn.textContent = `Earn ৳${settings.reward_per_ad || 0.1}`;
     }
 
     // Realtime
@@ -101,18 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    function updateUI() {
-        balanceElem.textContent = `৳${parseFloat(currentUser.balance || 0).toFixed(2)}`;
-        adViewsElem.textContent = currentUser.ad_views || 0;
-    }
-
     // Settings
     async function loadSettings() {
         const { data } = await supabase.from('settings').select('*').single();
         settings = data || {};
-        if (settings.main_button_reward > 0) {
-            tg.MainButton.setText(`Earn ৳${settings.main_button_reward}`).onClick(() => watchAdBtn.click());
-        }
+        updateUI();
     }
 
     // Ad Service
@@ -121,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const script = document.createElement('script');
         script.src = `https://ad.gigapub.tech/script?id=${settings.giga_app_id}`;
         script.onload = () => { gigaLoaded = true; watchAdBtn.disabled = false; };
-        script.onerror = () => showError('Ad script failed');
+        script.onerror = () => showError('Ad failed');
         document.head.appendChild(script);
     }
 
@@ -154,18 +158,17 @@ document.addEventListener('DOMContentLoaded', () => {
             loadDailyCheckin();
         } catch {
             checkinBtn.textContent = 'Check-in Now';
-            showError('Failed');
         }
     }
 
-    // Load Tasks – Only in Tasks Tab
+    // Load Tasks
     async function loadTasks() {
-        taskList.innerHTML = '<p style="color:var(--text-light);text-align:center;">Loading tasks...</p>';
+        taskList.innerHTML = '<p style="color:var(--text-light);text-align:center;font-size:0.8rem;">Loading...</p>';
         const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
         const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
 
         if (!tasks?.length) {
-            taskList.innerHTML = '<p style="text-align:center;color:var(--text-light);">No active tasks</p>';
+            taskList.innerHTML = '<p style="text-align:center;color:var(--text-light);font-size:0.8rem;">No tasks</p>';
             return;
         }
 
@@ -212,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Watch Ad
-    watchAdBtn.onclick = async () => {
+    watchAdBtn.onclick = mainEarnBtn.onclick = async () => {
         if (!gigaLoaded) return showError('Ad not ready');
         watchAdBtn.disabled = true;
         try {
@@ -249,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     withdrawForm.onsubmit = async e => {
         e.preventDefault();
-        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits required');
+        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits');
         const amount = +amountSelect.value;
         if (currentUser.balance < amount) return showWithdrawError('Low balance');
 
@@ -263,25 +266,26 @@ document.addEventListener('DOMContentLoaded', () => {
         else {
             currentUser.balance -= amount;
             updateUI();
-            showWithdrawSuccess('Request sent!');
+            showWithdrawSuccess('Sent!');
             showConfetti();
-            setTimeout(() => modal.style.display = 'none', 2000);
+            setTimeout(() => modal.style.display = 'none', 1500);
         }
     };
 
     closeBtn.onclick = () => modal.style.display = 'none';
     window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
 
-    // Tab Switch
-    document.querySelectorAll('.tab').forEach(t => {
-        t.onclick = () => {
-            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
-            t.classList.add('active');
-            document.getElementById(t.dataset.tab).classList.add('active');
-            if (t.dataset.tab === 'tasks') loadTasks();
-        };
-    });
+    // Navigation
+    tasksTab.onclick = () => {
+        mainScreen.style.display = 'none';
+        tasksScreen.style.display = 'flex';
+        loadTasks();
+    };
+
+    backBtn.onclick = () => {
+        tasksScreen.style.display = 'none';
+        mainScreen.style.display = 'flex';
+    };
 
     // Helpers
     function showError(msg) { statusElem.textContent = `Error: ${msg}`; statusElem.className = 'error'; }
