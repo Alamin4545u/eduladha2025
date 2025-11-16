@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Coin Collector Game</title>
-    <!-- টেলিগ্রাম মিনি অ্যাপের জন্য SDK -->
+    
+    <!-- টেলিগ্রাম মিনি অ্যাপের জন্য প্রয়োজনীয় স্ক্রিপ্ট -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- আপনার দেওয়া Monetag Zone-এর SDK স্ক্রিপ্ট -->
+    <!-- আপনার দেওয়া Monetag Zone ID সহ SDK স্ক্রিপ্ট -->
+    <!-- এই কোডটি পরিবর্তন করার প্রয়োজন নেই -->
     <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154' async></script>
 
     <style>
@@ -21,7 +23,7 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -131,18 +133,19 @@
     </div>
 
     <script>
+        // টেলিগ্রাম ওয়েব অ্যাপ ইনিশিয়ালাইজ করা
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand(); // অ্যাপটি যেন পুরো স্ক্রিন জুড়ে থাকে
 
         // ব্যবহারকারীর তথ্য দেখানো
         const userInfoDiv = document.getElementById('userInfo');
-        if (tg.initDataUnsafe.user) {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             const user = tg.initDataUnsafe.user;
             userInfoDiv.textContent = `Player: ${user.first_name || 'Guest'}`;
         }
 
-        // গেমের ভেরিয়েবল
+        // গেমের প্রয়োজনীয় ভেরিয়েবল
         let score = 0;
         const scoreDisplay = document.getElementById('score');
         const coinButton = document.getElementById('coinButton');
@@ -155,12 +158,12 @@
         const MONETAG_ZONE_ID = '10197154';
         const showAdFunction = window[`show_${MONETAG_ZONE_ID}`];
 
-        // স্কোর আপডেট করার ফাংশন
+        // স্কোর আপডেট করার জন্য ফাংশন
         function updateScore(newScore) {
             score = newScore;
             scoreDisplay.textContent = score;
 
-            // রিওয়ার্ড বাটন চালু বা বন্ধ করা
+            // রিওয়ার্ড বাটন চালু বা বন্ধ করার লজিক
             if (score >= REWARD_THRESHOLD) {
                 rewardButton.disabled = false;
                 rewardMessage.textContent = 'Click now to get a bonus!';
@@ -170,22 +173,23 @@
             }
         }
 
-        // কয়েনে ক্লিক করলে স্কোর বাড়বে
+        // কয়েনে ক্লিক করলে স্কোর ১ করে বাড়বে
         coinButton.addEventListener('click', () => {
             updateScore(score + 1);
         });
 
-        // রিওয়ার্ড বাটনে ক্লিক করলে বিজ্ঞাপন দেখানো হবে
+        // "Watch Ad" বাটনে ক্লিক করলে বিজ্ঞাপন দেখানোর ফাংশন কল হবে
         rewardButton.addEventListener('click', () => {
+            // Monetag-এর বিজ্ঞাপন দেখানোর ফাংশনটি আছে কি না তা পরীক্ষা করা
             if (typeof showAdFunction === 'function') {
                 showAdFunction({
-                    // বিজ্ঞাপন দেখানো সফল হলে এই ফাংশনটি কাজ করবে
+                    // বিজ্ঞাপন সফলভাবে দেখা শেষ হলে এই কোডটি কাজ করবে
                     onSuccess: function() {
                         console.log('Ad watched successfully!');
                         alert(`Congratulations! Your score has been doubled from ${score} to ${score * 2}!`);
                         updateScore(score * 2);
                     },
-                    // বিজ্ঞাপন দেখাতে ব্যর্থ হলে এই ফাংশনটি কাজ করবে
+                    // কোনো কারণে বিজ্ঞাপন দেখাতে ব্যর্থ হলে এই কোডটি কাজ করবে
                     onError: function() {
                         console.error('Failed to show the ad.');
                         alert('Could not show ad. Please try again later.');
@@ -193,11 +197,12 @@
                 });
             } else {
                 console.error('Monetag SDK function not found.');
+                // এই মেসেজটি দেখানোর মানে হলো বিজ্ঞাপন ফরম্যাট চালু নেই অথবা নেটওয়ার্ক সমস্যা
                 alert('Ad service is not available right now.');
             }
         });
 
-        // থিম পরিবর্তনের সাথে অ্যাপের স্টাইল পরিবর্তন
+        // টেলিগ্রামের থিম পরিবর্তনের সাথে অ্যাপের স্টাইল পরিবর্তন
         tg.onEvent('themeChanged', function() {
             document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
             document.body.style.color = tg.themeParams.text_color || '#000000';
