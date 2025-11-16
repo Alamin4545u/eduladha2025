@@ -1,150 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bkash Earn Pro</title>
-  <link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&family=Clash+Display:wght@600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <style>
-    :root {
-      --bg: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      --card: rgba(255, 255, 255, 0.1);
-      --glass: rgba(255, 255, 255, 0.08);
-      --border: rgba(255, 255, 255, 0.2);
-      --text: #ffffff;
-      --text-light: rgba(255, 255, 255, 0.7);
-      --primary: #00d4ff;
-      --success: #00ff88;
-      --warning: #ffd700;
-      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      --radius: 20px;
-    }
-    [data-theme="light"] { --bg: linear-gradient(135deg, #667eea, #764ba2); --card: rgba(255,255,255,0.95); --text: #1a1a1a; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Satoshi', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; }
-    .bg-anim { position: fixed; inset: 0; background: var(--bg); z-index: -1; animation: gradient 15s ease infinite; }
-    @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-    .container { padding: 16px; max-width: 480px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
-    .header { text-align: center; margin-bottom: 16px; animation: fadeInDown 0.6s ease; }
-    .profile-pic { width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--primary); box-shadow: 0 0 20px rgba(0,212,255,0.5); margin-bottom: 8px; }
-    .username { font-family: 'Clash Display', sans-serif; font-size: 1.4rem; font-weight: 700; background: linear-gradient(90deg, var(--primary), var(--success)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .tabs { display: flex; background: var(--glass); border-radius: var(--radius); padding: 4px; margin-bottom: 16px; backdrop-filter: blur(12px); border: 1px solid var(--border); box-shadow: var(--shadow); }
-    .tab { flex: 1; padding: 12px; border: none; background: transparent; font-weight: 600; font-size: 0.9rem; border-radius: 16px; cursor: pointer; transition: all 0.3s ease; color: var(--text-light); }
-    .tab.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0,212,255,0.4); transform: translateY(-2px); }
-    .card { background: var(--card); border-radius: var(--radius); padding: 16px; backdrop-filter: blur(12px); border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 12px; transition: transform 0.3s ease; }
-    .card:hover { transform: translateY(-4px); }
-    .checkin-card { background: linear-gradient(135deg, #ff6b6b, #feca57); color: white; text-align: center; padding: 20px; border-radius: var(--radius); box-shadow: 0 10px 30px rgba(255,107,107,0.4); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { box-shadow: 0 10px 30px rgba(255,107,107,0.4); } 50% { box-shadow: 0 10px 40px rgba(255,107,107,0.6); } }
-    .checkin-btn { background: white; color: #ff6b6b; padding: 12px 24px; border-radius: 12px; font-weight: 700; margin-top: 12px; display: inline-block; cursor: pointer; transition: 0.3s; }
-    .checkin-btn:hover { transform: scale(1.05); }
-    .balance-val { font-family: 'Clash Display', sans-serif; font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, var(--success), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .btn { padding: 14px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
-    .btn-green { background: linear-gradient(135deg, var(--success), #00b359); color: white; }
-    .btn-blue { background: linear-gradient(135deg, var(--primary), #0066cc); color: white; }
-    .btn:active { transform: scale(0.95); }
-    .main-btn { background: linear-gradient(135deg, #ff6b6b, #feca57); color: white; padding: 16px; border-radius: 18px; font-weight: 700; font-size: 1.1rem; text-align: center; margin-top: 16px; box-shadow: 0 8px 25px rgba(255,107,107,0.4); animation: float 3s ease-in-out infinite; }
-    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-    .confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
-    .confetti-piece { position: absolute; width: 10px; height: 10px; background: var(--success); animation: fall 3s linear infinite; border-radius: 50%; }
-    @keyframes fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Coin Collector Game</title>
+    <!-- টেলিগ্রাম মিনি অ্যাপের জন্য SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- আপনার দেওয়া Monetag Zone-এর SDK স্ক্রিপ্ট -->
+    <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154' async></script>
+
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-button-color: #007bff;
+            --tg-theme-button-text-color: #ffffff;
+            --gold-color: #FFD700;
+            --dark-gold-color: #B8860B;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            color: var(--tg-theme-text-color);
+            background-color: var(--tg-theme-bg-color);
+            text-align: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+        }
+
+        #userInfo {
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 12px;
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        .score-container {
+            margin: 20px 0;
+        }
+
+        #score {
+            font-size: 4em;
+            font-weight: bold;
+            color: var(--dark-gold-color);
+        }
+
+        .game-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #coinButton {
+            width: 150px;
+            height: 150px;
+            background-color: var(--gold-color);
+            border-radius: 50%;
+            border: 5px solid var(--dark-gold-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            color: var(--dark-gold-color);
+            user-select: none;
+            transition: transform 0.1s ease;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #coinButton:active {
+            transform: scale(0.95);
+        }
+
+        .reward-area {
+            width: 100%;
+            padding: 15px 0;
+        }
+
+        #rewardButton {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            transition: background-color 0.2s;
+        }
+
+        #rewardButton:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
-<body data-theme="dark">
-  <div class="bg-anim"></div>
-  <div class="confetti" id="confetti"></div>
+<body>
 
-  <div id="main-screen" class="container">
     <div class="header">
-      <img id="profile-pic" class="profile-pic" src="" alt="Profile">
-      <div class="username" id="username">Loading...</div>
-      <div class="user-id" id="user-id"></div>
+        <div id="userInfo">Welcome!</div>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="home">Home</button>
-      <button class="tab" id="tasks-tab">Tasks</button>
+    <div class="score-container">
+        <h2>Your Score</h2>
+        <div id="score">0</div>
     </div>
 
-    <div id="home">
-      <div class="card checkin-card" id="daily-checkin" style="display:none;">
-        <lottie-player src="https://assets5.lottiefiles.com/packages/lf20_jwlppoey.json" background="transparent" speed="1" style="width:80px;height:80px;margin:0 auto;" loop autoplay></lottie-player>
-        <h3>Daily Check-in</h3>
-        <p>Watch ad to earn <span id="checkin-reward">৳0.10</span></p>
-        <div class="checkin-btn" id="checkin-btn">Check-in Now</div>
-      </div>
-
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <strong>Balance:</strong>
-          <span class="balance-val" id="balance">৳0.00</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;">
-          <strong>Ads Watched:</strong>
-          <span id="ad-views">0</span>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
-        <button id="watch-ad-btn" class="btn btn-green" disabled>Watch Ad</button>
-        <button id="withdraw-btn" class="btn btn-blue">Withdraw</button>
-      </div>
-
-      <!-- Referral Section -->
-      <div class="card" id="referral-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div>
-            <h3 style="margin:0;font-family:'Clash Display',sans-serif;font-size:1.1rem;">Invite & Earn</h3>
-            <p style="margin:4px 0 0;font-size:0.8rem;color:var(--text-light);">Earn <strong>৳<span id="referral-reward">5</span></strong> per friend!</p>
-          </div>
-          <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_kkflmtur.json" background="transparent" speed="1" style="width:60px;height:60px;" loop autoplay></lottie-player>
-        </div>
-        <div style="background:var(--glass);padding:12px;border-radius:14px;text-align:center;margin:12px 0;border:1px dashed var(--primary);">
-          <p style="margin:0;font-weight:600;font-size:1.1rem;color:var(--primary);" id="referral-code">Loading...</p>
-          <p style="margin:4px 0 0;font-size:0.75rem;color:var(--text-light);">Your Referral Code</p>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;">
-          <button class="btn" style="background:linear-gradient(135deg,#25d366,#128c7e);font-size:0.8rem;" onclick="share('whatsapp')"><span style="display:inline-block;transform:scale(1.3);">WhatsApp</span></button>
-          <button class="btn" style="background:linear-gradient(135deg,#0088cc,#0066aa);font-size:0.8rem;" onclick="share('telegram')"><span style="display:inline-block;transform:scale(1.3);">Telegram</span></button>
-          <button class="btn" style="background:linear-gradient(135deg,#6c757d,#495057);font-size:0.8rem;" onclick="copyLink()"><span style="display:inline-block;transform:scale(1.3);">Copy</span></button>
-        </div>
-        <div style="margin-top:12px;font-size:0.8rem;text-align:center;color:var(--text-light);">
-          <strong><span id="referral-count">0</span></strong> friends • Earned: ৳<span id="referral-earned">0.00</span>
-        </div>
-      </div>
-
-      <div class="main-btn" id="main-earn-btn">Earn ৳0.1</div>
+    <div class="game-area">
+        <div id="coinButton" title="Click to collect coins!">🪙</div>
     </div>
 
-    <p id="status" style="text-align:center;margin-top:12px;font-size:0.85rem;"></p>
-  </div>
-
-  <div id="tasks-screen" style="display:none;flex-direction:column;height:100%;">
-    <div style="display:flex;align-items:center;margin-bottom:12px;">
-      <button id="back-btn" style="background:none;border:none;font-size:1.6rem;color:var(--text);cursor:pointer;">Back</button>
-      <div style="flex:1;text-align:center;font-family:'Clash Display',sans-serif;font-size:1.2rem;font-weight:700;">Premium Tasks</div>
+    <div class="reward-area">
+        <button id="rewardButton" disabled>Watch Ad to Double Score!</button>
+        <p id="rewardMessage" style="font-size: 0.9em; margin-top: 10px;">Collect 10 points to unlock</p>
     </div>
-    <div id="task-list" style="flex:1;overflow-y:auto;padding-right:4px;">Loading...</div>
-  </div>
 
-  <!-- Withdraw Modal -->
-  <div id="withdraw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;z-index:1000;">
-    <div style="background:var(--card);padding:24px;border-radius:var(--radius);width:90%;max-width:360px;border:1px solid var(--border);box-shadow:var(--shadow);">
-      <span style="position:absolute;top:12px;right:16px;font-size:1.8rem;cursor:pointer;color:var(--text-light);" onclick="document.get0ElementById('withdraw-modal').style.display='none'">×</span>
-      <h2 style="margin:0 0 16px;font-family:'Clash Display',sans-serif;">Withdraw</h2>
-      <form id="withdraw-form">
-        <div style="margin-bottom:14px;"><label style="font-size:0.85rem;color:var(--text-light);">Method</label><select id="method" required style="width:100%;padding:10px;border-radius:12px;margin-top:6px;background:var(--glass);border:1px solid var(--border);color:var(--text);"></select></div>
-        <div style="margin-bottom:14px;"><label style="font-size:0.85rem;color:var(--text-light);">Amount</label><select id="amount" required style="width:100%;padding:10px;border-radius:12px;margin-top:6px;background:var(--glass);border:1px solid var(--border);color:var(--text);"></select></div>
-        <div style="margin-bottom:14px;"><label style="font-size:0.85rem;color:var(--text-light);">Account (11 digits)</label><input type="tel" id="number" required pattern="[0-9]{11}" placeholder="017xxxxxxxxx" style="width:100%;padding:10px;border-radius:12px;margin-top:6px;background:var(--glass);border:1px solid var(--border);color:var(--text);"></div>
-        <button type="submit" class="btn btn-blue" style="width:100%;padding:12px;margin-top:8px;">Submit</button>
-        <p id="withdraw-status" style="margin:8px 0 0;font-size:0.8rem;text-align:center;"></p>
-      </form>
-    </div>
-  </div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // অ্যাপটি যেন পুরো স্ক্রিন জুড়ে থাকে
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
+        // ব্যবহারকারীর তথ্য দেখানো
+        const userInfoDiv = document.getElementById('userInfo');
+        if (tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            userInfoDiv.textContent = `Player: ${user.first_name || 'Guest'}`;
+        }
+
+        // গেমের ভেরিয়েবল
+        let score = 0;
+        const scoreDisplay = document.getElementById('score');
+        const coinButton = document.getElementById('coinButton');
+        const rewardButton = document.getElementById('rewardButton');
+        const rewardMessage = document.getElementById('rewardMessage');
+
+        const REWARD_THRESHOLD = 10; // কত পয়েন্ট হলে রিওয়ার্ড বাটন চালু হবে
+        
+        // আপনার Monetag Zone ID এখানে সেট করা হয়েছে
+        const MONETAG_ZONE_ID = '10197154';
+        const showAdFunction = window[`show_${MONETAG_ZONE_ID}`];
+
+        // স্কোর আপডেট করার ফাংশন
+        function updateScore(newScore) {
+            score = newScore;
+            scoreDisplay.textContent = score;
+
+            // রিওয়ার্ড বাটন চালু বা বন্ধ করা
+            if (score >= REWARD_THRESHOLD) {
+                rewardButton.disabled = false;
+                rewardMessage.textContent = 'Click now to get a bonus!';
+            } else {
+                rewardButton.disabled = true;
+                rewardMessage.textContent = `Collect ${REWARD_THRESHOLD} points to unlock`;
+            }
+        }
+
+        // কয়েনে ক্লিক করলে স্কোর বাড়বে
+        coinButton.addEventListener('click', () => {
+            updateScore(score + 1);
+        });
+
+        // রিওয়ার্ড বাটনে ক্লিক করলে বিজ্ঞাপন দেখানো হবে
+        rewardButton.addEventListener('click', () => {
+            if (typeof showAdFunction === 'function') {
+                showAdFunction({
+                    // বিজ্ঞাপন দেখানো সফল হলে এই ফাংশনটি কাজ করবে
+                    onSuccess: function() {
+                        console.log('Ad watched successfully!');
+                        alert(`Congratulations! Your score has been doubled from ${score} to ${score * 2}!`);
+                        updateScore(score * 2);
+                    },
+                    // বিজ্ঞাপন দেখাতে ব্যর্থ হলে এই ফাংশনটি কাজ করবে
+                    onError: function() {
+                        console.error('Failed to show the ad.');
+                        alert('Could not show ad. Please try again later.');
+                    }
+                });
+            } else {
+                console.error('Monetag SDK function not found.');
+                alert('Ad service is not available right now.');
+            }
+        });
+
+        // থিম পরিবর্তনের সাথে অ্যাপের স্টাইল পরিবর্তন
+        tg.onEvent('themeChanged', function() {
+            document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
+            document.body.style.color = tg.themeParams.text_color || '#000000';
+        });
+
+    </script>
+
 </body>
-      </html>
+</html>
