@@ -1,5 +1,6 @@
 const SUPABASE_URL = 'https://wcmgdhyizhykqblndnhx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjbWdkaHlpemh5a3FibG5kbmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzM0MjAsImV4cCI6MjA3ODgwOTQyMH0.XuBmH3m0IMgdKen-By42CYlMMC9hhiijr_kDRqWJrp4';
+
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const tg = window.Telegram.WebApp;
 
@@ -22,13 +23,26 @@ document.querySelectorAll('.tab-button').forEach(button => {
     });
 });
 
+// --- Main App Logic ---
 async function initializeApp() {
     tg.ready();
     const tgUser = tg.initDataUnsafe?.user;
     if (!tgUser) { statusElem.textContent = 'Telegram user not found.'; return; }
 
+    const { data: settings } = await supabase.from('settings').select('giga_app_id').single();
+    if (settings && settings.giga_app_id) {
+        loadGigaScript(settings.giga_app_id);
+    } else {
+        statusElem.textContent = 'Ad service not configured.';
+    }
+
     const { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
-    currentUser = user;
+    if(error && error.code === 'PGRST116') {
+        const {data: newUser} = await supabase.from('users').insert({telegram_id: tgUser.id, first_name: tgUser.first_name, last_name: tgUser.last_name, username: tgUser.username}).select().single();
+        currentUser = newUser;
+    } else {
+        currentUser = user;
+    }
 
     if (currentUser) {
         if(currentUser.is_banned) {
@@ -46,14 +60,20 @@ function updateUserUI(user) {
     adViewsElem.textContent = user.ad_views;
 }
 
+function loadGigaScript(appId) {
+    if (document.querySelector(`script[src*="gigapub.tech"]`)) return;
+    const script = document.createElement('script');
+    script.src = `https://ad.gigapub.tech/script?id=${appId}`;
+    script.onload = () => { watchAdBtn.disabled = false; };
+    document.head.appendChild(script);
+}
+
 async function loadTasks() {
-    const { data: tasks, error: tasksError } = await supabase.from('tasks').select('*');
-    const { data: progress, error: progressError } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
+    const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
+    const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
     
-    if (tasksError || progressError) {
-        taskListElem.innerHTML = '<p>Could not load tasks.</p>';
-        return;
-    }
+    if (!tasks) { taskListElem.innerHTML = '<p>Could not load tasks.</p>'; return; }
+    if (tasks.length === 0) { taskListElem.innerHTML = '<p>No tasks available right now.</p>'; return; }
 
     taskListElem.innerHTML = '';
     tasks.forEach(task => {
@@ -64,49 +84,73 @@ async function loadTasks() {
         card.className = 'task-card';
         card.innerHTML = `
             <h3>${task.title}</h3>
-            <p>${task.description}</p>
-            <p>Reward: ৳${task.reward}</p>
+            <p>${task.description || ''}</p>
+            <p>Reward: <b>৳${task.reward}</b></p>
             <div class="progress-bar"><div style="width: ${percentage}%"></div></div>
             <p>Progress: ${userProgress.ads_watched} / ${task.required_ads} ads</p>
-            <button class="btn" onclick="startTask(${task.id})" ${userProgress.completed ? 'disabled' : ''}>
+            <button class="btn task-btn" data-task-id="${task.id}" ${userProgress.completed ? 'disabled' : ''}>
                 ${userProgress.completed ? 'Completed' : 'Watch Ad'}
             </button>
         `;
         taskListElem.appendChild(card);
     });
+
+    document.querySelectorAll('.task-btn').forEach(button => button.addEventListener('click', startTask));
 }
 
-window.startTask = async function(taskId) {
+async function startTask(event) {
     const button = event.target;
+    const taskId = button.dataset.taskId;
+    
     button.disabled = true;
     button.textContent = 'Loading Ad...';
 
-    // এখানে GigaPub অ্যাড দেখানোর কোড বসবে
-    // এই উদাহরণে, আমরা সফলভাবে অ্যাড দেখা হয়েছে ধরে নিচ্ছি
     try {
-        // await window.showGiga(); // বাস্তব অ্যাপে এটি আনকমেন্ট করতে হবে
+        await window.showGiga();
         
-        // অ্যাড দেখা সফল হলে, সার্ভারে অগ্রগতি আপডেট করা
         const { data, error } = await supabase.rpc('update_task_progress', {
-            task_id_param: taskId,
+            task_id_param: parseInt(taskId),
             user_id_param: currentUser.telegram_id
         });
 
         if (error) throw error;
         
-        // UI আপডেট করা
-        currentUser.balance = data.new_balance;
+        const result = data[0];
+        currentUser.balance = result.new_balance;
         updateUserUI(currentUser);
-        loadTasks(); // টাস্ক লিস্ট রিফ্রেশ করা
+        loadTasks();
 
-        if (data.is_completed) {
-            alert(`Task completed! You earned ৳${data.reward_amount}`);
+        if (result.is_completed) {
+            statusElem.textContent = `Task completed! You earned ৳${result.reward_amount}`;
+        } else {
+             statusElem.textContent = 'Ad watched! Keep going.';
         }
 
     } catch (e) {
-        button.textContent = 'Ad Failed';
-        console.error('Task Ad Error:', e);
+        statusElem.textContent = 'Ad failed or was skipped.';
+        button.disabled = false;
+        button.textContent = 'Watch Ad';
     }
-};
+}
+
+watchAdBtn.addEventListener('click', async () => {
+    watchAdBtn.disabled = true;
+    statusElem.textContent = 'Loading ad...';
+    try {
+        await window.showGiga();
+        const { data, error } = await supabase.rpc('claim_reward', { user_telegram_id: currentUser.telegram_id });
+        if (error) throw error;
+        
+        const result = data[0];
+        currentUser.balance = result.new_balance;
+        currentUser.ad_views = result.new_ad_views;
+        updateUserUI(currentUser);
+        statusElem.textContent = 'Reward claimed successfully!';
+    } catch (e) {
+        statusElem.textContent = e.message || 'Ad failed or was skipped.';
+    } finally {
+        watchAdBtn.disabled = false;
+    }
+});
 
 initializeApp();
