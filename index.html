@@ -3,24 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram User Info</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Telegram Mini App</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
+        h1 { margin-bottom: 20px; }
+        .user-stats { text-align: left; margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .user-stats p { margin: 10px 0; font-size: 16px; }
+        .user-stats strong { color: #555; }
+        #watch-ad-btn { background-color: #28a745; color: white; border: none; padding: 15px 25px; border-radius: 8px; font-size: 18px; cursor: pointer; transition: background-color 0.3s; margin-top: 20px; width: 100%; }
+        #watch-ad-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { margin-top: 15px; font-style: italic; color: #555; }
+    </style>
+    <!-- GigaPub স্ক্রিপ্টটি JavaScript দিয়ে যোগ করা হবে -->
 </head>
 <body>
     <div class="container">
-        <h1>App Version 3</h1>
-        <div id="user-info">
-            <p><strong>Name:</strong> <span id="name"></span></p>
-            <p><strong>Username:</strong> <span id="username"></span></p>
+        <h1>Welcome!</h1>
+        <div id="user-info" class="user-stats">
+            <p><strong>Name:</strong> <span id="name">Loading...</span></p>
+            <p><strong>Balance:</strong> <span id="balance">৳0.00</span></p>
+            <p><strong>Ads Watched:</strong> <span id="ad-views">0</span></p>
         </div>
+        <button id="watch-ad-btn" disabled>Watch Ad</button>
         <p id="status"></p>
     </div>
-
-    <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Supabase Client Script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Custom JS with Cache Busting -->
-    <script src="app.js?v=2"></script>
+    <script src="app.js"></script>
 </body>
 </html>
