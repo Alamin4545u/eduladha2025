@@ -29,6 +29,7 @@ function updateUserUI(user) {
 }
 
 function loadGigaScript(appId) {
+    if (document.querySelector(`script[src*="${appId}"]`)) return;
     const script = document.createElement('script');
     script.src = `https://ad.gigapub.tech/script?id=${appId}`;
     script.onload = () => { watchAdBtn.disabled = false; statusElem.textContent = 'Ready!'; };
@@ -43,7 +44,7 @@ async function initializeApp() {
     const { data: settings } = await supabase.from('settings').select('giga_app_id').single();
     if (settings) loadGigaScript(settings.giga_app_id);
 
-    const { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
+    let { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
     if(error && error.code === 'PGRST116') {
         const {data: newUser} = await supabase.from('users').insert({telegram_id: tgUser.id, first_name: tgUser.first_name, last_name: tgUser.last_name, username: tgUser.username}).select().single();
         currentUser = newUser;
@@ -65,7 +66,11 @@ watchAdBtn.addEventListener('click', async () => {
     statusElem.textContent = 'Loading ad...';
     try {
         await window.showGiga();
-        const { data, error } = await supabase.rpc('claim_reward');
+        // এখন আমরা সুরক্ষিত RPC ফাংশনটিকে সঠিক telegram_id দিয়ে কল করব
+        const { data, error } = await supabase.rpc('claim_reward', {
+            user_telegram_id: currentUser.telegram_id
+        });
+        
         if (error) throw new Error(error.message);
         
         const result = data[0];
