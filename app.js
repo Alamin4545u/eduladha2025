@@ -11,8 +11,17 @@ const adViewsElem = document.getElementById('ad-views');
 const watchAdBtn = document.getElementById('watch-ad-btn');
 const statusElem = document.getElementById('status');
 const taskListElem = document.getElementById('task-list');
+const withdrawBtn = document.getElementById('withdraw-btn');
+const modal = document.getElementById('withdraw-modal');
+const closeBtn = document.querySelector('.close');
+const withdrawForm = document.getElementById('withdraw-form');
+const methodSelect = document.getElementById('method');
+const amountSelect = document.getElementById('amount');
+const numberInput = document.getElementById('number');
+const withdrawStatus = document.getElementById('withdraw-status');
 
 let currentUser = null;
+let withdrawMethods = [];
 
 // --- Tab Navigation ---
 document.querySelectorAll('.tab-button').forEach(button => {
@@ -36,21 +45,23 @@ async function initializeApp() {
         statusElem.textContent = 'Ad service not configured.';
     }
 
-    const { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
-    if(error && error.code === 'PGRST116') {
+    let { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
+    if (error && error.code === 'PGRST116') {
         const {data: newUser} = await supabase.from('users').insert({telegram_id: tgUser.id, first_name: tgUser.first_name, last_name: tgUser.last_name, username: tgUser.username}).select().single();
         currentUser = newUser;
-    } else {
+    } else if (user) {
         currentUser = user;
     }
 
     if (currentUser) {
-        if(currentUser.is_banned) {
+        if (currentUser.is_banned) {
             document.body.innerHTML = '<h1>You are banned.</h1>';
             return;
         }
         updateUserUI(currentUser);
         loadTasks();
+    } else {
+        statusElem.textContent = "Could not load user profile.";
     }
 }
 
@@ -68,64 +79,41 @@ function loadGigaScript(appId) {
     document.head.appendChild(script);
 }
 
+// --- Tasks Logic ---
 async function loadTasks() {
+    if (!currentUser) return;
     const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
     const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
     
-    if (!tasks) { taskListElem.innerHTML = '<p>Could not load tasks.</p>'; return; }
-    if (tasks.length === 0) { taskListElem.innerHTML = '<p>No tasks available right now.</p>'; return; }
+    if (!tasks || tasks.length === 0) { taskListElem.innerHTML = '<p>No tasks available right now.</p>'; return; }
 
     taskListElem.innerHTML = '';
     tasks.forEach(task => {
         const userProgress = progress.find(p => p.task_id === task.id) || { ads_watched: 0, completed: false };
-        const percentage = (userProgress.ads_watched / task.required_ads) * 100;
-
+        const percentage = Math.min((userProgress.ads_watched / task.required_ads) * 100, 100);
         const card = document.createElement('div');
         card.className = 'task-card';
-        card.innerHTML = `
-            <h3>${task.title}</h3>
-            <p>${task.description || ''}</p>
-            <p>Reward: <b>৳${task.reward}</b></p>
-            <div class="progress-bar"><div style="width: ${percentage}%"></div></div>
-            <p>Progress: ${userProgress.ads_watched} / ${task.required_ads} ads</p>
-            <button class="btn task-btn" data-task-id="${task.id}" ${userProgress.completed ? 'disabled' : ''}>
-                ${userProgress.completed ? 'Completed' : 'Watch Ad'}
-            </button>
-        `;
+        card.innerHTML = `<h3_>`${task.title}</h3><p>${task.description || ''}</p><p>Reward: <b>৳${task.reward}</b></p><div class="progress-bar"><div style="width: ${percentage}%"></div></div><p>Progress: ${userProgress.ads_watched} / ${task.required_ads} ads</p><button class="btn task-btn" data-task-id="${task.id}" ${userProgress.completed ? 'disabled' : ''}>${userProgress.completed ? 'Completed' : 'Watch Ad'}</button>`;
         taskListElem.appendChild(card);
     });
-
     document.querySelectorAll('.task-btn').forEach(button => button.addEventListener('click', startTask));
 }
 
 async function startTask(event) {
     const button = event.target;
     const taskId = button.dataset.taskId;
-    
     button.disabled = true;
     button.textContent = 'Loading Ad...';
 
     try {
         await window.showGiga();
-        
-        const { data, error } = await supabase.rpc('update_task_progress', {
-            task_id_param: parseInt(taskId),
-            user_id_param: currentUser.telegram_id
-        });
-
+        const { data, error } = await supabase.rpc('update_task_progress', { task_id_param: parseInt(taskId), user_id_param: currentUser.telegram_id });
         if (error) throw error;
-        
         const result = data[0];
         currentUser.balance = result.new_balance;
         updateUserUI(currentUser);
         loadTasks();
-
-        if (result.is_completed) {
-            statusElem.textContent = `Task completed! You earned ৳${result.reward_amount}`;
-        } else {
-             statusElem.textContent = 'Ad watched! Keep going.';
-        }
-
+        statusElem.textContent = result.is_completed ? `Task completed! You earned ৳${result.reward_amount}` : 'Ad watched! Keep going.';
     } catch (e) {
         statusElem.textContent = 'Ad failed or was skipped.';
         button.disabled = false;
@@ -133,6 +121,7 @@ async function startTask(event) {
     }
 }
 
+// --- Direct Ad Reward Logic ---
 watchAdBtn.addEventListener('click', async () => {
     watchAdBtn.disabled = true;
     statusElem.textContent = 'Loading ad...';
@@ -140,7 +129,6 @@ watchAdBtn.addEventListener('click', async () => {
         await window.showGiga();
         const { data, error } = await supabase.rpc('claim_reward', { user_telegram_id: currentUser.telegram_id });
         if (error) throw error;
-        
         const result = data[0];
         currentUser.balance = result.new_balance;
         currentUser.ad_views = result.new_ad_views;
@@ -150,6 +138,49 @@ watchAdBtn.addEventListener('click', async () => {
         statusElem.textContent = e.message || 'Ad failed or was skipped.';
     } finally {
         watchAdBtn.disabled = false;
+    }
+});
+
+// --- Withdraw Logic ---
+withdrawBtn.onclick = async () => {
+    const { data } = await supabase.from('withdraw_methods').select('*').eq('is_active', true);
+    withdrawMethods = data;
+    methodSelect.innerHTML = withdrawMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+    updateAmountOptions();
+    modal.style.display = "flex";
+};
+
+closeBtn.onclick = () => { modal.style.display = "none"; };
+window.onclick = (event) => { if (event.target == modal) modal.style.display = "none"; };
+methodSelect.onchange = updateAmountOptions;
+
+function updateAmountOptions() {
+    const selectedMethod = withdrawMethods.find(m => m.name === methodSelect.value);
+    if (selectedMethod) {
+        amountSelect.innerHTML = selectedMethod.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
+    }
+}
+
+withdrawForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    withdrawStatus.textContent = 'Processing...';
+    const amount = parseFloat(amountSelect.value);
+    
+    if (currentUser.balance < amount) {
+        withdrawStatus.textContent = 'Insufficient balance!';
+        return;
+    }
+
+    const { error } = await supabase.from('withdraw_requests').insert({ user_id: currentUser.telegram_id, method: methodSelect.value, amount: amount, account_number: numberInput.value });
+    if (error) {
+        withdrawStatus.textContent = `Error: ${error.message}`;
+    } else {
+        const newBalance = currentUser.balance - amount;
+        await supabase.from('users').update({ balance: newBalance }).eq('telegram_id', currentUser.telegram_id);
+        currentUser.balance = newBalance;
+        updateUserUI(currentUser);
+        withdrawStatus.textContent = 'Request sent successfully!';
+        setTimeout(() => { modal.style.display = "none"; withdrawStatus.textContent = ""; }, 2000);
     }
 });
 
