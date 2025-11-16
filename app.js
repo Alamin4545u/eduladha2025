@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const tg = window.Telegram.WebApp;
 
+    // DOM Elements
     const nameElem = document.getElementById('name');
     const balanceElem = document.getElementById('balance');
     const adViewsElem = document.getElementById('ad-views');
