@@ -10,130 +10,125 @@ const balanceElem = document.getElementById('balance');
 const adViewsElem = document.getElementById('ad-views');
 const watchAdBtn = document.getElementById('watch-ad-btn');
 const statusElem = document.getElementById('status');
+const withdrawBtn = document.getElementById('withdraw-btn');
+const modal = document.getElementById('withdraw-modal');
+const closeBtn = document.querySelector('.close');
+const withdrawForm = document.getElementById('withdraw-form');
+const methodSelect = document.getElementById('method');
+const amountSelect = document.getElementById('amount');
+const numberInput = document.getElementById('number');
+const withdrawStatus = document.getElementById('withdraw-status');
 
 let currentUser = null;
-let appSettings = null;
+let withdrawMethods = [];
 
-// GigaPub স্ক্রিপ্টটি ডায়নামিকভাবে যোগ করার ফাংশন
-function loadGigaScript(appId) {
-    if (!appId) {
-        statusElem.textContent = 'Ad service is not configured.';
-        return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://ad.gigapub.tech/script?id=${appId}`;
-    script.onload = () => {
-        watchAdBtn.disabled = false;
-        statusElem.textContent = 'Ready to watch ads!';
-    };
-    script.onerror = () => {
-        statusElem.textContent = 'Could not load ad script.';
-    };
-    document.head.appendChild(script);
-}
-
-// UI আপডেট করার ফাংশন
 function updateUserUI(user) {
-    nameElem.textContent = `${user.first_name} ${user.last_name || ''}`;
+    nameElem.textContent = user.first_name;
     balanceElem.textContent = `৳${parseFloat(user.balance).toFixed(2)}`;
     adViewsElem.textContent = user.ad_views;
 }
 
-// অ্যাপ শুরু করার মূল ফাংশন
-async function initializeApp() {
-    tg.ready();
-
-    // ধাপ ১: সেটিংস আনা
-    const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('id', 1)
-        .single();
-
-    if (settingsError || !settingsData) {
-        statusElem.textContent = 'Could not load app settings.';
-        return;
-    }
-    appSettings = settingsData;
-    loadGigaScript(appSettings.giga_app_id);
-
-    // ধাপ ২: ব্যবহারকারীর ডেটা আনা ও তৈরি করা
-    const tgUser = tg.initDataUnsafe?.user;
-    if (!tgUser) {
-        statusElem.textContent = 'Could not retrieve user data from Telegram.';
-        return;
-    }
-
-    const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('telegram_id', tgUser.id)
-        .single();
-    
-    if (userError && userError.code === 'PGRST116') {
-        // ব্যবহারকারী নতুন হলে তৈরি করা
-        const { data: newUser, error: createError } = await supabase
-            .from('users')
-            .insert({
-                telegram_id: tgUser.id,
-                first_name: tgUser.first_name,
-                last_name: tgUser.last_name,
-                username: tgUser.username,
-            }).select().single();
-        
-        if (createError) {
-             statusElem.textContent = 'Failed to create user profile.';
-             return;
-        }
-        currentUser = newUser;
-    } else if (userError) {
-        statusElem.textContent = 'Failed to fetch user profile.';
-        return;
-    } else {
-        currentUser = userData;
-    }
-
-    updateUserUI(currentUser);
+function loadGigaScript(appId) {
+    const script = document.createElement('script');
+    script.src = `https://ad.gigapub.tech/script?id=${appId}`;
+    script.onload = () => { watchAdBtn.disabled = false; statusElem.textContent = 'Ready!'; };
+    document.head.appendChild(script);
 }
 
-// অ্যাড দেখার বাটন ক্লিক করলে যা হবে
-watchAdBtn.addEventListener('click', async () => {
-    if (!window.showGiga) {
-        alert('Ad service is not ready. Please wait.');
-        return;
-    }
+async function initializeApp() {
+    tg.ready();
+    const tgUser = tg.initDataUnsafe?.user;
+    if (!tgUser) { statusElem.textContent = 'Telegram user not found.'; return; }
     
+    const { data: settings } = await supabase.from('settings').select('giga_app_id').single();
+    if (settings) loadGigaScript(settings.giga_app_id);
+
+    const { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
+    if(error && error.code === 'PGRST116') {
+        const {data: newUser} = await supabase.from('users').insert({telegram_id: tgUser.id, first_name: tgUser.first_name, last_name: tgUser.last_name, username: tgUser.username}).select().single();
+        currentUser = newUser;
+    } else {
+        currentUser = user;
+    }
+
+    if (currentUser) {
+        if(currentUser.is_banned) {
+            document.body.innerHTML = '<h1 style="text-align:center; color:red; margin-top: 50px;">You are banned.</h1>';
+            return;
+        }
+        updateUserUI(currentUser);
+    }
+}
+
+watchAdBtn.addEventListener('click', async () => {
     watchAdBtn.disabled = true;
     statusElem.textContent = 'Loading ad...';
-
     try {
         await window.showGiga();
-        // অ্যাড সফলভাবে দেখা হলে
-        const newAdViews = currentUser.ad_views + 1;
-        const newBalance = parseFloat(currentUser.balance) + parseFloat(appSettings.reward_per_ad);
-
-        const { data: updatedUser, error } = await supabase
-            .from('users')
-            .update({
-                ad_views: newAdViews,
-                balance: newBalance
-            })
-            .eq('telegram_id', currentUser.telegram_id)
-            .select()
-            .single();
-
-        if (error) throw error;
+        const { data, error } = await supabase.rpc('claim_reward');
+        if (error) throw new Error(error.message);
         
-        currentUser = updatedUser;
+        const result = data[0];
+        currentUser.balance = result.new_balance;
+        currentUser.ad_views = result.new_ad_views;
         updateUserUI(currentUser);
-        statusElem.textContent = `Reward of ৳${appSettings.reward_per_ad} added!`;
-
+        statusElem.textContent = 'Reward claimed successfully!';
     } catch (e) {
-        // অ্যাড দেখতে কোনো সমস্যা হলে
-        statusElem.textContent = 'Ad failed to load or was skipped.';
-        console.error('Ad error:', e);
+        statusElem.textContent = e.message || 'Ad failed or was skipped.';
     } finally {
         watchAdBtn.disabled = false;
+    }
+});
+
+withdrawBtn.onclick = async () => {
+    const { data } = await supabase.from('withdraw_methods').select('*').eq('is_active', true);
+    withdrawMethods = data;
+    methodSelect.innerHTML = withdrawMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+    updateAmountOptions();
+    modal.style.display = "flex";
+};
+
+closeBtn.onclick = () => modal.style.display = "none";
+window.onclick = (event) => { if (event.target == modal) modal.style.display = "none"; };
+
+methodSelect.onchange = updateAmountOptions;
+function updateAmountOptions() {
+    const selectedMethod = withdrawMethods.find(m => m.name === methodSelect.value);
+    if (selectedMethod) {
+        amountSelect.innerHTML = selectedMethod.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
+    }
+}
+
+withdrawForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    withdrawStatus.textContent = 'Processing...';
+    const amount = parseFloat(amountSelect.value);
+    
+    if (currentUser.balance < amount) {
+        withdrawStatus.textContent = 'Insufficient balance!';
+        return;
+    }
+
+    const { error } = await supabase.from('withdraw_requests').insert({
+        user_id: currentUser.telegram_id,
+        method: methodSelect.value,
+        amount: amount,
+        account_number: numberInput.value
+    });
+
+    if (error) {
+        withdrawStatus.textContent = `Error: ${error.message}`;
+    } else {
+        const newBalance = currentUser.balance - amount;
+        await supabase.from('users').update({ balance: newBalance }).eq('telegram_id', currentUser.telegram_id);
+        currentUser.balance = newBalance;
+        updateUserUI(currentUser);
+
+        withdrawStatus.textContent = 'Withdrawal request sent successfully!';
+        setTimeout(() => {
+            modal.style.display = "none";
+            withdrawStatus.textContent = "";
+        }, 2000);
     }
 });
 
