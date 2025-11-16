@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
         userIdElem.textContent = `@${tgUser.username || tgUser.id}`;
 
         try {
-            let { data: user } = await supabase.fromfrom('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
+            // Fixed: fromfrom → from
+            let { data: user } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
             if (!user) {
                 const { data: newUser } = await supabase.from('users').insert({
                     telegram_id: tgUser.id,
@@ -81,7 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             await Promise.all([loadSettings(), loadWithdrawMethods(), loadAdService(), loadDailyCheckin()]);
             startRealtimeUpdates();
-        } catch (err) { showError(err.message); }
+        } catch (err) {
+            showError(`Init error: ${err.message}`);
+        }
     }
 
     // Realtime
@@ -107,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadSettings() {
         const { data } = await supabase.from('settings').select('*').single();
         settings = data || {};
-        if (settings.main_button_reward) {
+        if (settings.main_button_reward > 0) {
             tg.MainButton.setText(`Earn ৳${settings.main_button_reward}`).onClick(() => watchAdBtn.click());
         }
     }
@@ -118,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const script = document.createElement('script');
         script.src = `https://ad.gigapub.tech/script?id=${settings.giga_app_id}`;
         script.onload = () => { gigaLoaded = true; watchAdBtn.disabled = false; };
+        script.onerror = () => showError('Ad script failed');
         document.head.appendChild(script);
     }
 
@@ -130,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (settings.daily_checkin_enabled && !hasChecked) {
             checkinCard.style.display = 'block';
             checkinReward.textContent = `৳${settings.daily_checkin_reward || 0.10}`;
-            checkinBtn.onclick = () => handleDailyCheckin();
+            checkinBtn.onclick = handleDailyCheckin;
         } else {
             checkinCard.style.display = 'none';
         }
@@ -148,39 +152,46 @@ document.addEventListener('DOMContentLoaded', () => {
             showSuccess(`+৳${settings.daily_checkin_reward} added!`);
             showConfetti();
             loadDailyCheckin();
-        } catch { checkinBtn.textContent = 'Check-in Now'; }
+        } catch {
+            checkinBtn.textContent = 'Check-in Now';
+            showError('Failed');
+        }
     }
 
-    // Load Tasks (Only in Tasks Tab)
-    window.loadTasks = async function() {
-        if (document.querySelector('[data-tab="tasks"]').classList.contains('active')) {
-            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
-            const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
-            taskList.innerHTML = tasks?.length ? '' : '<p style="text-align:center;color:var(--text-light);">No tasks</p>';
+    // Load Tasks – Only in Tasks Tab
+    async function loadTasks() {
+        taskList.innerHTML = '<p style="color:var(--text-light);text-align:center;">Loading tasks...</p>';
+        const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
+        const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
 
-            tasks?.forEach(task => {
-                const prog = progress?.find(p => p.task_id === task.id) || { ads_watched: 0, completed: false };
-                const percent = Math.min((prog.ads_watched / task.required_ads) * 100, 100);
-                const card = document.createElement('div');
-                card.className = 'task-card';
-                card.innerHTML = `
-                    <div class="task-title"><span class="task-emoji">${task.emoji || 'Target'}</span> ${task.title}</div>
-                    <div class="task-desc">${task.description}</div>
-                    <div class="task-reward">Reward: ৳${task.reward}</div>
-                    <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
-                    <div class="task-progress">Progress: ${prog.ads_watched}/${task.required_ads}</div>
-                    <button class="btn ${prog.completed ? 'btn-green' : 'btn-blue'} task-btn" data-id="${task.id}" ${prog.completed ? 'disabled' : ''}>
-                        ${prog.completed ? 'Completed' : 'Watch Ad'}
-                    </button>
-                `;
-                taskList.appendChild(card);
-            });
-
-            document.querySelectorAll('.task-btn').forEach(btn => {
-                btn.onclick = () => handleTask(btn);
-            });
+        if (!tasks?.length) {
+            taskList.innerHTML = '<p style="text-align:center;color:var(--text-light);">No active tasks</p>';
+            return;
         }
-    };
+
+        taskList.innerHTML = '';
+        tasks.forEach(task => {
+            const prog = progress?.find(p => p.task_id === task.id) || { ads_watched: 0, completed: false };
+            const percent = Math.min((prog.ads_watched / task.required_ads) * 100, 100);
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.innerHTML = `
+                <div class="task-title"><span class="task-emoji">${task.emoji || 'Target'}</span> ${task.title}</div>
+                <div class="task-desc">${task.description || ''}</div>
+                <div class="task-reward">Reward: ৳${task.reward}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
+                <div class="task-progress">Progress: ${prog.ads_watched}/${task.required_ads}</div>
+                <button class="btn ${prog.completed ? 'btn-green' : 'btn-blue'} task-btn" data-id="${task.id}" ${prog.completed ? 'disabled' : ''}>
+                    ${prog.completed ? 'Completed' : 'Watch Ad'}
+                </button>
+            `;
+            taskList.appendChild(card);
+        });
+
+        document.querySelectorAll('.task-btn').forEach(btn => {
+            btn.onclick = () => handleTask(btn);
+        });
+    }
 
     async function handleTask(btn) {
         const taskId = btn.dataset.id;
@@ -194,12 +205,15 @@ document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
             showSuccess(data[0].is_completed ? `+৳${data[0].reward_amount}` : 'Ad watched');
             if (data[0].is_completed) showConfetti();
-        } catch { btn.disabled = false; btn.textContent = 'Watch Ad'; }
+        } catch {
+            btn.disabled = false; btn.textContent = 'Watch Ad';
+            showError('Ad failed');
+        }
     }
 
     // Watch Ad
     watchAdBtn.onclick = async () => {
-        if (!gigaLoaded) return;
+        if (!gigaLoaded) return showError('Ad not ready');
         watchAdBtn.disabled = true;
         try {
             await window.showGiga();
@@ -235,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     withdrawForm.onsubmit = async e => {
         e.preventDefault();
-        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits');
+        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits required');
         const amount = +amountSelect.value;
         if (currentUser.balance < amount) return showWithdrawError('Low balance');
 
@@ -249,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else {
             currentUser.balance -= amount;
             updateUI();
-            showWithdrawSuccess('Sent!');
+            showWithdrawSuccess('Request sent!');
             showConfetti();
             setTimeout(() => modal.style.display = 'none', 2000);
         }
