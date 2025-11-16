@@ -23,52 +23,77 @@ const withdrawStatus = document.getElementById('withdraw-status');
 let currentUser = null;
 let withdrawMethods = [];
 
-// --- Tab Navigation ---
-document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-        document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
-        button.classList.add('active');
-        document.getElementById(button.dataset.tab).classList.add('active');
-    });
-});
-
-// --- Main App Logic ---
+// --- Main App Initialization ---
 async function initializeApp() {
     tg.ready();
+    statusElem.textContent = 'Loading user data...';
+
     const tgUser = tg.initDataUnsafe?.user;
-    if (!tgUser) { statusElem.textContent = 'Telegram user not found.'; return; }
-
-    const { data: settings } = await supabase.from('settings').select('giga_app_id').single();
-    if (settings && settings.giga_app_id) {
-        loadGigaScript(settings.giga_app_id);
-    } else {
-        statusElem.textContent = 'Ad service not configured.';
+    if (!tgUser) {
+        statusElem.textContent = 'Could not get user data from Telegram.';
+        return;
     }
 
-    let { data: user, error } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).single();
-    if (error && error.code === 'PGRST116') {
-        const {data: newUser} = await supabase.from('users').insert({telegram_id: tgUser.id, first_name: tgUser.first_name, last_name: tgUser.last_name, username: tgUser.username}).select().single();
-        currentUser = newUser;
-    } else if (user) {
+    try {
+        // Step 1: Find or create the user
+        let { data: user, error: fetchError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('telegram_id', tgUser.id)
+            .single();
+
+        if (fetchError && fetchError.code === 'PGRST116') {
+            // User not found, create a new one
+            statusElem.textContent = 'Creating your profile...';
+            const { data: newUser, error: insertError } = await supabase
+                .from('users')
+                .insert({
+                    telegram_id: tgUser.id,
+                    first_name: tgUser.first_name,
+                    last_name: tgUser.last_name,
+                    username: tgUser.username
+                })
+                .select()
+                .single();
+            
+            if (insertError) throw insertError;
+            user = newUser;
+        } else if (fetchError) {
+            throw fetchError;
+        }
+
         currentUser = user;
-    }
 
-    if (currentUser) {
         if (currentUser.is_banned) {
-            document.body.innerHTML = '<h1>You are banned.</h1>';
+            document.body.innerHTML = '<h1>Your account is banned.</h1>';
             return;
         }
+
+        // Step 2: Load UI and Tasks
         updateUserUI(currentUser);
-        loadTasks();
-    } else {
-        statusElem.textContent = "Could not load user profile.";
+        await loadTasks();
+
+        // Step 3: Load Ad Script
+        const { data: settings } = await supabase.from('settings').select('giga_app_id').single();
+        if (settings && settings.giga_app_id) {
+            loadGigaScript(settings.giga_app_id);
+        } else {
+            statusElem.textContent = 'Ad service not configured.';
+        }
+
+    } catch (error) {
+        console.error('Initialization Error:', error);
+        statusElem.textContent = `Error: ${error.message}`;
     }
 }
 
+// --- UI and Script Loading Functions ---
 function updateUserUI(user) {
+    if (!user) return;
     nameElem.textContent = user.first_name;
     balanceElem.textContent = `৳${parseFloat(user.balance).toFixed(2)}`;
     adViewsElem.textContent = user.ad_views;
+    statusElem.textContent = ''; // Clear loading message
 }
 
 function loadGigaScript(appId) {
@@ -79,7 +104,16 @@ function loadGigaScript(appId) {
     document.head.appendChild(script);
 }
 
-// --- Tasks Logic ---
+// --- Tab Navigation ---
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+        button.classList.add('active');
+        document.getElementById(button.dataset.tab).classList.add('active');
+    });
+});
+
+// --- Task Logic ---
 async function loadTasks() {
     if (!currentUser) return;
     const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
@@ -166,7 +200,7 @@ withdrawForm.addEventListener('submit', async (e) => {
     withdrawStatus.textContent = 'Processing...';
     const amount = parseFloat(amountSelect.value);
     
-    if (currentUser.balance < amount) {
+    if (!currentUser || currentUser.balance < amount) {
         withdrawStatus.textContent = 'Insufficient balance!';
         return;
     }
@@ -184,4 +218,5 @@ withdrawForm.addEventListener('submit', async (e) => {
     }
 });
 
+// Start the app
 initializeApp();
