@@ -92,7 +92,7 @@
         }
         .loader {
             text-align: center;
-            padding: 20px;
+            padding: 50px 20px;
             font-size: 18px;
         }
         /* Modal Styles */
@@ -165,7 +165,7 @@
     <script>
         const SUPABASE_URL = 'https://pcnqgdmusmcpstxfntgn.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjbnFnZG11c21jcHN0eGZudGduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzODMwMzUsImV4cCI6MjA3ODk1OTAzNX0.a8CjieXPwU29O9qXTSG7xcHrj3NWsxvb-ca8MuXx7OE';
-        const VPN_API_KEY = '1151161c93b97a'; // Placeholder, replace if different API is used.
+        const VPN_API_KEY = '1151161c93b97a'; 
 
         const supabase = supabase_js.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const tg = window.Telegram.WebApp;
@@ -177,29 +177,45 @@
             tg.ready();
             tg.expand();
             
-            if (!tg.initDataUnsafe.user) {
-                document.getElementById('loader').innerText = 'ব্যবহারকারী সনাক্ত করা যায়নি। অনুগ্রহ করে টেলিগ্রাম থেকে অ্যাপটি খুলুন।';
-                return;
-            }
-            
-            currentUser = tg.initDataUnsafe.user;
-            await initializeUser();
-            await fetchTasks();
-            await fetchVPNSettings();
+            try {
+                if (!tg.initDataUnsafe.user) {
+                    throw new Error('ব্যবহারকারী সনাক্ত করা যায়নি। অনুগ্রহ করে টেলিগ্রাম থেকে অ্যাপটি খুলুন।');
+                }
+                
+                currentUser = tg.initDataUnsafe.user;
+                
+                // Fetch all initial data in parallel to speed up loading
+                await Promise.all([
+                    initializeUser(),
+                    fetchTasks(),
+                    fetchVPNSettings()
+                ]);
 
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
+                // Show the main content only after all data is loaded
+                document.getElementById('app-content').style.display = 'block';
+
+            } catch (error) {
+                console.error("Initialization Failed:", error);
+                const loader = document.getElementById('loader');
+                loader.innerText = `একটি ত্রুটি ঘটেছে: ${error.message}. অনুগ্রহ করে আবার চেষ্টা করুন।`;
+                loader.style.color = 'red';
+            } finally {
+                // Hide loader only if content is successfully displayed
+                if (document.getElementById('app-content').style.display === 'block') {
+                    document.getElementById('loader').style.display = 'none';
+                }
+            }
         });
 
+
         async function initializeUser() {
-            // Check if user exists
             let { data: user, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', currentUser.id)
                 .single();
 
-            if (error && error.code === 'PGRST116') { // Not found
+            if (error && error.code === 'PGRST116') { // User not found, create new one
                 const { data: newUser, error: insertError } = await supabase
                     .from('users')
                     .insert([{ 
@@ -210,14 +226,10 @@
                     .select()
                     .single();
                 
-                if (insertError) {
-                    alert('ব্যবহারকারী তৈরি করতে একটি ত্রুটি হয়েছে: ' + insertError.message);
-                    return;
-                }
+                if (insertError) throw new Error('নতুন ব্যবহারকারী তৈরি করা যায়নি: ' + insertError.message);
                 user = newUser;
             } else if (error) {
-                 alert('ব্যবহারকারীর তথ্য আনতে ত্রুটি হয়েছে: ' + error.message);
-                 return;
+                 throw new Error('ব্যবহারকারীর তথ্য আনা যায়নি: ' + error.message);
             }
             
             currentUser.balance = user.balance;
@@ -225,8 +237,8 @@
         }
         
         function updateUI() {
-            document.getElementById('user-name').innerText = currentUser.first_name;
-            document.getElementById('user-username').innerText = `@${currentUser.username}`;
+            document.getElementById('user-name').innerText = currentUser.first_name || 'User';
+            document.getElementById('user-username').innerText = currentUser.username ? `@${currentUser.username}` : '';
             document.getElementById('user-balance').innerText = `৳${parseFloat(currentUser.balance).toFixed(2)}`;
         }
 
@@ -237,10 +249,7 @@
                 .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                alert('টাস্ক আনতে ত্রুটি হয়েছে: ' + error.message);
-                return;
-            }
+            if (error) throw new Error('টাস্ক আনা যায়নি: ' + error.message);
 
             const taskList = document.getElementById('task-list');
             taskList.innerHTML = '';
@@ -269,26 +278,22 @@
                 .select('value')
                 .eq('key', 'vpn_check')
                 .single();
-
-            if (data) {
-                vpnSettings = data.value;
-            }
+            if (error) console.warn("VPN সেটিংস আনা যায়নি।");
+            if (data) vpnSettings = data.value;
         }
         
         async function checkVPN() {
-            if (!vpnSettings.enabled) return true; // VPN check is off
+            if (!vpnSettings.enabled) return true;
 
             try {
-                // Using ip-api.com as an example. The provided API key might belong to another service.
-                // This part needs adjustment based on the actual VPN detection API service.
-                const response = await fetch(`http://ip-api.com/json`);
+                const response = await fetch(`https://ipapi.co/json/`);
                 if (!response.ok) throw new Error('API request failed');
                 
                 const data = await response.json();
-                if (data.status === 'success' && vpnSettings.allowed_countries.includes(data.countryCode)) {
+                if (data && vpnSettings.allowed_countries.includes(data.country_code)) {
                     return true;
                 } else {
-                    alert(`এই কাজটি করার জন্য আপনাকে অবশ্যই (${vpnSettings.allowed_countries.join(', ')}) দেশের VPN ব্যবহার করতে হবে।`);
+                    alert(`এই কাজটি করার জন্য আপনাকে অবশ্যই (${vpnSettings.allowed_countries.join(', ')}) দেশের VPN ব্যবহার করতে হবে। আপনার বর্তমান দেশ: ${data.country_name}`);
                     return false;
                 }
             } catch (error) {
@@ -303,23 +308,20 @@
             if (!isVpnOk) return;
 
             tg.MainButton.showProgress();
-            tg.MainButton.setText('বিজ্ঞাপন লোড হচ্ছে...');
             
             for (let i = 0; i < adsToWatch; i++) {
                 tg.MainButton.setText(`বিজ্ঞাপন দেখুন (${i + 1}/${adsToWatch})`);
                 try {
                     await window.showGiga();
-                    // Ad watched successfully
                 } catch (e) {
                     alert('বিজ্ঞাপন দেখাতে একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
                     console.error('Ad Error:', e);
                     tg.MainButton.hideProgress();
-                    tg.MainButton.setText('কাজ করুন');
+                    tg.MainButton.setText('কাজ করুন'); // Reset button text
                     return;
                 }
             }
 
-            // All ads watched, grant reward
             const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
             const { error } = await supabase
                 .from('users')
@@ -340,11 +342,12 @@
         async function openWithdrawModal() {
             const modal = document.getElementById('withdrawModal');
             const select = document.getElementById('withdraw-method');
-            select.innerHTML = '';
+            select.innerHTML = '<option>লোড হচ্ছে...</option>';
             
             const { data, error } = await supabase.from('withdrawal_methods').select('*').eq('is_active', true);
             if (error) return alert('পেমেন্ট পদ্ধতি আনতে সমস্যা হয়েছে।');
 
+            select.innerHTML = '';
             data.forEach(method => {
                 const option = document.createElement('option');
                 option.value = method.id;
@@ -359,33 +362,33 @@
             const account = document.getElementById('withdraw-account').value;
             const amount = parseFloat(document.getElementById('withdraw-amount').value);
 
-            if (!account || !amount || amount <= 0) {
-                return alert('অনুগ্রহ করে সঠিক তথ্য দিন।');
-            }
-            if (amount > currentUser.balance) {
-                return alert('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।');
-            }
+            if (!account || !amount || amount <= 0) return alert('অনুগ্রহ করে সঠিক তথ্য দিন।');
+            if (amount > currentUser.balance) return alert('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।');
 
-            const { error } = await supabase.from('withdrawals').insert([{
-                user_id: currentUser.id,
-                method_id: methodId,
-                account_details: account,
-                amount: amount
+            // Optimistic UI update: First deduct balance, then send request
+            const originalBalance = currentUser.balance;
+            const newBalance = originalBalance - amount;
+
+            // Update UI immediately
+            currentUser.balance = newBalance;
+            updateUI();
+
+            const { error: insertError } = await supabase.from('withdrawals').insert([{
+                user_id: currentUser.id, method_id: methodId, account_details: account, amount: amount
             }]);
 
-            if (error) {
-                return alert('রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে: ' + error.message);
+            if(insertError) {
+                // If request fails, revert balance
+                currentUser.balance = originalBalance;
+                updateUI();
+                return alert('রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে: ' + insertError.message);
             }
 
-            const newBalance = currentUser.balance - amount;
             const { error: updateError } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
-            
             if(updateError) {
-                // Revert withdrawal if balance update fails (important!)
-                alert('ব্যালেন্স আপডেট করতে সমস্যা হয়েছে।');
+                // This is a critical error, the balance is out of sync. Needs logging.
+                alert('ব্যালেন্স আপডেট করতে মারাত্মক সমস্যা হয়েছে। সাপোর্টে যোগাযোগ করুন।');
             } else {
-                 currentUser.balance = newBalance;
-                 updateUI();
                  alert('আপনার উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে।');
                  closeModal('withdrawModal');
             }
@@ -403,15 +406,8 @@
                 .eq('user_id', currentUser.id)
                 .order('requested_at', { ascending: false });
 
-            if(error) {
-                content.innerHTML = 'হিস্টোরি আনতে সমস্যা হয়েছে।';
-                return;
-            }
-            
-            if(data.length === 0) {
-                content.innerHTML = 'কোনো হিস্টোরি পাওয়া যায়নি।';
-                return;
-            }
+            if(error) return content.innerHTML = 'হিস্টোরি আনতে সমস্যা হয়েছে।';
+            if(data.length === 0) return content.innerHTML = 'কোনো হিস্টোরি পাওয়া যায়নি।';
 
             content.innerHTML = data.map(item => `
                 <div style="padding: 8px; border-bottom: 1px solid #eee;">
