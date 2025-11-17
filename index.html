@@ -16,15 +16,12 @@
     <style>
         :root {
             --primary: #6366f1;
-            --primary-light: #818cf8;
             --success: #10b981;
-            --success-light: #34d399;
             --gray-100: #f8fafc;
             --gray-200: #e2e8f0;
             --gray-800: #1e293b;
             --radius: 20px;
             --shadow: 0 20px 40px rgba(0,0,0,0.12);
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,26 +30,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: var(--gray-800);
             min-height: 100vh;
-            padding: 12px;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        @keyframes fadeInUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.1); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
+            overflow: hidden;
         }
 
         .container {
@@ -62,7 +40,9 @@
             border-radius: var(--radius);
             overflow: hidden;
             box-shadow: var(--shadow);
-            animation: bounceIn 0.8s ease-out 0.3s both;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -70,33 +50,15 @@
             color: white;
             padding: 25px 20px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
+            flex-shrink: 0;
         }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-            transform: rotate(45deg);
-            animation: shine 6s infinite;
-        }
-        @keyframes shine {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
         .balance-card {
             background: rgba(255,255,255,0.25);
             backdrop-filter: blur(12px);
             border-radius: 18px;
             padding: 20px;
-            margin-top: 18px;
+            margin-top: 16px;
             border: 1px solid rgba(255,255,255,0.3);
-            animation: pulse 4s infinite;
         }
         .balance-amount {
             font-size: 38px;
@@ -108,96 +70,63 @@
             padding: 20px;
             display: flex;
             gap: 16px;
+            flex-shrink: 0;
         }
         .btn {
             flex: 1;
-            padding: 18px;
+            padding: 16px;
             border: none;
             border-radius: 16px;
             font-weight: 600;
             font-size: 17px;
             cursor: pointer;
-            transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            gap: 10px;
         }
         .btn-withdraw { background: var(--success); color: white; }
         .btn-history { background: var(--gray-200); color: var(--gray-800); }
-        .btn:active { transform: scale(0.95); }
 
-        .section { padding: 0 20px 30px; }
+        .task-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 30px;
+            -webkit-overflow-scrolling: touch;
+        }
         .section-title {
             font-size: 20px;
             font-weight: 700;
             margin: 25px 0 18px;
             color: var(--gray-800);
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            text-align: center;
         }
 
         .task-item {
             background: var(--gray-100);
             border-radius: 18px;
-            padding: 20px;
-            margin-bottom: 16px;
+            padding: 22px;
+            margin-bottom: 18px;
             border: 1px solid var(--gray-200);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-        .task-item::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(120deg, transparent, rgba(99,102,241,0.05), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
-        }
-        .task-item:hover::before { transform: translateX(100%); }
-        .task-item:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(99,102,241,0.15);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
 
-        .task-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-        .task-reward {
-            color: var(--success);
-            font-weight: 700;
-            font-size: 17px;
-            margin-bottom: 12px;
-        }
+        .task-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+        .task-reward { color: var(--success); font-weight: 700; font-size: 18px; margin-bottom: 16px; }
 
         .progress-container {
-            height: 14px;
+            height: 16px;
             background: #e0e0e0;
             border-radius: 10px;
             overflow: hidden;
             margin: 16px 0;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--success), var(--success-light));
+            background: linear-gradient(90deg, var(--success), #34d399);
             width: 0%;
             border-radius: 10px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: progressShine 2s infinite;
-        }
-        @keyframes progressShine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            transition: width 0.8s ease;
         }
 
         .countdown {
@@ -205,8 +134,7 @@
             font-size: 19px;
             font-weight: 700;
             color: var(--primary);
-            margin: 14px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 16px 0;
         }
 
         .claim-btn {
@@ -220,52 +148,35 @@
             font-weight: 700;
             cursor: pointer;
             margin-top: 12px;
-            transition: var(--transition);
-            box-shadow: 0 8px 20px rgba(16,185,129,0.3);
         }
-        .claim-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(16,185,129,0.4); }
-        .claim-btn:active { transform: scale(0.95); }
         .claim-btn:disabled {
             background: #94a3b8;
             cursor: not-allowed;
-            transform: none;
-        }
-
-        .skeleton {
-            background: #e0e0e0;
-            border-radius: 12px;
-            animation: pulse 1.5s infinite;
-            height: 120px;
-            margin-bottom: 16px;
         }
 
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             backdrop-filter: blur(12px);
             z-index: 999;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
             padding: 20px;
         }
         .modal-content {
             background: white;
-            border-radius: 24px 24px 0 0;
+            border-radius: 24px;
             width: 100%;
             max-width: 420px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: var(--shadow);
-            transform: translateY(100%);
-            animation: slideUp 0.5s ease-out forwards;
-        }
-        @keyframes slideUp {
-            to { transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="header">
             <h1>Bkash Earn Free TK</h1>
@@ -273,46 +184,32 @@
                 <div style="font-size:15px; opacity:0.9;">মোট ব্যালেন্স</div>
                 <div class="balance-amount" id="user-balance">৳0.00</div>
             </div>
-            <div style="margin-top:14px; font-size:16px;">
-                <span id="user-name">User</span> • <small id="user-username"></small>
-            </div>
+            <div style="margin-top:14px;"><span id="user-name">User</span></div>
         </div>
 
         <div class="actions">
-            <button class="btn btn-withdraw" onclick="openWithdrawModal()">উইথড্র</button>
-            <button class="btn btn-history" onclick="alert('শিগগিরই আসছে!')">হিস্টোরি</button>
+            <button class="btn btn-withdraw" onclick="openWithdraw()">উইথড্র</button>
+            <button class="btn btn-history" onclick="showHistory()">হিস্টোরি</button>
         </div>
 
-        <div class="section">
+        <div class="task-section">
             <h3 class="section-title">আজকের টাস্ক</h3>
-            <div id="task-list">
-                <div class="skeleton"></div>
-                <div class="skeleton"></div>
-            </div>
+            <div id="task-list"></div>
         </div>
     </div>
 
-    <!-- Withdraw Modal -->
+    <!-- Modal -->
     <div id="withdrawModal" class="modal">
         <div class="modal-content">
-            <div style="background:var(--primary); color:white; padding:20px; text-align:center; font-size:20px; font-weight:600; border-radius:24px 24px 0 0;">
+            <div style="background:var(--primary); color:white; padding:20px; text-align:center; font-size:20px; border-radius:24px 24px 0 0;">
                 টাকা উইথড্র করুন
             </div>
             <div style="padding:24px;">
-                <div style="margin-bottom:18px;">
-                    <label style="display:block; margin-bottom:8px; font-weight:500;">পেমেন্ট মেথড</label>
-                    <select id="withdraw-method" style="width:100%; padding:14px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px;"></select>
-                </div>
-                <div style="margin-bottom:18px;">
-                    <label style="display:block; margin-bottom:8px; font-weight:500;">একাউন্ট নম্বর</label>
-                    <input type="text" id="withdraw-account" placeholder="01xxxxxxxxx" style="width:100%; padding:14px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px;">
-                </div>
-                <div style="margin-bottom:24px;">
-                    <label style="display:block; margin-bottom:8px; font-weight:500;">পরিমাণ</label>
-                    <input type="number" id="withdraw-amount" placeholder="সর্বনিম্ন ৳50" style="width:100%; padding:14px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px;">
-                </div>
+                <select id="withdraw-method" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;"></select>
+                <input type="text" id="withdraw-account" placeholder="মোবাইল নম্বর" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;">
+                <input type="number" id="withdraw-amount" placeholder="পরিমাণ (সর্বনিম্ন ৳50)" style="width:100%; padding:14px; border-radius:12px; margin-bottom:24px; border:1px solid #ddd;">
                 <div style="display:flex; gap:12px;">
-                    <button class="btn" style="background:#e2e8f0; flex:1;" onclick="closeModal('withdrawModal')">বাতিল</button>
+                    <button class="btn" style="background:#e2e8f0; flex:1;" onclick="closeModal()">বাতিল</button>
                     <button class="btn" style="background:var(--success); flex:1;" onclick="submitWithdraw()">সাবমিট</button>
                 </div>
             </div>
@@ -329,129 +226,155 @@
         tg.ready(); tg.expand();
 
         let currentUser = { id: null, balance: 0 };
-
-        // Number counting animation
-        function animateValue(id, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const value = progress * (end - start) + start;
-                document.getElementById(id).innerText = `৳${value.toFixed(2)}`;
-                if (progress < 1) window.requestAnimationFrame(step);
-            };
-            window.requestAnimationFrame(step);
-        }
+        const STORAGE_KEY = 'task_progress_' + (tg.initDataUnsafe?.user?.id || 'guest');
 
         window.addEventListener('load', async () => {
             if (!tg.initDataUnsafe?.user) return alert('টেলিগ্রাম থেকে খুলুন');
-            currentUser = { ...tg.initDataUnsafe.user };
-            document.getElementById('user-name').innerText = currentUser.first_name || 'User';
-            document.getElementById('user-username').innerText = currentUser.username ? `@${currentUser.username}` : '';
+            currentUser.id = tg.initDataUnsafe.user.id;
+            document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name || 'User';
 
-            await Promise.all([loadUser(), loadTasks()]);
+            await Promise.all([loadUser(), loadTasks(), loadMethods()]);
         });
 
         async function loadUser() {
-            let { data: user } = await supabase.from('users').select('balance').eq('id', currentUser.id).single();
-            if (!user) {
-                await supabase.from('users').insert({ id: currentUser.id, first_name: currentUser.first_name, balance: 0 });
-                user = { balance: 0 };
+            let { data } = await supabase.from('users').select('balance').eq('id', currentUser.id).single();
+            if (!data) {
+                await supabase.from('users').insert({ id: currentUser.id, balance: 0 });
+                data = { balance: 0 };
             }
-            currentUser.balance = user.balance || 0;
-            animateValue('user-balance', 0, currentUser.balance, 1500);
+            currentUser.balance = data.balance;
+            document.getElementById('user-balance').innerText = `৳${parseFloat(data.balance).toFixed(2)}`;
         }
 
         async function loadTasks() {
-            const { data } = await supabase.from('tasks').select('*').eq('is_active', true);
+            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
             const container = document.getElementById('task-list');
-            
-            setTimeout(() => {
-                if (!data || data.length === 0) {
-                    container.innerHTML = `<div style="text-align:center; padding:80px 20px; color:#64748b; font-size:18px;">
-                        আজ কোনো টাস্ক নেই<br><br><i class="fas fa-sad-tear fa-3x"></i>
-                    </div>`;
-                    return;
-                }
 
-                container.innerHTML = data.map((task, i) => `
-                    <div class="task-item" style="animation: fadeInUp 0.6s ease-out ${i*0.1}s both;">
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:60px; color:#64748b;">কোনো টাস্ক নেই</div>';
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => {
+                const progress = saved[task.id] || { watched: 0, claimed: false };
+                const percent = (progress.watched / task.ads_to_watch) * 100;
+                const isComplete = progress.watched >= task.ads_to_watch;
+
+                return `
+                    <div class="task-item">
                         <div class="task-title">${task.title}</div>
-                        <div class="task-reward">পুরস্কার: ৳${parseFloat(task.reward).toFixed(2)}</div>
-                        
-                        <div class="progress-container">
-                            <div class="progress-bar" id="progress-${task.id}"></div>
+                        <div class="task-reward">পুরস্কার: ৳${task.reward}</div>
+                        <div class="progress-container"><div class="progress-bar" style="width:${percent}%"></div></div>
+                        <div class="countdown">
+                            ${isComplete ? (progress.claimed ? 'ক্লেইম করা হয়েছে' : 'সম্পূর্ণ!') : `${progress.watched}/${task.ads_to_watch} অ্যাড দেখা হয়েছে`}
                         </div>
-                        <div class="countdown" id="countdown-${task.id}">শুরু করুন</div>
-                        
-                        <button class="claim-btn" id="start-${task.id}" onclick="startTask(${task.id}, ${task.ads_to_watch}, ${task.reward})">
-                            অ্যাড দেখুন
-                        </button>
-                        <button class="claim-btn" id="claim-${task.id}" style="display:none; background:#8b5cf6;" onclick="claimReward(${task.id}, ${task.reward})">
-                            Claim Reward ৳${task.reward}
-                        </button>
-                    </div>
-                `).join('');
-            }, 800);
+                        ${isComplete && !progress.claimed ? 
+                            `<button class="claim-btn" onclick="claimReward(${task.id}, ${task.reward})">Claim ৳${task.reward}</button>` :
+                            `<button class="claim-btn" ${isComplete ? 'disabled' : ''} onclick="continueTask(${task.id}, ${task.ads_to_watch}, ${task.reward}, ${progress.watched})">
+                                ${progress.watched > 0 ? 'চালিয়ে যান' : 'শুরু করুন'}
+                            </button>`
+                        }
+                    </div>`;
+            }).join('');
         }
 
-        async function startTask(taskId, totalAds, reward) {
-            const progressEl = document.getElementById(`progress-${taskId}`);
-            const countdownEl = document.getElementById(`countdown-${taskId}`);
-            const startBtn = document.getElementById(`start-${taskId}`);
-            const claimBtn = document.getElementById(`claim-${taskId}`);
+        window.continueTask = async (taskId, total, reward, watched) => {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = 'দেখা হচ্ছে...';
 
-            startBtn.disabled = true;
-            let watched = 0;
-
-            for (let i = 1; i <= totalAds; i++) {
-                countdownEl.innerHTML = `<i class="fas fa-play-circle"></i> বিজ্ঞাপন ${i}/${totalAds} দেখা হচ্ছে...`;
-                progressEl.style.width = `${(i / totalAds) * 100}%`;
-
+            for (let i = watched + 1; i <= total; i++) {
                 try {
                     await window.showGiga();
-                    watched++;
+                    watched = i;
+                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                    saved[taskId] = { watched, claimed: false };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+                    loadTasks();
                 } catch (e) {
-                    alert('বিজ্ঞাপন দেখাতে সমস্যা!');
-                    startBtn.disabled = false;
+                    btn.disabled = false;
+                    btn.innerHTML = 'আবার চেষ্টা করুন';
                     return;
                 }
             }
 
-            countdownEl.innerHTML = `সম্পূর্ণ হয়েছে!`;
-            startBtn.style.display = 'none';
-            claimBtn.style.display = 'block';
-            claimBtn.innerHTML = `Claim Reward ৳${reward}`;
-        }
+            loadTasks();
+        };
 
-        async function claimReward(taskId, reward) {
-            const btn = document.getElementById(`claim-${taskId}`);
-            btn.innerHTML = 'দিচ্ছি...';
-            btn.disabled = true;
-
+        window.claimReward = async (taskId, reward) => {
             const { error } = await supabase.from('users')
                 .update({ balance: supabase.raw('balance + ?', [reward]) })
                 .eq('id', currentUser.id);
 
             if (!error) {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                saved[taskId] = { watched: saved[taskId]?.watched || 0, claimed: true };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+
                 currentUser.balance += parseFloat(reward);
-                animateValue('user-balance', currentUser.balance - reward, currentUser.balance, 1200);
-                btn.innerHTML = 'ক্লেইম হয়েছে!';
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                document.getElementById('user-balance').innerText = `৳${currentUser.balance.toFixed(2)}`;
+                confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+                loadTasks();
             } else {
                 alert('ক্লেইম করতে সমস্যা');
             }
+        };
+
+        async function loadMethods() {
+            const { data } = await supabase.from('withdrawal_methods').select('*').eq('is_active', true).order('id');
+            const select = document.getElementById('withdraw-method');
+            select.innerHTML = data.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            if (data.length === 0) select.innerHTML = '<option value="1">bKash</option>';
         }
 
-        function openWithdrawModal() {
+        function openWithdraw() {
+            loadMethods();
             document.getElementById('withdrawModal').style.display = 'flex';
         }
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
+
+        function closeModal() {
+            document.getElementById('withdrawModal').style.display = 'none';
         }
+
         async function submitWithdraw() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            if (amount < 50 || amount > currentUser.balance) return alert('সঠিক পরিমাণ দিন');
+
+            await supabase.from('withdrawals').insert({
+                user_id: currentUser.id,
+                method_id: document.getElementById('withdraw-method').value || 1,
+                account_details: document.getElementById('withdraw-account').value,
+                amount: amount,
+                status: 'pending'
+            });
+
             alert('উইথড্র রিকোয়েস্ট পাঠানো হয়েছে!');
-            closeModal('withdrawModal');
+            closeModal();
+        }
+
+        async function showHistory() {
+            const { data } = await supabase.from('withdrawals')
+                .select('*, withdrawal_methods(name)')
+                .eq('user_id', currentUser.id)
+                .order('requested_at', { ascending: false });
+
+            let html = '<div style="padding:20px;"><h3 style="text-align:center; margin-bottom:20px;">উইথড্র হিস্টোরি</h3>';
+            if (!data || data.length === 0) html += '<p style="text-align:center; color:#666;">কোনো রিকোয়েস্ট নেই</p>';
+            else {
+                data.forEach(w => {
+                    html += `<div style="background:#f9f9f9; padding:12px; border-radius:12px; margin-bottom:10px;">
+                        <strong>৳${w.amount} → ${w.withdrawal_methods?.name || 'bKash'}</strong><br>
+                        <small>${new Date(w.requested_at).toLocaleString('bn-BD')}</small>
+                        <span style="float:right; color:${w.status==='paid'?'green':(w.status==='rejected'?'red':'orange')}">
+                            ${w.status==='paid'?'পেইড':(w.status==='rejected'?'রিজেক্টেড':'পেন্ডিং')}
+                        </span>
+                    </div>`;
+                });
+            }
+            html += '<button class="btn" style="width:100%; margin-top:20px; background:#e2e8f0;" onclick="closeModal()">বন্ধ করুন</button></div>';
+            document.getElementById('withdrawModal').innerHTML = `<div class="modal-content">${html}</div>`;
+            document.getElementById('withdrawModal').style.display = 'flex';
         }
     </script>
 </body>
