@@ -1,214 +1,433 @@
+<!-- user.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Coin Collector Game</title>
-    
-    <!-- টেলিগ্রাম মিনি অ্যাপের জন্য প্রয়োজনীয় স্ক্রিপ্ট -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Mini App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- আপনার দেওয়া Monetag Zone ID সহ SDK স্ক্রিপ্ট -->
-    <!-- এই কোডটি পরিবর্তন করার প্রয়োজন নেই -->
-    <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154' async></script>
-
+    <script src="https://ad.gigapub.tech/script?id=4203"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
         :root {
             --tg-theme-bg-color: #ffffff;
             --tg-theme-text-color: #000000;
             --tg-theme-button-color: #007bff;
             --tg-theme-button-text-color: #ffffff;
-            --gold-color: #FFD700;
-            --dark-gold-color: #B8860B;
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
         }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Noto Sans Bengali', sans-serif;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            height: 100vh;
-            color: var(--tg-theme-text-color);
-            background-color: var(--tg-theme-bg-color);
-            text-align: center;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .header {
-            width: 100%;
-        }
-
-        #userInfo {
-            font-size: 16px;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 12px;
-            background: rgba(128, 128, 128, 0.1);
-        }
-
-        .score-container {
-            margin: 20px 0;
-        }
-
-        #score {
-            font-size: 4em;
-            font-weight: bold;
-            color: var(--dark-gold-color);
-        }
-
-        .game-area {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #coinButton {
-            width: 150px;
-            height: 150px;
-            background-color: var(--gold-color);
-            border-radius: 50%;
-            border: 5px solid var(--dark-gold-color);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4em;
-            color: var(--dark-gold-color);
-            user-select: none;
-            transition: transform 0.1s ease;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        #coinButton:active {
-            transform: scale(0.95);
-        }
-
-        .reward-area {
-            width: 100%;
-            padding: 15px 0;
-        }
-
-        #rewardButton {
-            width: 100%;
             padding: 15px;
-            font-size: 1.2em;
-            font-weight: bold;
-            border: none;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            cursor: pointer;
-            background-color: var(--tg-theme-button-color);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .user-info { font-size: 14px; font-weight: 500; }
+        .balance {
+            background-color: var(--primary-color);
             color: var(--tg-theme-button-text-color);
-            transition: background-color 0.2s;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 700;
         }
-
-        #rewardButton:disabled {
-            background-color: #a0a0a0;
-            cursor: not-allowed;
+        .actions { display: flex; gap: 10px; margin-bottom: 25px; }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
         }
+        .btn-withdraw { background-color: var(--success-color); color: white; }
+        .btn-history { background-color: var(--secondary-color); color: white; }
+        .task-list {
+            margin-top: 20px;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .task-title { font-size: 16px; font-weight: 500; color: var(--dark-color);}
+        .task-reward { color: var(--success-color); font-weight: 700; }
+        .task-button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .loader {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.5);
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff; margin: auto; padding: 25px; border-radius: 12px;
+            width: 90%; max-width: 400px; color: #333;
+        }
+        .modal-content h3 { margin-top: 0; }
+        .modal-content input, .modal-content select { width: calc(100% - 20px); padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-actions button { padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div id="userInfo">Welcome!</div>
+    <div class="container">
+        <div id="loader" class="loader">লোড হচ্ছে...</div>
+
+        <div id="app-content" style="display: none;">
+            <div class="header">
+                <div class="user-info">
+                    <span id="user-name"></span><br>
+                    <small id="user-username"></small>
+                </div>
+                <div class="balance" id="user-balance">৳0.00</div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-withdraw" onclick="openWithdrawModal()">উইথড্র</button>
+                <button class="btn btn-history" onclick="showHistoryModal()">হিস্টোরি</button>
+            </div>
+
+            <h3 style="color: var(--dark-color);">আজকের টাস্ক</h3>
+            <div class="task-list" id="task-list">
+                <!-- Tasks will be loaded here -->
+            </div>
+        </div>
     </div>
 
-    <div class="score-container">
-        <h2>Your Score</h2>
-        <div id="score">0</div>
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <h3>টাকা উত্তোলন করুন</h3>
+            <select id="withdraw-method"></select>
+            <input type="text" id="withdraw-account" placeholder="আপনার একাউন্ট নম্বর">
+            <input type="number" id="withdraw-amount" placeholder="টাকার পরিমাণ">
+            <div class="modal-actions">
+                <button style="background-color: #6c757d; color: white;" onclick="closeModal('withdrawModal')">বন্ধ করুন</button>
+                <button style="background-color: #28a745; color: white;" onclick="submitWithdrawRequest()">সাবমিট</button>
+            </div>
+        </div>
     </div>
-
-    <div class="game-area">
-        <div id="coinButton" title="Click to collect coins!">🪙</div>
-    </div>
-
-    <div class="reward-area">
-        <button id="rewardButton" disabled>Watch Ad to Double Score!</button>
-        <p id="rewardMessage" style="font-size: 0.9em; margin-top: 10px;">Collect 10 points to unlock</p>
+    
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <h3>উইথড্র হিস্টোরি</h3>
+            <div id="history-content" style="max-height: 300px; overflow-y: auto;"></div>
+            <div class="modal-actions">
+                 <button style="background-color: #6c757d; color: white;" onclick="closeModal('historyModal')">বন্ধ করুন</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // টেলিগ্রাম ওয়েব অ্যাপ ইনিশিয়ালাইজ করা
+        const SUPABASE_URL = 'https://pcnqgdmusmcpstxfntgn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjbnFnZG11c21jcHN0eGZudGduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzODMwMzUsImV4cCI6MjA3ODk1OTAzNX0.a8CjieXPwU29O9qXTSG7xcHrj3NWsxvb-ca8MuXx7OE';
+        const VPN_API_KEY = '1151161c93b97a'; // Placeholder, replace if different API is used.
+
+        const supabase = supabase_js.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand(); // অ্যাপটি যেন পুরো স্ক্রিন জুড়ে থাকে
 
-        // ব্যবহারকারীর তথ্য দেখানো
-        const userInfoDiv = document.getElementById('userInfo');
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            userInfoDiv.textContent = `Player: ${user.first_name || 'Guest'}`;
+        let currentUser = {};
+        let vpnSettings = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            tg.ready();
+            tg.expand();
+            
+            if (!tg.initDataUnsafe.user) {
+                document.getElementById('loader').innerText = 'ব্যবহারকারী সনাক্ত করা যায়নি। অনুগ্রহ করে টেলিগ্রাম থেকে অ্যাপটি খুলুন।';
+                return;
+            }
+            
+            currentUser = tg.initDataUnsafe.user;
+            await initializeUser();
+            await fetchTasks();
+            await fetchVPNSettings();
+
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+        });
+
+        async function initializeUser() {
+            // Check if user exists
+            let { data: user, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (error && error.code === 'PGRST116') { // Not found
+                const { data: newUser, error: insertError } = await supabase
+                    .from('users')
+                    .insert([{ 
+                        id: currentUser.id, 
+                        username: currentUser.username,
+                        first_name: currentUser.first_name
+                    }])
+                    .select()
+                    .single();
+                
+                if (insertError) {
+                    alert('ব্যবহারকারী তৈরি করতে একটি ত্রুটি হয়েছে: ' + insertError.message);
+                    return;
+                }
+                user = newUser;
+            } else if (error) {
+                 alert('ব্যবহারকারীর তথ্য আনতে ত্রুটি হয়েছে: ' + error.message);
+                 return;
+            }
+            
+            currentUser.balance = user.balance;
+            updateUI();
         }
-
-        // গেমের প্রয়োজনীয় ভেরিয়েবল
-        let score = 0;
-        const scoreDisplay = document.getElementById('score');
-        const coinButton = document.getElementById('coinButton');
-        const rewardButton = document.getElementById('rewardButton');
-        const rewardMessage = document.getElementById('rewardMessage');
-
-        const REWARD_THRESHOLD = 10; // কত পয়েন্ট হলে রিওয়ার্ড বাটন চালু হবে
         
-        // আপনার Monetag Zone ID এখানে সেট করা হয়েছে
-        const MONETAG_ZONE_ID = '10197154';
-        const showAdFunction = window[`show_${MONETAG_ZONE_ID}`];
+        function updateUI() {
+            document.getElementById('user-name').innerText = currentUser.first_name;
+            document.getElementById('user-username').innerText = `@${currentUser.username}`;
+            document.getElementById('user-balance').innerText = `৳${parseFloat(currentUser.balance).toFixed(2)}`;
+        }
 
-        // স্কোর আপডেট করার জন্য ফাংশন
-        function updateScore(newScore) {
-            score = newScore;
-            scoreDisplay.textContent = score;
+        async function fetchTasks() {
+            const { data, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
 
-            // রিওয়ার্ড বাটন চালু বা বন্ধ করার লজিক
-            if (score >= REWARD_THRESHOLD) {
-                rewardButton.disabled = false;
-                rewardMessage.textContent = 'Click now to get a bonus!';
-            } else {
-                rewardButton.disabled = true;
-                rewardMessage.textContent = `Collect ${REWARD_THRESHOLD} points to unlock`;
+            if (error) {
+                alert('টাস্ক আনতে ত্রুটি হয়েছে: ' + error.message);
+                return;
+            }
+
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+            if (data.length === 0) {
+                taskList.innerHTML = '<p>আজকের জন্য কোন টাস্ক নেই।</p>';
+                return;
+            }
+
+            data.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
+                taskElement.innerHTML = `
+                    <div>
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-reward">পুরস্কার: ৳${parseFloat(task.reward).toFixed(2)}</div>
+                    </div>
+                    <button class="task-button" onclick="startTask(${task.id}, ${task.ads_to_watch}, ${task.reward})">কাজ করুন</button>
+                `;
+                taskList.appendChild(taskElement);
+            });
+        }
+        
+        async function fetchVPNSettings() {
+            const { data, error } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'vpn_check')
+                .single();
+
+            if (data) {
+                vpnSettings = data.value;
+            }
+        }
+        
+        async function checkVPN() {
+            if (!vpnSettings.enabled) return true; // VPN check is off
+
+            try {
+                // Using ip-api.com as an example. The provided API key might belong to another service.
+                // This part needs adjustment based on the actual VPN detection API service.
+                const response = await fetch(`http://ip-api.com/json`);
+                if (!response.ok) throw new Error('API request failed');
+                
+                const data = await response.json();
+                if (data.status === 'success' && vpnSettings.allowed_countries.includes(data.countryCode)) {
+                    return true;
+                } else {
+                    alert(`এই কাজটি করার জন্য আপনাকে অবশ্যই (${vpnSettings.allowed_countries.join(', ')}) দেশের VPN ব্যবহার করতে হবে।`);
+                    return false;
+                }
+            } catch (error) {
+                alert('VPN সনাক্ত করতে সমস্যা হচ্ছে। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।');
+                console.error("VPN Check Error:", error);
+                return false;
             }
         }
 
-        // কয়েনে ক্লিক করলে স্কোর ১ করে বাড়বে
-        coinButton.addEventListener('click', () => {
-            updateScore(score + 1);
-        });
+        async function startTask(taskId, adsToWatch, reward) {
+            const isVpnOk = await checkVPN();
+            if (!isVpnOk) return;
 
-        // "Watch Ad" বাটনে ক্লিক করলে বিজ্ঞাপন দেখানোর ফাংশন কল হবে
-        rewardButton.addEventListener('click', () => {
-            // Monetag-এর বিজ্ঞাপন দেখানোর ফাংশনটি আছে কি না তা পরীক্ষা করা
-            if (typeof showAdFunction === 'function') {
-                showAdFunction({
-                    // বিজ্ঞাপন সফলভাবে দেখা শেষ হলে এই কোডটি কাজ করবে
-                    onSuccess: function() {
-                        console.log('Ad watched successfully!');
-                        alert(`Congratulations! Your score has been doubled from ${score} to ${score * 2}!`);
-                        updateScore(score * 2);
-                    },
-                    // কোনো কারণে বিজ্ঞাপন দেখাতে ব্যর্থ হলে এই কোডটি কাজ করবে
-                    onError: function() {
-                        console.error('Failed to show the ad.');
-                        alert('Could not show ad. Please try again later.');
-                    }
-                });
-            } else {
-                console.error('Monetag SDK function not found.');
-                // এই মেসেজটি দেখানোর মানে হলো বিজ্ঞাপন ফরম্যাট চালু নেই অথবা নেটওয়ার্ক সমস্যা
-                alert('Ad service is not available right now.');
+            tg.MainButton.showProgress();
+            tg.MainButton.setText('বিজ্ঞাপন লোড হচ্ছে...');
+            
+            for (let i = 0; i < adsToWatch; i++) {
+                tg.MainButton.setText(`বিজ্ঞাপন দেখুন (${i + 1}/${adsToWatch})`);
+                try {
+                    await window.showGiga();
+                    // Ad watched successfully
+                } catch (e) {
+                    alert('বিজ্ঞাপন দেখাতে একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+                    console.error('Ad Error:', e);
+                    tg.MainButton.hideProgress();
+                    tg.MainButton.setText('কাজ করুন');
+                    return;
+                }
             }
-        });
 
-        // টেলিগ্রামের থিম পরিবর্তনের সাথে অ্যাপের স্টাইল পরিবর্তন
-        tg.onEvent('themeChanged', function() {
-            document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
-            document.body.style.color = tg.themeParams.text_color || '#000000';
-        });
+            // All ads watched, grant reward
+            const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
+            const { error } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', currentUser.id);
+
+            if (error) {
+                alert('পুরস্কার যোগ করতে সমস্যা হয়েছে: ' + error.message);
+            } else {
+                currentUser.balance = newBalance;
+                updateUI();
+                alert(`অভিনন্দন! আপনি ৳${parseFloat(reward).toFixed(2)} পেয়েছেন।`);
+            }
+            
+            tg.MainButton.hideProgress();
+        }
+
+        async function openWithdrawModal() {
+            const modal = document.getElementById('withdrawModal');
+            const select = document.getElementById('withdraw-method');
+            select.innerHTML = '';
+            
+            const { data, error } = await supabase.from('withdrawal_methods').select('*').eq('is_active', true);
+            if (error) return alert('পেমেন্ট পদ্ধতি আনতে সমস্যা হয়েছে।');
+
+            data.forEach(method => {
+                const option = document.createElement('option');
+                option.value = method.id;
+                option.innerText = method.name;
+                select.appendChild(option);
+            });
+            modal.style.display = 'flex';
+        }
+
+        async function submitWithdrawRequest() {
+            const methodId = document.getElementById('withdraw-method').value;
+            const account = document.getElementById('withdraw-account').value;
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+
+            if (!account || !amount || amount <= 0) {
+                return alert('অনুগ্রহ করে সঠিক তথ্য দিন।');
+            }
+            if (amount > currentUser.balance) {
+                return alert('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।');
+            }
+
+            const { error } = await supabase.from('withdrawals').insert([{
+                user_id: currentUser.id,
+                method_id: methodId,
+                account_details: account,
+                amount: amount
+            }]);
+
+            if (error) {
+                return alert('রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে: ' + error.message);
+            }
+
+            const newBalance = currentUser.balance - amount;
+            const { error: updateError } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+            
+            if(updateError) {
+                // Revert withdrawal if balance update fails (important!)
+                alert('ব্যালেন্স আপডেট করতে সমস্যা হয়েছে।');
+            } else {
+                 currentUser.balance = newBalance;
+                 updateUI();
+                 alert('আপনার উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে।');
+                 closeModal('withdrawModal');
+            }
+        }
+        
+        async function showHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('history-content');
+            content.innerHTML = 'লোড হচ্ছে...';
+            modal.style.display = 'flex';
+
+            const { data, error } = await supabase
+                .from('withdrawals')
+                .select(`*, withdrawal_methods(name)`)
+                .eq('user_id', currentUser.id)
+                .order('requested_at', { ascending: false });
+
+            if(error) {
+                content.innerHTML = 'হিস্টোরি আনতে সমস্যা হয়েছে।';
+                return;
+            }
+            
+            if(data.length === 0) {
+                content.innerHTML = 'কোনো হিস্টোরি পাওয়া যায়নি।';
+                return;
+            }
+
+            content.innerHTML = data.map(item => `
+                <div style="padding: 8px; border-bottom: 1px solid #eee;">
+                    <strong>পরিমাণ: ৳${item.amount}</strong> (${item.withdrawal_methods.name})<br>
+                    <small>${new Date(item.requested_at).toLocaleString('bn-BD')}</small>
+                    <span style="float: right; font-weight: bold; color: ${item.status === 'paid' ? 'green' : (item.status === 'rejected' ? 'red' : 'orange')}">
+                        ${item.status === 'pending' ? 'পেন্ডিং' : (item.status === 'paid' ? 'পেইড' : 'রিজেক্টেড')}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
 
     </script>
-
 </body>
 </html>
