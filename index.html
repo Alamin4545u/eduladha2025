@@ -18,10 +18,11 @@
         .header { background: linear-gradient(135deg, var(--primary), #4f46e5); color: white; padding: 25px 20px; text-align: center; flex-shrink: 0; }
         .balance-card { background: rgba(255,255,255,0.25); backdrop-filter: blur(12px); border-radius: 18px; padding: 20px; margin-top: 16px; border: 1px solid rgba(255,255,255,0.3); }
         .balance-amount { font-size: 38px; font-weight: 700; font-family: 'Poppins', sans-serif; }
-        .actions { padding: 20px; display: flex; gap: 16px; flex-shrink: 0; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 16px; font-weight: 600; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-withdraw { background: var(--success); color: white; }
-        .btn-history { background: var(--gray-200); color: var(--gray-800); }
+        .actions { padding: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; flex-shrink: 0; }
+        .btn { padding: 16px; border: none; border-radius: 16px; font-weight: 600; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-withdraw { background: var(--success); color: white; grid-column: span 1; }
+        .btn-history { background: var(--gray-200); color: var(--gray-800); grid-column: span 1; }
+        .btn-refer { background-color: #f59e0b; color: white; grid-column: span 1; }
         .task-section { flex: 1; overflow-y: auto; padding: 0 20px 30px; -webkit-overflow-scrolling: touch; }
         .section-title { font-size: 20px; font-weight: 700; margin: 25px 0 18px; color: var(--gray-800); text-align: center; }
         .task-item { background: var(--gray-100); border-radius: 18px; padding: 22px; margin-bottom: 18px; border: 1px solid var(--gray-200); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
@@ -39,7 +40,11 @@
 <body>
     <div class="container">
         <div class="header"><h1>Bkash Earn Free TK</h1><div class="balance-card"><div style="font-size:15px; opacity:0.9;">মোট ব্যালেন্স</div><div class="balance-amount" id="user-balance">৳0.00</div></div><div style="margin-top:14px;"><span id="user-name">User</span></div></div>
-        <div class="actions"><button class="btn btn-withdraw" onclick="openWithdrawModal()">উইথড্র</button><button class="btn btn-history" onclick="showHistoryModal()">হিস্টোরি</button></div>
+        <div class="actions">
+            <button class="btn btn-withdraw" onclick="openWithdrawModal()">উইথড্র</button>
+            <button class="btn btn-history" onclick="showHistoryModal()">হিস্টোরি</button>
+            <button class="btn btn-refer" onclick="showReferralModal()">রেফার</button>
+        </div>
         <div class="task-section"><h3 class="section-title">আজকের টাস্ক</h3><div id="task-list"></div></div>
     </div>
     <div id="appModal" class="modal"></div>
@@ -49,7 +54,7 @@
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
-        let currentUser = { id: null, balance: 0 };
+        let currentUser = { id: null, balance: 0, referral_code: null };
         let vpnSettings = {};
         let activeTimers = {};
 
@@ -57,17 +62,37 @@
             if (!tg.initDataUnsafe?.user) return alert('টেলিগ্রাম থেকে খুলুন');
             currentUser.id = tg.initDataUnsafe.user.id;
             document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name || 'User';
+            const startParam = tg.initDataUnsafe.start_param;
+            if (startParam) {
+                localStorage.setItem('referral_code', startParam);
+            }
             await Promise.all([loadUser(), loadTasks(), fetchVPNSettings()]);
             listenForTaskChanges();
         });
 
         async function loadUser() {
-            let { data } = await supabase.from('users').select('balance').eq('id', currentUser.id).single();
+            let { data } = await supabase.from('users').select('balance, referral_code, referred_by').eq('id', currentUser.id).single();
             if (!data) {
-                await supabase.from('users').insert({ id: currentUser.id, balance: 0 });
-                data = { balance: 0 };
+                const referredByCode = localStorage.getItem('referral_code');
+                let referredById = null;
+                if (referredByCode) {
+                    const { data: referrer } = await supabase.from('users').select('id, balance').eq('referral_code', referredByCode).single();
+                    if (referrer && referrer.id !== currentUser.id) {
+                        referredById = referrer.id;
+                        const { data: bonusSetting } = await supabase.from('settings').select('value').eq('key', 'referral_bonus').single();
+                        if (bonusSetting) {
+                            const referralBonus = parseFloat(bonusSetting.value.amount);
+                            await supabase.from('users').update({ balance: referrer.balance + referralBonus }).eq('id', referredById);
+                        }
+                    }
+                }
+                const newReferralCode = 'ref' + currentUser.id + Date.now().toString().slice(-4);
+                const { data: newUser } = await supabase.from('users').insert({ id: currentUser.id, balance: 0, referral_code: newReferralCode, referred_by: referredById }).select().single();
+                data = newUser;
+                localStorage.removeItem('referral_code');
             }
             currentUser.balance = data.balance;
+            currentUser.referral_code = data.referral_code;
             document.getElementById('user-balance').innerText = `৳${parseFloat(data.balance).toFixed(2)}`;
         }
         
@@ -84,7 +109,6 @@
             container.innerHTML = tasks.map(task => {
                 const completion = completions.find(c => c.task_id === task.id);
                 let buttonHtml, countdownHtml;
-
                 if (completion) {
                     const availableAt = new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000);
                     if (new Date() < availableAt) {
@@ -92,14 +116,14 @@
                         buttonHtml = `<button class="task-btn start" disabled>অপেক্ষা করুন</button>`;
                         startCountdown(task.id, availableAt);
                     } else {
-                        countdownHtml = `${task.ads_to_watch}/${task.ads_to_watch} অ্যাড দেখুন`;
+                        countdownHtml = `সম্পন্ন! পুরস্কার: ৳${task.reward}`;
                         buttonHtml = `<button class="task-btn start" onclick="startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})">আবার শুরু করুন</button>`;
                     }
                 } else {
-                    countdownHtml = `${task.ads_to_watch}/${task.ads_to_watch} অ্যাড দেখুন`;
+                    countdownHtml = `পুরস্কার: ৳${task.reward}`;
                     buttonHtml = `<button class="task-btn start" onclick="startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})">শুরু করুন</button>`;
                 }
-                return `<div class="task-item"><div class="task-title">${task.title}</div><div class="task-reward">পুরস্কার: ৳${task.reward}</div>${countdownHtml}${buttonHtml}</div>`;
+                return `<div class="task-item"><div class="task-title">${task.title}</div><div class="task-reward">${countdownHtml}</div>${buttonHtml}</div>`;
             }).join('');
         }
         
@@ -156,10 +180,8 @@
             const { error: completionError } = await supabase.from('user_task_completions').upsert({ user_id: currentUser.id, task_id: taskId, completed_at: new Date().toISOString() }, { onConflict: 'user_id,task_id' });
             if (completionError) {
                 alert('টাস্ক রেকর্ড করতে সমস্যা: ' + completionError.message);
-                loadTasks(); // Reset button state
-                return;
+                loadTasks(); return;
             }
-
             const newBalance = currentUser.balance + parseFloat(reward);
             const { error } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
             if (!error) {
@@ -168,7 +190,6 @@
                 loadTasks();
             } else { 
                 alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message);
-                // Revert completion if balance update fails
                 await supabase.from('user_task_completions').delete().eq('user_id', currentUser.id).eq('task_id', taskId);
                 loadTasks();
             }
@@ -192,13 +213,11 @@
             if (!account || !amount) return alert('সঠিক তথ্য দিন');
             if (amount > currentUser.balance) return alert('আপনার পর্যাপ্ত ব্যালেন্স নেই');
             btn.disabled = true; btn.innerText = 'প্রসেসিং...';
-
             const { error: insertError } = await supabase.from('withdrawals').insert({ user_id: currentUser.id, method_id: document.getElementById('withdraw-method').value, account_details: account, amount: amount, status: 'pending' });
             if (insertError) {
                 btn.disabled = false; btn.innerText = 'সাবমিট';
                 return alert('রিকোয়েস্ট পাঠাতে সমস্যা: ' + insertError.message);
             }
-            
             const newBalance = currentUser.balance - amount;
             const { error: updateError } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
             if (updateError) {
@@ -219,6 +238,29 @@
             historyHtml += '<button class="btn" style="width:100%; margin-top:20px; background:#e2e8f0;" onclick="closeModal()">বন্ধ করুন</button></div>';
             document.getElementById('appModal').innerHTML = `<div class="modal-content">${historyHtml}</div>`;
             document.getElementById('appModal').style.display = 'flex';
+        }
+
+        function showReferralModal() {
+            const botUsername = 'YOUR_BOT_USERNAME'; // **এখানে আপনার টেলিগ্রাম বটের ইউজারনেম দিন**
+            const referralLink = `https://t.me/${botUsername}?start=${currentUser.referral_code}`;
+            const modalHtml = `
+                <div class="modal-content" style="text-align: center; padding: 30px;">
+                    <h3>আপনার বন্ধুদের রেফার করুন!</h3>
+                    <p style="margin: 15px 0; color: #555;">আপনার রেফারেল লিঙ্ক বন্ধুদের সাথে শেয়ার করুন। প্রতি সফল রেফারেলে বোনাস পান!</p>
+                    <input type="text" value="${referralLink}" id="referralLinkInput" readonly style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 16px; margin-bottom: 15px;">
+                    <button class="btn" style="background: var(--primary); color: white; width: 100%;" onclick="copyReferralLink()">লিঙ্ক কপি করুন</button>
+                    <button class="btn" style="background: #e2e8f0; width: 100%; margin-top: 10px;" onclick="closeModal()">বন্ধ করুন</button>
+                </div>`;
+            document.getElementById('appModal').innerHTML = modalHtml;
+            document.getElementById('appModal').style.display = 'flex';
+        }
+
+        function copyReferralLink() {
+            const copyText = document.getElementById("referralLinkInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("রেফারেল লিঙ্ক কপি করা হয়েছে!");
         }
         
         function closeModal() { document.getElementById('appModal').style.display = 'none'; }
