@@ -240,8 +240,9 @@
             document.getElementById('appModal').style.display = 'flex';
         }
 
-        function showReferralModal() {
-            const botUsername = 'YOUR_BOT_USERNAME'; // **এখানে আপনার টেলিগ্রাম বটের ইউজারনেম দিন**
+        async function showReferralModal() {
+            const { data } = await supabase.from('settings').select('value').eq('key', 'bot_username').single();
+            const botUsername = data?.value?.username || 'YOUR_BOT_USERNAME';
             const referralLink = `https://t.me/${botUsername}?start=${currentUser.referral_code}`;
             const modalHtml = `
                 <div class="modal-content" style="text-align: center; padding: 30px;">
