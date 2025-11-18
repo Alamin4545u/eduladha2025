@@ -74,13 +74,17 @@
         async function loadTasks() {
             const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
             const { data: completions } = await supabase.from('user_task_completions').select('*').eq('user_id', currentUser.id);
+
             Object.values(activeTimers).forEach(clearInterval);
             activeTimers = {};
+
             const container = document.getElementById('task-list');
             if (!tasks || tasks.length === 0) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#64748b;">কোনো টাস্ক নেই</div>'; return; }
+
             container.innerHTML = tasks.map(task => {
                 const completion = completions.find(c => c.task_id === task.id);
                 let buttonHtml, countdownHtml;
+
                 if (completion) {
                     const availableAt = new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000);
                     if (new Date() < availableAt) {
@@ -150,14 +154,24 @@
         async function claimReward(btn, taskId, reward) {
             btn.innerText = 'ক্লেইম হচ্ছে...';
             const { error: completionError } = await supabase.from('user_task_completions').upsert({ user_id: currentUser.id, task_id: taskId, completed_at: new Date().toISOString() }, { onConflict: 'user_id,task_id' });
-            if (completionError) return alert('টাস্ক রেকর্ড করতে সমস্যা: ' + completionError.message);
+            if (completionError) {
+                alert('টাস্ক রেকর্ড করতে সমস্যা: ' + completionError.message);
+                loadTasks(); // Reset button state
+                return;
+            }
+
             const newBalance = currentUser.balance + parseFloat(reward);
             const { error } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
             if (!error) {
                 await loadUser();
                 confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
                 loadTasks();
-            } else { alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message); loadTasks(); }
+            } else { 
+                alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message);
+                // Revert completion if balance update fails
+                await supabase.from('user_task_completions').delete().eq('user_id', currentUser.id).eq('task_id', taskId);
+                loadTasks();
+            }
         };
 
         function listenForTaskChanges() {
@@ -172,7 +186,6 @@
             document.getElementById('appModal').style.display = 'flex';
         }
         
-        // **চূড়ান্ত সমাধান: উইথড্র করার পর ব্যালেন্স কেটে নেওয়া **
         async function submitWithdrawRequest(btn) {
             const amount = parseFloat(document.getElementById('withdraw-amount').value);
             const account = document.getElementById('withdraw-account').value;
@@ -186,7 +199,6 @@
                 return alert('রিকোয়েস্ট পাঠাতে সমস্যা: ' + insertError.message);
             }
             
-            // রিকোয়েস্ট সফল হলে ব্যালেন্স কেটে নেওয়া হচ্ছে
             const newBalance = currentUser.balance - amount;
             const { error: updateError } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
             if (updateError) {
