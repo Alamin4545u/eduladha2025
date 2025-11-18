@@ -108,22 +108,21 @@
 
             container.innerHTML = tasks.map(task => {
                 const completion = completions.find(c => c.task_id === task.id);
-                let buttonHtml, countdownHtml;
-                if (completion) {
-                    const availableAt = new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000);
-                    if (new Date() < availableAt) {
-                        countdownHtml = `<div class="countdown" id="timer-${task.id}">লোড হচ্ছে...</div>`;
-                        buttonHtml = `<button class="task-btn start" disabled>অপেক্ষা করুন</button>`;
-                        startCountdown(task.id, availableAt);
-                    } else {
-                        countdownHtml = `সম্পন্ন! পুরস্কার: ৳${task.reward}`;
-                        buttonHtml = `<button class="task-btn start" onclick="startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})">আবার শুরু করুন</button>`;
-                    }
+                const adsWatched = completion ? completion.ads_watched : 0;
+                let buttonHtml, infoHtml;
+
+                if (completion && new Date() < new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000) && adsWatched >= task.ads_to_watch) {
+                    infoHtml = `<div class="countdown" id="timer-${task.id}">লোড হচ্ছে...</div>`;
+                    buttonHtml = `<button class="task-btn start" disabled>অপেক্ষা করুন</button>`;
+                    startCountdown(task.id, new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000));
+                } else if (adsWatched > 0 && adsWatched < task.ads_to_watch) {
+                    infoHtml = `পুরস্কার: ৳${task.reward} <br> <span style="font-size: 16px; color: #333;">বিজ্ঞাপন দেখা হয়েছে: ${adsWatched}/${task.ads_to_watch}</span>`;
+                    buttonHtml = `<button class="task-btn start" onclick="startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})">দেখা চালিয়ে যান</button>`;
                 } else {
-                    countdownHtml = `পুরস্কার: ৳${task.reward}`;
+                    infoHtml = `পুরস্কার: ৳${task.reward}`;
                     buttonHtml = `<button class="task-btn start" onclick="startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})">শুরু করুন</button>`;
                 }
-                return `<div class="task-item"><div class="task-title">${task.title}</div><div class="task-reward">${countdownHtml}</div>${buttonHtml}</div>`;
+                return `<div class="task-item"><div class="task-title">${task.title}</div><div class="task-reward">${infoHtml}</div>${buttonHtml}</div>`;
             }).join('');
         }
         
@@ -166,10 +165,20 @@
         window.startTask = async (btn, taskId, totalAds, reward) => {
             if (!await checkVPN()) return;
             btn.disabled = true;
-            for (let i = 1; i <= totalAds; i++) {
+
+            let { data: completion } = await supabase.from('user_task_completions').select('ads_watched').eq('user_id', currentUser.id).eq('task_id', taskId).single();
+            let adsWatched = completion ? completion.ads_watched : 0;
+
+            for (let i = adsWatched + 1; i <= totalAds; i++) {
                 btn.innerText = `অ্যাড দেখুন (${i}/${totalAds})`;
-                try { await window.showGiga(); } catch (e) {
-                    alert('বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।'); btn.disabled = false; btn.innerText = 'আবার শুরু করুন'; return;
+                try {
+                    await window.showGiga();
+                    await supabase.from('user_task_completions').upsert({ user_id: currentUser.id, task_id: taskId, ads_watched: i, completed_at: new Date().toISOString() }, { onConflict: 'user_id,task_id' });
+                } catch (e) {
+                    alert('বিজ্ঞাপন দেখাতে সমস্যা হয়েছে।');
+                    btn.disabled = false;
+                    btn.innerText = 'আবার শুরু করুন';
+                    return;
                 }
             }
             claimReward(btn, taskId, reward);
@@ -177,11 +186,6 @@
         
         async function claimReward(btn, taskId, reward) {
             btn.innerText = 'ক্লেইম হচ্ছে...';
-            const { error: completionError } = await supabase.from('user_task_completions').upsert({ user_id: currentUser.id, task_id: taskId, completed_at: new Date().toISOString() }, { onConflict: 'user_id,task_id' });
-            if (completionError) {
-                alert('টাস্ক রেকর্ড করতে সমস্যা: ' + completionError.message);
-                loadTasks(); return;
-            }
             const newBalance = currentUser.balance + parseFloat(reward);
             const { error } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
             if (!error) {
@@ -190,7 +194,7 @@
                 loadTasks();
             } else { 
                 alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message);
-                await supabase.from('user_task_completions').delete().eq('user_id', currentUser.id).eq('task_id', taskId);
+                await supabase.from('user_task_completions').update({ ads_watched: 0 }).eq('user_id', currentUser.id).eq('task_id', taskId);
                 loadTasks();
             }
         };
@@ -200,20 +204,30 @@
         }
 
         async function openWithdrawModal() {
-            const { data } = await supabase.from('withdrawal_methods').select('*').eq('is_active', true).order('id');
-            const methodsOptions = data && data.length > 0 ? data.map(m => `<option value="${m.id}">${m.name}</option>`).join('') : '<option value="1">bKash</option>';
-            const modalHtml = `<div class="modal-content"><div style="background:var(--primary); color:white; padding:20px; text-align:center; font-size:20px; border-radius:24px 24px 0 0;">টাকা উইথড্র করুন</div><div style="padding:24px;"><select id="withdraw-method" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;">${methodsOptions}</select><input type="text" id="withdraw-account" placeholder="মোবাইল নম্বর" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;"><input type="number" id="withdraw-amount" placeholder="পরিমাণ" style="width:100%; padding:14px; border-radius:12px; margin-bottom:24px; border:1px solid #ddd;"><div style="display:flex; gap:12px;"><button class="btn" style="background:#e2e8f0;" onclick="closeModal()">বাতিল</button><button class="btn" style="background:var(--success);" onclick="submitWithdrawRequest(this)">সাবমিট</button></div></div></div>`;
+            const { data: methods } = await supabase.from('withdrawal_methods').select('id, name').eq('is_active', true).order('id');
+            const { data: setting } = await supabase.from('settings').select('value').eq('key', 'fixed_withdrawal_amount').single();
+
+            const fixedAmount = setting ? setting.value.amount : null;
+
+            if (!fixedAmount) {
+                alert('উত্তোলনের পরিমাণ নির্ধারণ করা হয়নি। অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।');
+                return;
+            }
+
+            const methodsOptions = methods && methods.length > 0 ? methods.map(m => `<option value="${m.id}">${m.name}</option>`).join('') : '';
+            const modalHtml = `<div class="modal-content"><div style="background:var(--primary); color:white; padding:20px; text-align:center; font-size:20px; border-radius:24px 24px 0 0;">টাকা উইথড্র করুন</div><div style="padding:24px;"><select id="withdraw-method" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;">${methodsOptions}</select><input type="text" id="withdraw-account" placeholder="মোবাইল নম্বর" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;"><input type="number" id="withdraw-amount" value="${fixedAmount}" readonly style="width:100%; padding:14px; border-radius:12px; margin-bottom:24px; border:1px solid #ddd; background-color: #f0f0f0;"><div style="display:flex; gap:12px;"><button class="btn" style="background:#e2e8f0;" onclick="closeModal()">বাতিল</button><button class="btn" style="background:var(--success);" onclick="submitWithdrawRequest(this, ${fixedAmount})">সাবমিট</button></div></div></div>`;
             document.getElementById('appModal').innerHTML = modalHtml;
             document.getElementById('appModal').style.display = 'flex';
         }
         
-        async function submitWithdrawRequest(btn) {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+        async function submitWithdrawRequest(btn, fixedAmount) {
+            const amount = fixedAmount;
             const account = document.getElementById('withdraw-account').value;
-            if (!account || !amount) return alert('সঠিক তথ্য দিন');
+            const methodId = document.getElementById('withdraw-method').value;
+            if (!account || !amount || !methodId) return alert('সঠিক তথ্য দিন');
             if (amount > currentUser.balance) return alert('আপনার পর্যাপ্ত ব্যালেন্স নেই');
             btn.disabled = true; btn.innerText = 'প্রসেসিং...';
-            const { error: insertError } = await supabase.from('withdrawals').insert({ user_id: currentUser.id, method_id: document.getElementById('withdraw-method').value, account_details: account, amount: amount, status: 'pending' });
+            const { error: insertError } = await supabase.from('withdrawals').insert({ user_id: currentUser.id, method_id: methodId, account_details: account, amount: amount, status: 'pending' });
             if (insertError) {
                 btn.disabled = false; btn.innerText = 'সাবমিট';
                 return alert('রিকোয়েস্ট পাঠাতে সমস্যা: ' + insertError.message);
