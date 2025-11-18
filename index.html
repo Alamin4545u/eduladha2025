@@ -27,7 +27,7 @@
         .section-title { font-size: 20px; font-weight: 700; margin: 25px 0 18px; color: var(--gray-800); text-align: center; }
         .task-item { background: var(--gray-100); border-radius: 18px; padding: 22px; margin-bottom: 18px; border: 1px solid var(--gray-200); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .task-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
-        .task-reward { color: var(--success); font-weight: 700; font-size: 18px; margin-bottom: 16px; }
+        .task-reward { color: #555; font-weight: 500; font-size: 16px; margin-bottom: 16px; }
         .countdown { text-align: center; font-size: 19px; font-weight: 700; color: var(--primary); margin: 16px 0; }
         .task-btn { width: 100%; padding: 16px; color: white; border: none; border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 12px; }
         .task-btn.claim { background: var(--success); }
@@ -57,9 +57,7 @@
         let currentUser = { id: null, balance: 0, referral_code: null };
         let vpnSettings = {};
         let activeTimers = {};
-        const POST_AD_BREAK_SECONDS = 10; // প্রতিটি অ্যাডের পর কত সেকেন্ড অপেক্ষা করতে হবে
 
-        // --- User and Task Loading Functions (No changes here) ---
         window.addEventListener('load', async () => {
             if (!tg.initDataUnsafe?.user) return alert('টেলিগ্রাম থেকে খুলুন');
             currentUser.id = tg.initDataUnsafe.user.id;
@@ -108,18 +106,20 @@
 
             container.innerHTML = tasks.map(task => {
                 const completion = completions.find(c => c.task_id === task.id);
-                let buttonHtml, infoHtml = `পুরস্কার: ৳${task.reward}`;
+                let buttonHtml;
+                let infoHtml = `পুরস্কার: <span style="color:var(--success); font-weight:bold;">৳${task.reward}</span>`;
+
                 if (completion) {
                     const availableAt = new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000);
                     if (new Date() < availableAt) {
-                        infoHtml = `<div class="countdown" id="timer-${task.id}">লোড হচ্ছে...</div>`;
+                        infoHtml = `<div class="countdown" id="timer-task-${task.id}">লোড হচ্ছে...</div>`;
                         buttonHtml = `<button class="task-btn start" disabled>অপেক্ষা করুন</button>`;
                         startCooldown(task.id, availableAt);
                     } else {
-                        buttonHtml = `<button class="task-btn start" onclick='startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})'>আবার শুরু করুন</button>`;
+                        buttonHtml = `<button class="task-btn start" onclick='startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward}, ${task.post_ad_break_seconds})'>আবার শুরু করুন</button>`;
                     }
                 } else {
-                    buttonHtml = `<button class="task-btn start" onclick='startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward})'>শুরু করুন</button>`;
+                    buttonHtml = `<button class="task-btn start" onclick='startTask(this, ${task.id}, ${task.ads_to_watch}, ${task.reward}, ${task.post_ad_break_seconds})'>শুরু করুন</button>`;
                 }
                 return `<div class="task-item" id="task-item-${task.id}">
                             <div class="task-title">${task.title}</div>
@@ -130,19 +130,23 @@
         }
         
         function startCooldown(taskId, availableAt) {
-            const timerElement = document.getElementById(`timer-${taskId}`);
+            const timerElement = document.getElementById(`timer-task-${taskId}`);
             if (!timerElement) return;
-            activeTimers[taskId] = setInterval(() => {
+
+            const updateTimer = () => {
                 const distance = availableAt - new Date();
                 if (distance < 0) {
                     clearInterval(activeTimers[taskId]);
                     loadTasks(); return;
                 }
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                timerElement.innerText = `${hours}ঘণ্টা ${minutes}মিনিট ${seconds}সেকেন্ড পর`;
-            }, 1000);
+                const hours = String(Math.floor((distance / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+                const minutes = String(Math.floor((distance / 1000 / 60) % 60)).padStart(2, '0');
+                const seconds = String(Math.floor((distance / 1000) % 60)).padStart(2, '0');
+                timerElement.innerText = `আবার পাওয়া যাবে: ${hours}:${minutes}:${seconds} পর`;
+            };
+            
+            updateTimer(); // initial call
+            activeTimers[taskId] = setInterval(updateTimer, 1000);
         }
 
         async function fetchVPNSettings() {
@@ -160,38 +164,23 @@
             } catch (error) { alert('VPN সনাক্ত করতে সমস্যা হচ্ছে।'); return false; }
         }
         
-        // --- NEW TASK HANDLING LOGIC ---
+        let currentTaskState = {};
 
-        let currentTaskState = {
-            button: null,
-            taskId: null,
-            totalAds: 0,
-            adsWatched: 0,
-            reward: 0
-        };
-
-        async function startTask(btn, taskId, totalAds, reward) {
+        async function startTask(btn, taskId, totalAds, reward, breakTime) {
             if (!await checkVPN()) return;
-
-            // Disable all other task buttons to prevent multiple tasks at once
             document.querySelectorAll('.task-btn').forEach(b => b.disabled = true);
             
-            currentTaskState = { btn, taskId, totalAds, adsWatched: 0, reward };
-            
-            // Start the first ad
+            currentTaskState = { btn, taskId, totalAds, adsWatched: 0, reward, breakTime: breakTime || 10 };
             handleNextStep();
         }
 
         function handleNextStep() {
-            const { btn, totalAds, adsWatched, taskId, reward } = currentTaskState;
-            
+            const { btn, totalAds, adsWatched } = currentTaskState;
             if (adsWatched < totalAds) {
-                // More ads to watch
                 btn.innerText = `বিজ্ঞাপন দেখুন (${adsWatched + 1}/${totalAds})`;
                 btn.disabled = false;
                 btn.onclick = () => showAndProcessAd();
             } else {
-                // All ads watched, time to claim
                 btn.innerText = 'ক্লেইম করুন';
                 btn.disabled = false;
                 btn.classList.remove('start');
@@ -206,18 +195,18 @@
             btn.innerText = 'বিজ্ঞাপন লোড হচ্ছে...';
             
             try {
-                await window.showGiga(); // Show the ad
+                await window.showGiga();
                 currentTaskState.adsWatched++;
-                startPostAdCountdown(); // Start countdown after ad
+                startPostAdCountdown();
             } catch (e) {
                 alert('বিজ্ঞাপন দেখাতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
-                handleNextStep(); // Let the user try again
+                handleNextStep();
             }
         }
 
         function startPostAdCountdown() {
-            const { btn } = currentTaskState;
-            let countdown = POST_AD_BREAK_SECONDS;
+            const { btn, breakTime } = currentTaskState;
+            let countdown = breakTime;
             btn.innerText = `অপেক্ষা করুন (${countdown}s)`;
 
             const timer = setInterval(() => {
@@ -226,7 +215,7 @@
                     btn.innerText = `অপেক্ষা করুন (${countdown}s)`;
                 } else {
                     clearInterval(timer);
-                    handleNextStep(); // Prepare for the next ad or claim
+                    handleNextStep();
                 }
             }, 1000);
         }
@@ -237,10 +226,10 @@
             btn.innerText = 'চূড়ান্ত বিজ্ঞাপন দেখানো হচ্ছে...';
 
             try {
-                await window.showGiga(); // Show the FINAL ad before payment
+                await window.showGiga();
             } catch (e) {
                  alert('চূড়ান্ত বিজ্ঞাপন দেখাতে সমস্যা হয়েছে। ক্লেইম করতে আবার চেষ্টা করুন।');
-                 handleNextStep(); // Let user try to claim again
+                 handleNextStep();
                  return;
             }
 
@@ -260,7 +249,6 @@
                 alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message);
                 await supabase.from('user_task_completions').delete().eq('user_id', currentUser.id).eq('task_id', taskId);
             }
-            // Finally, reload all tasks
             loadTasks();
         };
 
@@ -268,11 +256,14 @@
             supabase.channel('public:tasks').on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => { loadTasks(); }).subscribe();
         }
 
-        // --- MODAL FUNCTIONS (No changes here) ---
         async function openWithdrawModal() {
-            const { data: methods } = await supabase.from('withdrawal_methods').select('id, name').eq('is_active', true).order('id');
+            const { data: methods, error } = await supabase.from('withdrawal_methods').select('id, name').eq('is_active', true).order('id');
+            if (error || !methods) {
+                alert('পেমেন্ট মেথড লোড করা যায়নি।');
+                return;
+            }
+            
             const { data: setting } = await supabase.from('settings').select('value').eq('key', 'fixed_withdrawal_amount').single();
-
             const fixedAmount = setting ? setting.value.amount : null;
 
             if (!fixedAmount) {
@@ -280,7 +271,10 @@
                 return;
             }
 
-            const methodsOptions = methods && methods.length > 0 ? methods.map(m => `<option value="${m.id}">${m.name}</option>`).join('') : '';
+            // Fix for duplicate methods - filter unique names
+            const uniqueMethods = Array.from(new Map(methods.map(item => [item.name, item])).values());
+            const methodsOptions = uniqueMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            
             const modalHtml = `<div class="modal-content"><div style="background:var(--primary); color:white; padding:20px; text-align:center; font-size:20px; border-radius:24px 24px 0 0;">টাকা উইথড্র করুন</div><div style="padding:24px;"><select id="withdraw-method" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;">${methodsOptions}</select><input type="text" id="withdraw-account" placeholder="মোবাইল নম্বর" style="width:100%; padding:14px; border-radius:12px; margin-bottom:16px; border:1px solid #ddd;"><input type="number" id="withdraw-amount" value="${fixedAmount}" readonly style="width:100%; padding:14px; border-radius:12px; margin-bottom:24px; border:1px solid #ddd; background-color: #f0f0f0;"><div style="display:flex; gap:12px;"><button class="btn" style="background:#e2e8f0;" onclick="closeModal()">বাতিল</button><button class="btn" style="background:var(--success);" onclick="submitWithdrawRequest(this, ${fixedAmount})">সাবমিট</button></div></div></div>`;
             document.getElementById('appModal').innerHTML = modalHtml;
             document.getElementById('appModal').style.display = 'flex';
