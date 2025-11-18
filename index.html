@@ -74,17 +74,13 @@
         async function loadTasks() {
             const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
             const { data: completions } = await supabase.from('user_task_completions').select('*').eq('user_id', currentUser.id);
-
             Object.values(activeTimers).forEach(clearInterval);
             activeTimers = {};
-
             const container = document.getElementById('task-list');
             if (!tasks || tasks.length === 0) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#64748b;">কোনো টাস্ক নেই</div>'; return; }
-
             container.innerHTML = tasks.map(task => {
                 const completion = completions.find(c => c.task_id === task.id);
                 let buttonHtml, countdownHtml;
-
                 if (completion) {
                     const availableAt = new Date(new Date(completion.completed_at).getTime() + task.cooldown_hours * 60 * 60 * 1000);
                     if (new Date() < availableAt) {
@@ -110,8 +106,7 @@
                 const distance = availableAt - new Date();
                 if (distance < 0) {
                     clearInterval(activeTimers[taskId]);
-                    loadTasks();
-                    return;
+                    loadTasks(); return;
                 }
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -137,10 +132,7 @@
                     alert(`এই কাজটি করার জন্য আপনাকে অবশ্যই (${vpnSettings.allowed_countries.join(', ')}) দেশের VPN ব্যবহার করতে হবে।`);
                     return false;
                 }
-            } catch (error) {
-                alert('VPN সনাক্ত করতে সমস্যা হচ্ছে।');
-                return false;
-            }
+            } catch (error) { alert('VPN সনাক্ত করতে সমস্যা হচ্ছে।'); return false; }
         }
 
         window.startTask = async (btn, taskId, totalAds, reward) => {
@@ -159,25 +151,17 @@
             btn.innerText = 'ক্লেইম হচ্ছে...';
             const { error: completionError } = await supabase.from('user_task_completions').upsert({ user_id: currentUser.id, task_id: taskId, completed_at: new Date().toISOString() }, { onConflict: 'user_id,task_id' });
             if (completionError) return alert('টাস্ক রেকর্ড করতে সমস্যা: ' + completionError.message);
-
             const newBalance = currentUser.balance + parseFloat(reward);
             const { error } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
             if (!error) {
                 await loadUser();
                 confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
                 loadTasks();
-            } else {
-                alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message);
-                loadTasks();
-            }
+            } else { alert('ক্লেইম করতে সমস্যা হয়েছে: ' + error.message); loadTasks(); }
         };
 
         function listenForTaskChanges() {
-            supabase.channel('public:tasks')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
-                    loadTasks();
-                })
-                .subscribe();
+            supabase.channel('public:tasks').on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => { loadTasks(); }).subscribe();
         }
 
         async function openWithdrawModal() {
@@ -188,15 +172,30 @@
             document.getElementById('appModal').style.display = 'flex';
         }
         
+        // **চূড়ান্ত সমাধান: উইথড্র করার পর ব্যালেন্স কেটে নেওয়া **
         async function submitWithdrawRequest(btn) {
             const amount = parseFloat(document.getElementById('withdraw-amount').value);
             const account = document.getElementById('withdraw-account').value;
             if (!account || !amount) return alert('সঠিক তথ্য দিন');
             if (amount > currentUser.balance) return alert('আপনার পর্যাপ্ত ব্যালেন্স নেই');
             btn.disabled = true; btn.innerText = 'প্রসেসিং...';
-            const { error } = await supabase.from('withdrawals').insert({ user_id: currentUser.id, method_id: document.getElementById('withdraw-method').value, account_details: account, amount: amount, status: 'pending' });
-            if (error) { btn.disabled = false; btn.innerText = 'সাবমিট'; return alert('রিকোয়েস্ট পাঠাতে সমস্যা: ' + error.message); }
-            alert('উইথড্র রিকোয়েস্ট পাঠানো হয়েছে!');
+
+            const { error: insertError } = await supabase.from('withdrawals').insert({ user_id: currentUser.id, method_id: document.getElementById('withdraw-method').value, account_details: account, amount: amount, status: 'pending' });
+            if (insertError) {
+                btn.disabled = false; btn.innerText = 'সাবমিট';
+                return alert('রিকোয়েস্ট পাঠাতে সমস্যা: ' + insertError.message);
+            }
+            
+            // রিকোয়েস্ট সফল হলে ব্যালেন্স কেটে নেওয়া হচ্ছে
+            const newBalance = currentUser.balance - amount;
+            const { error: updateError } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+            if (updateError) {
+                alert('রিকোয়েস্ট পাঠানো হয়েছে কিন্তু ব্যালেন্স আপডেট হয়নি। সাপোর্টে যোগাযোগ করুন।');
+            } else {
+                currentUser.balance = newBalance;
+                document.getElementById('user-balance').innerText = `৳${newBalance.toFixed(2)}`;
+                alert('উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!');
+            }
             closeModal();
         }
 
