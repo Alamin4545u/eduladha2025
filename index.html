@@ -3,548 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Giga Rewards - Premium Mini App</title>
-    <!-- Font Awesome for Icons -->
+    <title>EarnApp User</title>
+
+    <!-- 1. Essential CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     
+    <!-- 2. GigaPub Ad Script -->
+    <script src="https://ad.gigapub.tech/script?id=4413"></script>
+
+    <!-- 3. Styles -->
     <style>
-        :root {
-            --primary: #00ffa3;
-            --primary-glow: rgba(0, 255, 163, 0.4);
-            --bg-dark: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text-main: #ffffff;
-            --text-muted: #94a3b8;
-            --danger: #ff4757;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none; /* Prevent text selection for app-like feel */
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 255, 163, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 20%);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* --- Header Section --- */
-        .app-header {
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 10;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .user-status {
-            font-size: 11px;
-            color: var(--primary);
-        }
-
-        /* --- Main Content --- */
-        .main-container {
-            flex: 1;
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-        }
-
-        /* Balance Display */
-        .balance-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 25px 40px;
-            text-align: center;
-            margin-bottom: 40px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            width: 100%;
-        }
-
-        .balance-label {
-            font-size: 14px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
-
-        .balance-amount {
-            font-size: 42px;
-            font-weight: 700;
-            color: var(--text-main);
-            text-shadow: 0 0 20px var(--primary-glow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .coin-icon {
-            color: #ffd700;
-            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
-            animation: float 3s ease-in-out infinite;
-        }
-
-        /* Action Button */
-        .click-btn-container {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .pulse-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            opacity: 0;
-            animation: pulse-ring 2s infinite;
-        }
-
-        .action-btn {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            border: none;
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            box-shadow: 
-                5px 5px 15px #0a0f1c, 
-                -5px -5px 15px #2d3d52,
-                inset 0 0 20px rgba(0, 255, 163, 0.1);
-            color: var(--primary);
-            font-size: 24px;
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            /* Default state when script is loading */
-            opacity: 0.6; 
-            pointer-events: none;
-        }
-        
-        .action-btn.ready {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
-            box-shadow: inset 5px 5px 10px #0a0f1c, inset -5px -5px 10px #2d3d52;
-        }
-
-        .action-btn i {
-            font-size: 32px;
-        }
-
-        .action-btn span {
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .action-btn.loading-state {
-            pointer-events: none;
-        }
-
-        .loader-spinner {
-            display: none;
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 255, 163, 0.1);
-            border-left-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Footer Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 100%;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
-
-        .toast {
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 12px 20px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            color: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast.success { border-left: 3px solid var(--primary); }
-        .toast.error { border-left: 3px solid var(--danger); }
-
-        /* Animations */
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            100% { transform: scale(1.3); opacity: 0; }
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .loader { width: 40px; height: 40px; border: 4px solid #1e293b; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .btn-press:active { transform: scale(0.96); }
     </style>
 </head>
 <body>
 
-    <!-- App Header -->
-    <header class="app-header">
-        <div class="user-info">
-            <div class="user-avatar">
-                <i class="fa-solid fa-user"></i>
-            </div>
-            <div>
-                <div class="user-name">Giga User</div>
-                <div class="user-status">Online</div>
-            </div>
-        </div>
-        <div class="menu-icon">
-            <i class="fa-solid fa-bars" style="color: var(--text-muted); cursor: pointer;"></i>
-        </div>
-    </header>
+    <div id="root"></div>
 
-    <!-- Main Content -->
-    <div class="main-container">
-        
-        <!-- Balance -->
-        <div class="balance-card">
-            <div class="balance-label">Current Balance</div>
-            <div class="balance-amount">
-                <i class="fa-solid fa-coins coin-icon"></i>
-                <span id="score">0.00</span>
-            </div>
-        </div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-        <!-- Big Action Button -->
-        <div class="click-btn-container">
-            <div class="pulse-ring"></div>
-            <!-- Initial state: Button is disabled until ad script loads -->
-            <button class="action-btn" id="adButton" onclick="handleAdClick()" disabled>
-                <i class="fa-solid fa-play" id="btnIcon"></i>
-                <div class="loader-spinner" id="btnLoader"></div>
-                <span id="btnText">Loading Ad...</span>
-            </button>
-        </div>
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = "https://uqyhgzhesvlvclszkkkm.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWhnemhlc3ZsdmNsc3pra2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMTIxNzYsImV4cCI6MjA3OTY4ODE3Nn0.X9sZ8V6fOcMbXWnbkMonT-gE1xH-TEDur3Aa7aEGjDc";
+        const IPINFO_TOKEN = "1151161c93b97a"; 
 
-        <!-- Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="adsWatched">0</div>
-                <div class="stat-label">Ads Watched</div>
-            </div>
-            <div class="stat-card">
-                <!-- Using total balance as mock "Earned Today" -->
-                <div class="stat-value" id="earnedToday">$0.00</div>
-                <div class="stat-label">Earned Today</div>
-            </div>
-        </div>
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    </div>
-
-    <!-- Toast Notification Area -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- EXTERNAL AD SCRIPT -->
-    <script src="https://ad.gigapub.tech/script?id=4413" defer></script>
-
-    <script>
-        // --- State Management ---
-        let balance = parseFloat(localStorage.getItem('giga_balance')) || 0.00;
-        let watchedCount = parseInt(localStorage.getItem('giga_watched')) || 0;
-        let isProcessing = false;
-
-        // --- DOM Elements ---
-        const scoreEl = document.getElementById('score');
-        const adsWatchedEl = document.getElementById('adsWatched');
-        const btnText = document.getElementById('btnText');
-        const btnIcon = document.getElementById('btnIcon');
-        const btnLoader = document.getElementById('btnLoader');
-        const adButton = document.getElementById('adButton');
-        const earnedTodayEl = document.getElementById('earnedToday');
-
-        // --- Init ---
-        updateUI();
-
-        // 1. Check for Telegram and Ad function readiness on window load
-        window.onload = function() {
-            // Start the readiness check
-            waitForAppReady();
-        };
-        
-        /**
-         * Checks repeatedly until the Telegram WebApp is ready and the external Ad script is loaded.
-         */
-        function waitForAppReady() {
-            let isTelegramReady = false;
-            let isAdScriptReady = false;
-
-            // Step 1: Check and initialize Telegram WebApp
-            if (window.Telegram && window.Telegram.WebApp) {
-                // Initialize Telegram WebApp features
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-                // Set header color
-                if (window.Telegram.WebApp.setHeaderColor) {
-                    window.Telegram.WebApp.setHeaderColor('#0f172a');
-                }
-                
-                // Update User Name if available
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                if(user) {
-                    document.querySelector('.user-name').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                }
-                isTelegramReady = true;
-            }
-
-            // Step 2: Check for Ad Script readiness
-            if (typeof window.showGiga === 'function') {
-                isAdScriptReady = true;
-            }
-
-            // Step 3: Enable button if both are ready (or if running outside of Telegram, just check for ad script)
-            const isOutsideTelegram = typeof window.Telegram === 'undefined';
+        // --- MAIN USER APP COMPONENT ---
+        const UserApp = () => {
+            // States
+            const [loading, setLoading] = useState(true);
+            const [view, setView] = useState('auth'); // auth, home, withdraw
+            const [user, setUser] = useState(null);
+            const [tasks, setTasks] = useState([]);
+            const [settings, setSettings] = useState({});
             
-            if (isAdScriptReady && (isTelegramReady || isOutsideTelegram)) {
-                adButton.classList.add('ready');
-                adButton.removeAttribute('disabled');
-                btnText.textContent = "WATCH AD";
-                showToast("App ready! Click to earn.", 'success'); 
-                console.log("App ready: Environment and Ad service initialized.");
-                return; // Stop checking
-            } else {
-                // If not ready, retry check after a delay
-                console.warn(`App not ready. TG ready: ${isTelegramReady}, Ad script loaded: ${isAdScriptReady}. Retrying...`);
-                btnText.textContent = "Loading Ad...";
-                setTimeout(waitForAppReady, 500); 
-            }
-        }
-        
-        // --- Logic ---
+            // VPN & Error States
+            const [vpnBlocked, setVpnBlocked] = useState(false);
+            const [detectedCountry, setDetectedCountry] = useState('Checking...');
+            const [errorMessage, setErrorMessage] = useState('');
 
-        function updateUI() {
-            scoreEl.textContent = balance.toFixed(2);
-            adsWatchedEl.textContent = watchedCount;
-            earnedTodayEl.textContent = `$${balance.toFixed(2)}`;
-        }
+            // Inputs
+            const [loginId, setLoginId] = useState('');
+            const [username, setUsername] = useState('');
+            const [withdrawAmount, setWithdrawAmount] = useState('');
+            const [wallet, setWallet] = useState('');
 
-        // --- Fixed Function ---
-        function handleAdClick() {
-            // 1. CRITICAL CALL: Initiate the ad script promise immediately as the absolute first step.
-            // This maximizes the chance of the browser recognizing it as a direct user action.
-            const adFunction = window.showGiga;
+            // --- 1. INITIALIZE APP ---
+            useEffect(() => {
+                init();
+            }, []);
 
-            // 2. Pre-checks and immediate return if necessary
-            if (isProcessing || typeof adFunction !== 'function') {
-                showToast('Ad service is busy or not ready.', 'error');
-                return;
-            }
+            const init = async () => {
+                setLoading(true);
+                try {
+                    // A. Fetch App Settings
+                    const { data: set, error } = await supabase.from('settings').select('*').eq('id', 1).single();
+                    if (error) throw new Error("Could not load app settings.");
+                    setSettings(set);
 
-            // 3. Execute the function synchronously under the click context
-            const adPromise = adFunction();
+                    // B. Maintenance Check
+                    if (set.maintenance_mode) {
+                        setErrorMessage("Server under maintenance. Please come back later.");
+                        setLoading(false);
+                        return;
+                    }
 
-            // 4. Update internal state and visual loading state
-            isProcessing = true; 
-            setLoading(true);
+                    // C. VPN Check
+                    if (set.vpn_enabled) {
+                        const passed = await checkVPN(set.allowed_countries);
+                        if (!passed) {
+                            setLoading(false); 
+                            return; // Stop here if blocked
+                        }
+                    }
 
-            adPromise
-                .then(() => {
-                    // SUCCESS: User watched the ad
-                    const reward = 0.15; // Define your reward amount
-                    
-                    balance = parseFloat((balance + reward).toFixed(2));
-                    watchedCount++;
-                    
-                    // Save to storage
-                    localStorage.setItem('giga_balance', balance.toFixed(2));
-                    localStorage.setItem('giga_watched', watchedCount);
-                    
-                    updateUI();
-                    showToast('Success! Reward added +$' + reward.toFixed(2), 'success');
-                })
-                .catch(e => {
-                    // ERROR: Script failed or user closed early/browser blocked
-                    console.error("Ad closed or failed:", e); 
-                    
-                    // Provide a user-friendly message for the common blocking error
-                    const message = e.message && e.message.includes('show ad') 
-                        ? 'Ad service blocked by browser or closed. Try again later.' 
-                        : 'Ad closed or failed to load. Try again.';
-                        
-                    showToast(message, 'error');
-                })
-                .finally(() => {
-                    // Stop Loading Visuals and reset guard flag
+                    // D. Auto Login (if ID saved)
+                    const savedId = localStorage.getItem('tg_id');
+                    if (savedId) {
+                        await handleLogin(savedId, localStorage.getItem('tg_user') || 'User');
+                    } else {
+                        setLoading(false);
+                        setView('auth');
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    setErrorMessage("Connection Error: " + err.message);
                     setLoading(false);
-                });
-        }
-
-        function setLoading(loading) {
-            isProcessing = loading;
-            
-            // Explicitly set disabled attribute for robustness
-            adButton.disabled = loading;
-            
-            // Original neumorphic shadow for the button
-            const originalShadow = '5px 5px 15px #0a0f1c, -5px -5px 15px #2d3d52, inset 0 0 20px rgba(0, 255, 163, 0.1)';
-            // Pressed/Loading inset shadow
-            const pressedShadow = 'inset 5px 5px 10px #0a0f1c, inset -5px -5px 10px #2d3d52';
-
-            if (loading) {
-                adButton.classList.add('loading-state');
-                adButton.classList.remove('ready'); // Temporarily remove 'ready' to stop pulse animation
-                btnText.style.display = 'none';
-                btnIcon.style.display = 'none';
-                btnLoader.style.display = 'block';
-                adButton.style.transform = 'scale(0.95)';
-                adButton.style.boxShadow = pressedShadow; // Apply inset shadow
-            } else {
-                adButton.classList.remove('loading-state');
-                // Only add 'ready' if the ad service is actually loaded (checked in waitForAppReady)
-                if (typeof window.showGiga === 'function') {
-                    adButton.classList.add('ready');
                 }
-                btnText.style.display = 'block';
-                btnIcon.style.display = 'block';
-                btnLoader.style.display = 'none';
-                adButton.style.transform = 'scale(1)';
-                adButton.style.boxShadow = originalShadow; // Restore original shadow
-            }
-        }
+            };
 
-        // --- Toast Notification System ---
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            let icon = type === 'success' ? '<i class="fa-solid fa-check-circle" style="color:var(--primary)"></i>' : '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger)"></i>';
-            
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `${icon} <span>${message}</span>`;
-            
-            container.appendChild(toast);
+            // --- 2. ROBUST VPN CHECKER ---
+            const checkVPN = async (allowedList) => {
+                try {
+                    const response = await fetch(`https://ipinfo.io/json?token=${IPINFO_TOKEN}`);
+                    if (!response.ok) throw new Error("IP Service Unavailable");
+                    
+                    const data = await response.json();
+                    setDetectedCountry(data.country); // e.g. 'US'
 
-            // Animate In
-            setTimeout(() => toast.classList.add('show'), 10);
+                    const allowed = allowedList.split(',').map(c => c.trim().toUpperCase());
+                    
+                    if (!allowed.includes(data.country)) {
+                        setVpnBlocked(true);
+                        return false;
+                    }
+                    return true;
+                } catch (e) {
+                    console.warn("VPN Check failed, proceeding with caution:", e);
+                    // If IP check fails, we allow access but warn console (or block if you prefer strict security)
+                    return true; 
+                }
+            };
 
-            // Remove after 3 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-        
+            // --- 3. AUTHENTICATION ---
+            const handleLogin = async (tgId, name) => {
+                setLoading(true);
+                try {
+                    // Check if profile exists
+                    let { data: profile } = await supabase.from('profiles').select('*').eq('telegram_id', tgId).single();
+
+                    // If not, create new
+                    if (!profile) {
+                        const { data: newProfile, error } = await supabase.from('profiles').insert([
+                            { id: crypto.randomUUID(), telegram_id: tgId, username: name, balance: 0 }
+                        ]).select().single();
+                        
+                        if (error) throw error;
+                        profile = newProfile;
+                    }
+
+                    if (profile.is_banned) {
+                        setErrorMessage("Your account has been banned.");
+                        setLoading(false);
+                        return;
+                    }
+
+                    // Success
+                    setUser(profile);
+                    localStorage.setItem('tg_id', tgId);
+                    localStorage.setItem('tg_user', name);
+                    
+                    // Fetch Tasks
+                    const { data: tData } = await supabase.from('tasks').select('*').order('id', { ascending: false });
+                    setTasks(tData || []);
+                    
+                    setView('home');
+
+                } catch (e) {
+                    alert("Login failed: " + e.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            // --- 4. EARNING LOGIC ---
+            const handleTask = (task) => {
+                // GigaPub Logic
+                if (window.showGiga) {
+                    window.showGiga()
+                        .then(() => verifyAndReward(task))
+                        .catch((e) => {
+                            console.log("Ad closed or failed", e);
+                            // Verify ad fail policy. For now, we reward to keep users happy
+                            verifyAndReward(task);
+                        });
+                } else {
+                    // Fallback for testing
+                    alert("Ad Script loading... wait 2 seconds.");
+                    setTimeout(() => verifyAndReward(task), 2000);
+                }
+            };
+
+            const verifyAndReward = async (task) => {
+                // Optimistic Update (Instant UI feedback)
+                const newBalance = user.balance + task.reward;
+                setUser(prev => ({ ...prev, balance: newBalance }));
+                
+                // Database Update
+                await supabase.from('profiles').update({ balance: newBalance }).eq('id', user.id);
+                
+                // Optional: Vibrate or sound
+                if(navigator.vibrate) navigator.vibrate(50);
+            };
+
+            // --- 5. WITHDRAWAL LOGIC ---
+            const submitWithdraw = async () => {
+                if (!wallet || !withdrawAmount) return alert("Fill all fields");
+                if (parseInt(withdrawAmount) > user.balance) return alert("Insufficient Balance");
+
+                setLoading(true);
+                const { error } = await supabase.from('withdrawals').insert([
+                    { 
+                        user_id: user.id, 
+                        amount: parseInt(withdrawAmount), 
+                        method: "USDT/Crypto", 
+                        wallet: wallet 
+                    }
+                ]);
+
+                if (!error) {
+                    const newBal = user.balance - parseInt(withdrawAmount);
+                    setUser({ ...user, balance: newBal });
+                    await supabase.from('profiles').update({ balance: newBal }).eq('id', user.id);
+                    alert("Withdrawal Requested!");
+                    setView('home');
+                } else {
+                    alert("Error: " + error.message);
+                }
+                setLoading(false);
+            };
+
+            // --- RENDER HELPERS ---
+
+            if (loading) return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                    <div className="loader"></div>
+                </div>
+            );
+
+            if (errorMessage) return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-900 p-6 text-center">
+                    <div className="glass p-6 rounded-xl border-red-500/50 border">
+                        <i className="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-4"></i>
+                        <h2 className="text-xl font-bold text-white mb-2">Error</h2>
+                        <p className="text-gray-400">{errorMessage}</p>
+                    </div>
+                </div>
+            );
+
+            if (vpnBlocked) return (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
+                    <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6 animate-pulse">
+                        <i className="fa-solid fa-shield-halved text-4xl text-red-500"></i>
+                    </div>
+                    <h2 className="text-3xl font-bold mb-2">Access Restricted</h2>
+                    <p className="text-gray-400 mb-6 max-w-xs mx-auto">
+                        This app is only available in: <br/>
+                        <span className="text-white font-mono font-bold">{settings.allowed_countries}</span>
+                    </p>
+                    <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 mb-8">
+                        <span className="text-xs text-gray-500 uppercase block mb-1">Your Location</span>
+                        <span className="text-xl font-bold text-yellow-400">{detectedCountry}</span>
+                    </div>
+                    <button onClick={() => window.location.reload()} className="px-8 py-3 bg-blue-600 rounded-full font-bold shadow-lg shadow-blue-600/30 btn-press">
+                        Refetch Location
+                    </button>
+                </div>
+            );
+
+            // --- VIEW: LOGIN ---
+            if (view === 'auth') return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                    {/* Background Blobs */}
+                    <div className="absolute top-0 left-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+
+                    <div className="glass w-full max-w-sm p-8 rounded-3xl relative z-10">
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
+                                <i className="fa-solid fa-sack-dollar text-3xl text-white"></i>
+                            </div>
+                            <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
+                            <p className="text-slate-400 text-sm">Login to start earning rewards</p>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs text-slate-400 ml-1">Telegram ID</label>
+                                <input 
+                                    type="number" 
+                                    value={loginId}
+                                    onChange={e => setLoginId(e.target.value)}
+                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition"
+                                    placeholder="e.g. 12345678"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400 ml-1">Username</label>
+                                <input 
+                                    type="text" 
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition"
+                                    placeholder="Your Name"
+                                />
+                            </div>
+                            <button 
+                                onClick={() => loginId && handleLogin(loginId, username || 'Anonymous')}
+                                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 btn-press mt-2"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // --- VIEW: DASHBOARD (HOME) ---
+            return (
+                <div className="min-h-screen bg-slate-900 pb-24">
+                    {/* Top Stats Card */}
+                    <div className="relative bg-gradient-to-b from-blue-900 to-slate-900 p-6 pb-12 rounded-b-[2.5rem] shadow-2xl">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold border border-white/10">
+                                    {user.username.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white leading-tight">{user.username}</h3>
+                                    <span className="text-xs text-green-400 flex items-center gap-1">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Online
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="bg-white/10 px-3 py-1 rounded-full border border-white/10 text-xs text-white">
+                                <i className="fa-solid fa-earth-americas mr-1"></i> {detectedCountry}
+                            </div>
+                        </div>
+                        
+                        <div className="text-center">
+                            <span className="text-slate-400 text-sm font-medium uppercase tracking-wider">Total Balance</span>
+                            <div className="text-5xl font-black text-white mt-2 drop-shadow-lg">
+                                {user.balance.toLocaleString()}
+                            </div>
+                            <div className="text-yellow-400 font-bold mt-1 text-sm">GOLD COINS</div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="absolute -bottom-6 left-6 right-6 flex gap-4">
+                            <button 
+                                onClick={() => setView('withdraw')}
+                                className="flex-1 bg-slate-800 border border-slate-700 text-white py-3 rounded-xl shadow-lg btn-press flex items-center justify-center gap-2 font-bold"
+                            >
+                                <i className="fa-solid fa-wallet text-blue-400"></i> Withdraw
+                            </button>
+                            <button 
+                                onClick={() => setView('home')}
+                                className="flex-1 bg-slate-800 border border-slate-700 text-white py-3 rounded-xl shadow-lg btn-press flex items-center justify-center gap-2 font-bold"
+                            >
+                                <i className="fa-solid fa-list text-green-400"></i> Tasks
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Scrollable Content */}
+                    <div className="mt-12 px-5">
+                        {/* Announcement Banner */}
+                        {settings.announcement && (
+                            <div className="mb-6 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 border border-indigo-500/30 p-4 rounded-2xl flex gap-3 items-start">
+                                <div className="bg-indigo-500/20 p-2 rounded-lg shrink-0">
+                                    <i className="fa-solid fa-bullhorn text-indigo-400"></i>
+                                </div>
+                                <p className="text-sm text-indigo-100 leading-relaxed pt-1">{settings.announcement}</p>
+                            </div>
+                        )}
+
+                        {/* Home: Task List */}
+                        {view === 'home' && (
+                            <div>
+                                <h3 className="text-slate-400 font-bold mb-4 uppercase text-xs tracking-wider">Available Tasks ({tasks.length})</h3>
+                                <div className="space-y-3">
+                                    {tasks.length === 0 ? (
+                                        <div className="text-center py-10 text-gray-500">
+                                            <i className="fa-solid fa-box-open text-4xl mb-2 opacity-50"></i>
+                                            <p>No tasks right now.</p>
+                                        </div>
+                                    ) : (
+                                        tasks.map((task, i) => (
+                                            <div 
+                                                key={task.id} 
+                                                onClick={() => handleTask(task)}
+                                                className="glass p-4 rounded-2xl flex items-center justify-between group active:scale-95 transition cursor-pointer hover:bg-slate-800"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition">
+                                                        <i className="fa-solid fa-play"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-white text-sm">{task.title}</h4>
+                                                        <p className="text-xs text-slate-400 mt-1">
+                                                            <i className="fa-regular fa-clock mr-1"></i> {task.timer} seconds
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-lg font-bold text-sm border border-yellow-500/20">
+                                                    +{task.reward}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Withdraw View */}
+                        {view === 'withdraw' && (
+                            <div className="glass p-6 rounded-3xl animate-fade-in">
+                                <h3 className="text-xl font-bold text-white mb-6">Request Payout</h3>
+                                
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="text-xs text-slate-400 ml-1 block mb-2">Wallet Address (TRC20/Binance)</label>
+                                        <div className="relative">
+                                            <i className="fa-solid fa-qrcode absolute left-4 top-3.5 text-slate-500"></i>
+                                            <input 
+                                                type="text" 
+                                                value={wallet}
+                                                onChange={e => setWallet(e.target.value)}
+                                                placeholder="Paste address here..."
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-slate-400 ml-1 block mb-2">Amount (Coins)</label>
+                                        <div className="relative">
+                                            <i className="fa-solid fa-coins absolute left-4 top-3.5 text-slate-500"></i>
+                                            <input 
+                                                type="number" 
+                                                value={withdrawAmount}
+                                                onChange={e => setWithdrawAmount(e.target.value)}
+                                                placeholder={`Min: 1000 | Max: ${user.balance}`}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 outline-none font-mono"
+                                            />
+                                        </div>
+                                        <div className="text-right mt-2">
+                                            <button 
+                                                onClick={() => setWithdrawAmount(user.balance)}
+                                                className="text-xs text-blue-400 hover:text-blue-300 font-bold"
+                                            >
+                                                Max Amount
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button 
+                                        onClick={submitWithdraw}
+                                        className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/20 btn-press"
+                                    >
+                                        Confirm Withdraw
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={() => setView('home')}
+                                        className="w-full text-slate-500 text-sm font-bold py-2"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<UserApp />);
     </script>
 </body>
 </html>
