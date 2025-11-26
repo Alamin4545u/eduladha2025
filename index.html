@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gigapub Premium Auto-Earner</title>
+    <title>GigaEarn TWA</title>
     
-    <!-- External Assets -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-    <!-- 🔥 GIGAPUB SCRIPT (ID: 4413) 🔥 -->
-    <script src="https://ad.gigapub.tech/script?id=4413" onerror="app.scriptError()"></script>
+    <!-- 🔥 REQUIRED SCRIPTS 🔥 -->
+    <!-- 1. Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- 2. Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 3. Gigapub Ad Script -->
+    <script src="https://ad.gigapub.tech/script?id=4413" onerror="App.scriptError()"></script>
 
     <style>
         :root {
@@ -59,38 +65,11 @@
             margin-bottom: 20px;
         }
 
-        /* Auth Screen */
-        #auth-screen {
-            position: fixed; inset: 0; z-index: 900;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex; align-items: center; justify-content: center; padding: 20px;
+        /* Loading Spinner */
+        .spinner {
+            width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); 
+            border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;
         }
-        .login-card { text-align: center; width: 100%; max-width: 350px; }
-
-        /* Inputs & Buttons */
-        input {
-            width: 100%; padding: 16px; margin: 20px 0;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-            border-radius: 16px; color: white; font-size: 1rem; outline: none;
-            text-align: center; transition: 0.3s;
-        }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
-
-        .btn-primary {
-            width: 100%; padding: 16px; border: none; border-radius: 16px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; font-weight: 700; cursor: pointer; font-size: 1rem;
-            box-shadow: 0 4px 20px var(--primary-glow); transition: transform 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-danger {
-            width: 100%; padding: 16px; border: none; border-radius: 16px;
-            background: linear-gradient(135deg, #ef4444, #b91c1c);
-            color: white; font-weight: 700; cursor: pointer; font-size: 1rem;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        button:active { transform: scale(0.96); }
 
         /* Layout */
         #app-container { height: 100%; display: flex; flex-direction: column; }
@@ -122,6 +101,19 @@
             border: 1px solid var(--glass-border);
             border-radius: 24px; padding: 25px; margin-bottom: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        /* Coming Soon Overlay */
+        .coming-soon-overlay {
+            position: absolute; inset: 0; background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px); border-radius: 24px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .cs-badge {
+            background: var(--primary); color: white; padding: 5px 15px;
+            border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;
         }
 
         /* Stats */
@@ -160,7 +152,7 @@
 
         /* Console Log */
         .console-log {
-            width: 100%; height: 100px; background: rgba(0,0,0,0.5); border-radius: 12px;
+            width: 100%; height: 80px; background: rgba(0,0,0,0.5); border-radius: 12px;
             padding: 10px; font-family: 'Courier New', monospace; font-size: 0.75rem;
             overflow-y: auto; margin-top: 20px; border: 1px solid var(--glass-border);
         }
@@ -179,10 +171,6 @@
         }
         .nav-btn { color: #64748b; font-size: 1.6rem; padding: 10px; position: relative; transition: 0.3s; }
         .nav-btn.active { color: var(--text-main); }
-        .nav-btn.active::after {
-            content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-            width: 5px; height: 5px; background: var(--primary); border-radius: 50%;
-        }
         .play-btn-wrapper { transform: translateY(-25px); }
         .play-btn {
             width: 65px; height: 65px; background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -191,10 +179,26 @@
             border: 5px solid var(--bg-dark); cursor: pointer;
         }
 
-        /* Animations */
+        /* Buttons */
+        .btn-primary {
+            width: 100%; padding: 16px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; font-weight: 700; cursor: pointer; font-size: 1rem;
+            box-shadow: 0 4px 20px var(--primary-glow); transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-danger {
+            width: 100%; padding: 16px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: white; font-weight: 700; cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        button:active { transform: scale(0.96); }
+
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
@@ -205,20 +209,10 @@
         <div class="logo-pulse">
             <i class="ti ti-bolt"></i>
         </div>
-        <h2>GigaEarn</h2>
-        <p style="color: var(--text-muted); margin-top: 10px;">Checking Ad Network...</p>
-    </div>
-
-    <!-- Login Screen -->
-    <div id="auth-screen" class="hidden">
-        <div class="glass-card login-card fade-in">
-            <div style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"><i class="ti ti-user-circle"></i></div>
-            <h1>Welcome Back</h1>
-            <p style="color: var(--text-muted);">Enter your username to begin.</p>
-            <input type="text" id="username-input" placeholder="e.g. JoyQuiz123" autocomplete="off">
-            <button class="btn-primary" onclick="App.login()">
-                Start Earning <i class="ti ti-arrow-right"></i>
-            </button>
+        <h2>GigaEarn Bot</h2>
+        <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px; color: var(--text-muted);">
+            <div class="spinner"></div>
+            <span>Connecting Supabase...</span>
         </div>
     </div>
 
@@ -227,11 +221,11 @@
         
         <header>
             <div class="user-info">
-                <span>Welcome,</span>
-                <h3 id="display-username">User</h3>
+                <span>Hello,</span>
+                <h3 id="display-username">Loading...</h3>
             </div>
             <div class="balance-badge">
-                <i class="ti ti-coin"></i> <span id="header-balance">0.00</span>
+                <i class="ti ti-coin"></i> <span id="header-balance">0</span>
             </div>
         </header>
 
@@ -245,26 +239,26 @@
                         <h2 id="total-impressions">0</h2>
                     </div>
                     <div class="stat-box purple">
-                        <i class="ti ti-wallet"></i>
-                        <span>Earnings</span>
-                        <h2 id="total-earnings">$0.00</h2>
+                        <i class="ti ti-diamond"></i>
+                        <span>Points</span>
+                        <h2 id="total-points">0</h2>
                     </div>
                 </div>
 
                 <div class="glass-card" style="margin-top: 20px;">
-                    <h3>Account Status</h3>
+                    <h3>Telegram User</h3>
                     <div style="margin-top: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
-                        <span style="color: var(--text-muted);">Network</span>
-                        <span style="color: var(--success);">Gigapub Direct</span>
+                        <span style="color: var(--text-muted);">Status</span>
+                        <span style="color: var(--success);">Connected</span>
                     </div>
                     <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-                        <span style="color: var(--text-muted);">User ID</span>
+                        <span style="color: var(--text-muted);">TG ID</span>
                         <span id="user-uid" style="font-family: monospace;">---</span>
                     </div>
                 </div>
 
                 <button class="btn-primary" onclick="App.navTo('earn')">
-                    <i class="ti ti-player-play"></i> Open Auto-Panel
+                    <i class="ti ti-player-play"></i> Start Earning
                 </button>
             </section>
 
@@ -288,37 +282,34 @@
                     </div>
 
                     <button id="btn-start" class="btn-primary" onclick="Engine.start()">
-                        <i class="ti ti-bolt"></i> Start Auto-Impression
+                        <i class="ti ti-bolt"></i> Start Auto
                     </button>
                     
                     <button id="btn-stop" class="btn-danger hidden" onclick="Engine.stop()">
-                        <i class="ti ti-player-pause"></i> Stop Engine
+                        <i class="ti ti-player-pause"></i> Stop
                     </button>
 
                     <div class="console-log" id="log-container">
-                        <span class="log-line log-info">> System Initialized...</span>
+                        <span class="log-line log-info">> Ready to earn points...</span>
                     </div>
-                </div>
-
-                <!-- Hidden Ad Container (Required for Script) -->
-                <div style="opacity: 0.5; text-align: center; margin-top: 20px; font-size: 0.8rem; color: #444;">
-                    Gigapub ID: 4413 | Banner Slot
                 </div>
             </section>
 
-            <!-- 3. PROFILE -->
-            <section id="view-profile">
-                <div class="glass-card" style="text-align: center;">
-                    <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
-                        <i class="ti ti-user"></i>
+            <!-- 3. WALLET / WITHDRAW (COMING SOON) -->
+            <section id="view-wallet">
+                <div class="glass-card" style="text-align: center; height: 300px; display: flex; align-items: center; justify-content: center;">
+                    <!-- Overlay -->
+                    <div class="coming-soon-overlay">
+                        <div class="cs-badge">UPDATE</div>
+                        <h2>Coming Soon</h2>
+                        <p style="color: var(--text-muted); margin-top: 5px;">Wallet features are under development.</p>
                     </div>
-                    <h2 id="profile-name">User</h2>
-                    <p style="color: var(--text-muted);">Premium Publisher</p>
                     
-                    <div style="margin-top: 30px;">
-                        <button class="btn-danger" style="background: transparent; border: 1px solid var(--danger); color: var(--danger);" onclick="App.logout()">
-                            <i class="ti ti-logout"></i> Logout
-                        </button>
+                    <!-- Blurry Background Content -->
+                    <div style="filter: blur(5px); opacity: 0.3; width: 100%;">
+                        <h2>Withdraw</h2>
+                        <input type="text" placeholder="Wallet Address" disabled>
+                        <button class="btn-primary">Submit</button>
                     </div>
                 </div>
             </section>
@@ -334,40 +325,112 @@
                     <i class="ti ti-bolt"></i>
                 </div>
             </div>
-            <div class="nav-btn" onclick="App.navTo('profile', this)">
-                <i class="ti ti-user"></i>
+            <div class="nav-btn" onclick="App.navTo('wallet', this)">
+                <i class="ti ti-wallet"></i>
             </div>
         </nav>
     </div>
 
     <!-- LOGIC -->
     <script>
+        // ==========================================
+        // ⚙️ CONFIGURATION (Replace Keys Here!)
+        // ==========================================
         const CONFIG = {
-            cycleTime: 10, // Seconds
-            payout: 0.0005, // Per ad
-            storageKey: 'giga_premium_v1'
+            supabaseUrl: 'https://uqyhgzhesvlvclszkkkm.supabase.co', // 👈 আপনার URL দিন
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWhnemhlc3ZsdmNsc3pra2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMTIxNzYsImV4cCI6MjA3OTY4ODE3Nn0.X9sZ8V6fOcMbXWnbkMonT-gE1xH-TEDur3Aa7aEGjDc', // 👈 আপনার Anon Key দিন
+            cycleTime: 10,
+            pointsPerAd: 100
         };
 
-        // --- Data Manager ---
+        // Initialize Supabase Client
+        const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+
+        // --- User Data Manager (Supabase Linked) ---
         const Data = {
-            user: { name: null, earnings: 0, impressions: 0, uid: null },
-            load() {
-                const saved = localStorage.getItem(CONFIG.storageKey);
-                if(saved) this.user = JSON.parse(saved);
-                return !!saved;
+            user: { 
+                telegram_id: null, 
+                username: 'Guest', 
+                points: 0,
+                impressions: 0
             },
-            save() {
-                localStorage.setItem(CONFIG.storageKey, JSON.stringify(this.user));
+
+            async init() {
+                // 1. Detect Telegram User
+                const tg = window.Telegram.WebApp;
+                tg.expand(); // Fullscreen
+
+                let tgId, tgName;
+
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    // Running inside Telegram
+                    tgId = tg.initDataUnsafe.user.id.toString();
+                    tgName = tg.initDataUnsafe.user.first_name;
+                } else {
+                    // Browser Testing (Fallback)
+                    tgId = localStorage.getItem('test_tg_id') || 'test_user_' + Math.floor(Math.random() * 1000);
+                    localStorage.setItem('test_tg_id', tgId);
+                    tgName = "Test User";
+                }
+
+                this.user.telegram_id = tgId;
+                this.user.username = tgName;
+
+                // 2. Sync with Supabase
+                await this.syncWithDb();
                 App.updateUI();
             },
-            create(name) {
-                this.user.name = name;
-                this.user.uid = 'GP-' + Math.floor(Math.random() * 999999);
-                this.save();
+
+            async syncWithDb() {
+                try {
+                    // Check if user exists
+                    let { data, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('telegram_id', this.user.telegram_id)
+                        .single();
+
+                    if (error && error.code !== 'PGRST116') {
+                        // Real Error
+                        console.error('DB Error:', error);
+                    } else if (!data) {
+                        // User New -> Insert
+                        const { error: insertError } = await supabase
+                            .from('users')
+                            .insert([
+                                { 
+                                    telegram_id: this.user.telegram_id, 
+                                    username: this.user.username,
+                                    points: 0
+                                }
+                            ]);
+                        if(insertError) console.error(insertError);
+                    } else {
+                        // User Exists -> Load Data
+                        this.user.points = data.points;
+                        this.user.impressions = 0; // Session based impression count
+                    }
+                } catch (err) {
+                    App.log("DB Connection Failed", "error");
+                }
+            },
+
+            async addPoints(amount) {
+                this.user.points += amount;
+                this.user.impressions++;
+                App.updateUI();
+
+                // Update Database Background
+                const { error } = await supabase
+                    .from('users')
+                    .update({ points: this.user.points })
+                    .eq('telegram_id', this.user.telegram_id);
+                
+                if(error) App.log("Save Failed!", "error");
             }
         };
 
-        // --- Engine Logic (Auto Impression) ---
+        // --- Engine Logic ---
         const Engine = {
             active: false,
             timer: null,
@@ -376,20 +439,15 @@
             start() {
                 if(this.active) return;
                 
-                // Check if script exists
+                // Script Check
                 if(typeof window.showGiga === 'undefined') {
-                    App.log("⚠️ Gigapub script missing or blocked by AdBlocker.", "error");
-                    alert("Please disable AdBlocker to earn rewards.");
+                    App.log("⚠️ Ad script blocked/missing.", "error");
+                    alert("Disable AdBlock to continue.");
                 }
 
                 this.active = true;
-                document.getElementById('btn-start').classList.add('hidden');
-                document.getElementById('btn-stop').classList.remove('hidden');
-                document.getElementById('status-dot').classList.add('active');
-                document.getElementById('engine-state-text').innerText = "Engine Running";
-                document.getElementById('engine-state-text').style.color = "#22c55e";
-                
-                App.log("🚀 Engine started. Auto-refreshing ads...", "success");
+                this.toggleBtn(true);
+                App.log("🚀 Engine Started. Loading Ads...", "success");
                 this.loop();
             },
 
@@ -399,13 +457,16 @@
                 this.timeLeft = CONFIG.cycleTime;
                 this.updateCircle(0);
                 document.getElementById('countdown-text').innerText = CONFIG.cycleTime;
-                
-                document.getElementById('btn-start').classList.remove('hidden');
-                document.getElementById('btn-stop').classList.add('hidden');
-                document.getElementById('status-dot').classList.remove('active');
-                document.getElementById('engine-state-text').innerText = "Engine Stopped";
-                document.getElementById('engine-state-text').style.color = "#94a3b8";
-                App.log("🛑 Engine stopped by user.", "info");
+                this.toggleBtn(false);
+                App.log("🛑 Engine Stopped.", "info");
+            },
+
+            toggleBtn(running) {
+                document.getElementById('btn-start').classList.toggle('hidden', running);
+                document.getElementById('btn-stop').classList.toggle('hidden', !running);
+                document.getElementById('status-dot').classList.toggle('active', running);
+                document.getElementById('engine-state-text').innerText = running ? "Engine Running" : "Engine Stopped";
+                document.getElementById('engine-state-text').style.color = running ? "#22c55e" : "#94a3b8";
             },
 
             loop() {
@@ -421,46 +482,38 @@
 
                     if(this.timeLeft <= 0) {
                         this.triggerAd();
-                        this.timeLeft = CONFIG.cycleTime; // Reset loop immediately
+                        this.timeLeft = CONFIG.cycleTime;
                     }
                 }, 1000);
             },
 
             async triggerAd() {
-                App.log("🔄 Requesting new ad...", "info");
+                App.log("🔄 Loading Ad...", "info");
                 
-                // Try to show ad
                 try {
                     if (typeof window.showGiga === 'function') {
-                        // Call the Gigapub function
+                        // Gigapub Call
                         window.showGiga().then(() => {
                             this.success();
                         }).catch((err) => {
-                            // Even if it fails (no fill), we log it but keep engine running
-                            App.log("⚠️ Ad not filled (Network busy). Retrying...", "error");
+                            App.log("⚠️ No Ad Fill. Retrying...", "error");
                         });
                     } else {
-                        // Fallback/Demo mode if script isn't loaded (For Testing)
-                        App.log("⚠️ Script not found. Simulating impression...", "error");
-                        // Optional: Still give reward for testing UI
-                        // this.success(); 
+                        // Testing fallback
+                        setTimeout(() => this.success(), 1000); 
                     }
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) { console.error(e); }
             },
 
             success() {
-                Data.user.impressions++;
-                Data.user.earnings += CONFIG.payout;
-                Data.save();
-                App.log(`✅ Ad Loaded! Earnings: $${Data.user.earnings.toFixed(4)}`, "success");
+                Data.addPoints(CONFIG.pointsPerAd);
+                App.log(`✅ Ad Watched! +${CONFIG.pointsPerAd} Points`, "success");
             },
 
             updateCircle(percent) {
                 const circle = document.getElementById('progress-ring');
                 const radius = circle.r.baseVal.value;
-                const circumference = radius * 2 * Math.PI; // approx 440
+                const circumference = radius * 2 * Math.PI;
                 const offset = circumference - (percent / 100) * circumference;
                 circle.style.strokeDashoffset = offset;
             }
@@ -468,56 +521,36 @@
 
         // --- App Controller ---
         const App = {
-            init() {
+            async init() {
+                // Start Supabase & User Load
+                await Data.init();
+
                 // Remove Splash
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = 0;
                     setTimeout(() => {
                         document.getElementById('splash-screen').classList.add('hidden');
-                        if(Data.load()) {
-                            this.showDashboard();
-                        } else {
-                            document.getElementById('auth-screen').classList.remove('hidden');
-                        }
+                        document.getElementById('app-container').classList.remove('hidden');
                     }, 500);
-                }, 2000);
-            },
-
-            login() {
-                const input = document.getElementById('username-input');
-                const name = input.value.trim();
-                if(name.length > 2) {
-                    Data.create(name);
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    this.showDashboard();
-                } else {
-                    alert("Enter a valid username!");
-                }
-            },
-
-            showDashboard() {
-                document.getElementById('app-container').classList.remove('hidden');
-                this.updateUI();
+                }, 1500);
             },
 
             updateUI() {
-                document.getElementById('display-username').innerText = Data.user.name;
-                document.getElementById('profile-name').innerText = Data.user.name;
-                document.getElementById('user-uid').innerText = Data.user.uid;
-                
+                document.getElementById('display-username').innerText = Data.user.username;
+                document.getElementById('user-uid').innerText = Data.user.telegram_id;
+                document.getElementById('total-points').innerText = Data.user.points;
+                document.getElementById('header-balance').innerText = Data.user.points;
                 document.getElementById('total-impressions').innerText = Data.user.impressions;
-                document.getElementById('total-earnings').innerText = '$' + Data.user.earnings.toFixed(4);
-                document.getElementById('header-balance').innerText = Data.user.earnings.toFixed(4);
             },
 
             navTo(viewId, btnElement) {
-                // Switch View
                 document.querySelectorAll('section').forEach(el => el.classList.remove('active-view'));
                 document.getElementById('view-' + viewId).classList.add('active-view');
 
-                // Switch Nav Active State
-                document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-                if(btnElement) btnElement.classList.add('active');
+                if(btnElement) {
+                    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+                    btnElement.classList.add('active');
+                }
             },
 
             log(msg, type) {
@@ -528,16 +561,9 @@
                 p.innerText = `[${time}] ${msg}`;
                 container.prepend(p);
             },
-
-            logout() {
-                if(confirm("Logout? Your local data will be kept.")) {
-                    location.reload();
-                }
-            },
             
             scriptError() {
                 console.log("Gigapub script failed to load");
-                // We handle this in Engine.start()
             }
         };
 
