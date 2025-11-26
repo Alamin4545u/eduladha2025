@@ -7,85 +7,77 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-
-    <!-- Telegram & Supabase -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* আগের স্টাইল অপরিবর্তিত রাখা হয়েছে, শুধু ডায়নামিক লোডিং এর জন্য কিছু ক্লাস অ্যাড করা হয়েছে */
         :root { --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.7); --primary: #8b5cf6; --secondary: #3b82f6; --text-main: #f8fafc; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-dark); color: var(--text-main); font-family: 'Outfit', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 70%); }
         .hidden { display: none !important; }
-        
-        /* Splash & Loader */
-        #splash-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
-        .loader { width: 40px; height: 40px; border: 4px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* UI Components */
-        #app-container { height: 100%; display: flex; flex-direction: column; }
-        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); }
+        /* Components */
+        #splash-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader { width: 40px; height: 40px; border: 4px solid #fff; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #maintenance-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        
+        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); }
         .balance-badge { background: rgba(255, 215, 0, 0.15); color: #fbbf24; padding: 6px 15px; border-radius: 20px; font-weight: bold; border: 1px solid rgba(251, 191, 36, 0.3); }
+        
         main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
         section { display: none; animation: slideUp 0.3s ease; }
         section.active-view { display: block; }
-        
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
         .glass-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; }
         
-        /* Engine UI */
-        .timer-wrapper { position: relative; width: 140px; height: 140px; margin: 20px auto; }
+        /* Engine Timer */
+        .timer-wrapper { position: relative; width: 150px; height: 150px; margin: 20px auto; }
         .timer-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
         .circle-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 8; }
-        .circle-progress { fill: none; stroke: var(--primary); stroke-width: 8; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear; stroke-linecap: round; }
+        .circle-progress { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear; }
         .timer-val { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .timer-val h1 { font-size: 3rem; line-height: 1; }
-        
+
         button { width: 100%; padding: 15px; border: none; border-radius: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4); }
         .btn-danger { background: #ef4444; color: white; }
-        
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(15, 23, 42, 0.95); display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        .nav-item { color: #64748b; font-size: 1.5rem; padding: 10px; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: white; transform: scale(1.1); }
+        button:active { transform: scale(0.96); }
 
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        /* Maintenance Mode */
-        #maintenance-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; padding: 20px; }
-        #maintenance-screen h2 { color: #ef4444; margin-top: 20px; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
+        .nav-item { font-size: 1.6rem; color: #64748b; padding: 10px; transition: 0.3s; cursor: pointer; }
+        .nav-item.active { color: white; transform: translateY(-5px); }
     </style>
 </head>
 <body>
 
-    <!-- Splash Screen -->
     <div id="splash-screen">
         <span class="loader"></span>
-        <p style="margin-top: 15px; color: #94a3b8;">Initializing System...</p>
+        <p style="margin-top: 15px; color: #94a3b8;">Connecting...</p>
     </div>
 
-    <!-- Maintenance Screen -->
     <div id="maintenance-screen" class="hidden">
         <i class="ti ti-tools" style="font-size: 4rem; color: #ef4444;"></i>
-        <h2>System Maintenance</h2>
-        <p>We are updating the servers. Please try again later.</p>
+        <h2 style="margin-top: 20px;">Maintenance Break</h2>
+        <p style="color: #94a3b8;">Server is updating. Try again later.</p>
     </div>
 
-    <!-- Main App -->
     <div id="app-container" class="hidden">
         <header>
             <div class="user-info">
-                <small style="color: #94a3b8;">Welcome,</small>
+                <small style="color: #94a3b8;">Hello,</small>
                 <h3 id="username">User</h3>
             </div>
-            <div class="balance-badge"><i class="ti ti-coin"></i> <span id="balance">0</span></div>
+            <div class="balance-badge">
+                <i class="ti ti-coin"></i> <span id="balance">0</span>
+            </div>
         </header>
 
         <main>
-            <!-- Home -->
             <section id="view-home" class="active-view">
                 <div class="stats-grid">
                     <div class="stat-box">
@@ -94,32 +86,26 @@
                         <small>Impressions</small>
                     </div>
                     <div class="stat-box">
-                        <i class="ti ti-coin" style="color: #fbbf24; font-size: 1.5rem;"></i>
+                        <i class="ti ti-wallet" style="color: #fbbf24; font-size: 1.5rem;"></i>
                         <h2 id="points-display">0</h2>
                         <small>Points</small>
                     </div>
                 </div>
 
                 <div class="glass-card" style="margin-top: 20px;">
-                    <h3><i class="ti ti-settings"></i> System Status</h3>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.9rem;">
-                        <span style="color: #94a3b8;">Timer Cycle</span>
-                        <span style="color: #4ade80;"><span id="config-time">--</span>s</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.9rem;">
-                        <span style="color: #94a3b8;">Ad Zone</span>
-                        <span style="color: #c084fc;">Active</span>
+                    <h3><i class="ti ti-server"></i> System Status</h3>
+                    <div style="margin-top: 15px; font-size: 0.9rem; display: flex; justify-content: space-between;">
+                        <span style="color: #94a3b8;">Auto Timer</span>
+                        <span style="color: var(--primary);"><span id="config-time">--</span> Seconds</span>
                     </div>
                 </div>
 
-                <button class="btn-primary" onclick="UI.nav('earn')">Start Earning <i class="ti ti-arrow-right"></i></button>
+                <button class="btn-primary" onclick="UI.nav('earn')">Go to Earning Panel <i class="ti ti-arrow-right"></i></button>
             </section>
 
-            <!-- Earn Panel -->
             <section id="view-earn">
                 <div class="glass-card" style="text-align: center;">
-                    <h3 id="engine-status" style="color: #94a3b8;">Engine Ready</h3>
-                    
+                    <div id="engine-status" style="margin-bottom: 15px; font-weight: bold; color: #94a3b8;">Engine Ready</div>
                     <div class="timer-wrapper">
                         <svg class="timer-svg" viewBox="0 0 160 160">
                             <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
@@ -130,17 +116,9 @@
                             <small>SEC</small>
                         </div>
                     </div>
-
-                    <button id="btn-start" class="btn-primary" onclick="Engine.start()">
-                        <i class="ti ti-player-play"></i> Start Engine
-                    </button>
-                    <button id="btn-stop" class="btn-danger hidden" onclick="Engine.stop()">
-                        <i class="ti ti-player-stop"></i> Stop Engine
-                    </button>
-                    
-                    <div id="console" style="margin-top: 20px; text-align: left; font-size: 0.75rem; color: #64748b; height: 60px; overflow: hidden;">
-                        > System initialized...
-                    </div>
+                    <button id="btn-start" class="btn-primary" onclick="Engine.start()"><i class="ti ti-player-play"></i> Start Auto Ads</button>
+                    <button id="btn-stop" class="btn-danger hidden" onclick="Engine.stop()"><i class="ti ti-player-pause"></i> Stop Engine</button>
+                    <div id="console" style="margin-top: 20px; font-family: monospace; font-size: 0.8rem; color: #64748b; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">> Ready...</div>
                 </div>
             </section>
         </main>
@@ -153,120 +131,28 @@
     </div>
 
     <script>
-        // ================= CONFIG =================
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // 👈 আপনার URL দিন
-        const SUPABASE_KEY = 'YOUR_SUPABASE_KEY'; // 👈 আপনার Key দিন
-        // ==========================================
+        // 🔴🔴 নিচে আপনার SUPABASE URL এবং KEY বসান 🔴🔴
+        const SUPABASE_URL = 'https://uqyhgzhesvlvclszkkkm.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWhnemhlc3ZsdmNsc3pra2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMTIxNzYsImV4cCI6MjA3OTY4ODE3Nn0.X9sZ8V6fOcMbXWnbkMonT-gE1xH-TEDur3Aa7aEGjDc';
+        // 🔴🔴 -------------------------------------- 🔴🔴
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // Global App State
-        const AppState = {
-            config: {
-                cycleTime: 10, // Default fallback
-                adId: '4413'   // Default fallback
-            },
-            user: {
-                tgId: null,
-                points: 0,
-                impressions: 0
-            }
-        };
 
-        const Engine = {
-            running: false,
-            timer: null,
-            timeLeft: 0,
-
-            start() {
-                if(this.running) return;
-                this.running = true;
-                UI.toggleEngine(true);
-                this.runLoop();
-                UI.log("Engine started...");
-            },
-
-            stop() {
-                this.running = false;
-                clearInterval(this.timer);
-                UI.toggleEngine(false);
-                this.updateCircle(0);
-                document.getElementById('countdown').innerText = AppState.config.cycleTime;
-                UI.log("Engine stopped.");
-            },
-
-            runLoop() {
-                this.timeLeft = AppState.config.cycleTime;
-                
-                this.timer = setInterval(() => {
-                    if(!this.running) return;
-                    
-                    this.timeLeft--;
-                    const percent = ((AppState.config.cycleTime - this.timeLeft) / AppState.config.cycleTime) * 100;
-                    this.updateCircle(percent);
-                    document.getElementById('countdown').innerText = this.timeLeft;
-
-                    if(this.timeLeft <= 0) {
-                        this.triggerAd();
-                        this.timeLeft = AppState.config.cycleTime; // Reset loop
-                    }
-                }, 1000);
-            },
-
-            async triggerAd() {
-                UI.log("Loading Ad...");
-                try {
-                    // Check if Gigapub loaded
-                    if(typeof window.showGiga === 'function') {
-                        await window.showGiga();
-                        this.reward();
-                    } else {
-                        UI.log("Ad Script not ready. Retrying...");
-                        // Dynamic Load Fallback if needed
-                    }
-                } catch(e) {
-                    console.error(e);
-                    UI.log("Ad load failed.");
-                }
-            },
-
-            reward() {
-                AppState.user.points += 100;
-                AppState.user.impressions++;
-                UI.updateStats();
-                UI.log("Ad Watched! +100 Points");
-                
-                // Save to DB (Background)
-                supabase.from('users').update({ points: AppState.user.points }).eq('telegram_id', AppState.user.tgId).then();
-            },
-
-            updateCircle(percent) {
-                const circle = document.getElementById('progress-ring');
-                const radius = circle.r.baseVal.value;
-                const circumference = radius * 2 * Math.PI;
-                const offset = circumference - (percent / 100) * circumference;
-                circle.style.strokeDashoffset = offset;
-            }
-        };
+        const AppState = { config: { cycleTime: 10, adId: '4413' }, user: { tgId: null, username: 'Guest', points: 0, impressions: 0 } };
 
         const UI = {
             nav(view, el) {
                 document.querySelectorAll('section').forEach(s => s.classList.remove('active-view'));
                 document.getElementById('view-'+view).classList.add('active-view');
-                if(el) {
-                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                    el.classList.add('active');
-                }
+                if(el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
             },
             toggleEngine(on) {
                 document.getElementById('btn-start').classList.toggle('hidden', on);
                 document.getElementById('btn-stop').classList.toggle('hidden', !on);
-                document.getElementById('engine-status').innerText = on ? "Engine Running..." : "Engine Stopped";
-                document.getElementById('engine-status').style.color = on ? "#4ade80" : "#94a3b8";
+                const st = document.getElementById('engine-status');
+                st.innerText = on ? "⚡ Engine Running..." : "Engine Stopped"; st.style.color = on ? "#4ade80" : "#94a3b8";
             },
-            log(msg) {
-                document.getElementById('console').innerText = "> " + msg;
-            },
+            log(msg) { document.getElementById('console').innerText = "> " + msg; },
             updateStats() {
                 document.getElementById('balance').innerText = AppState.user.points;
                 document.getElementById('points-display').innerText = AppState.user.points;
@@ -274,70 +160,72 @@
             }
         };
 
+        const Engine = {
+            running: false, timer: null, timeLeft: 0,
+            start() { if(this.running) return; this.running = true; UI.toggleEngine(true); UI.log("Started..."); this.runLoop(); },
+            stop() { this.running = false; clearInterval(this.timer); UI.toggleEngine(false); this.updateCircle(0); document.getElementById('countdown').innerText = AppState.config.cycleTime; UI.log("Stopped."); },
+            runLoop() {
+                this.timeLeft = AppState.config.cycleTime;
+                this.timer = setInterval(() => {
+                    if(!this.running) return;
+                    this.timeLeft--;
+                    const percent = ((AppState.config.cycleTime - this.timeLeft) / AppState.config.cycleTime) * 100;
+                    this.updateCircle(percent);
+                    document.getElementById('countdown').innerText = this.timeLeft;
+                    if(this.timeLeft <= 0) { this.triggerAd(); this.timeLeft = AppState.config.cycleTime; }
+                }, 1000);
+            },
+            async triggerAd() {
+                UI.log("Loading Ad...");
+                try {
+                    if(typeof window.showGiga === 'function') { await window.showGiga(); this.reward(); }
+                    else { UI.log("Ad script loading..."); setTimeout(() => this.reward(), 2000); /* Demo Fallback */ }
+                } catch(e) { UI.log("Network busy. Retrying..."); }
+            },
+            reward() {
+                AppState.user.points += 100; AppState.user.impressions++;
+                UI.updateStats(); UI.log("✅ Points Added!");
+                supabase.from('users').update({ points: AppState.user.points }).eq('telegram_id', AppState.user.tgId).then();
+            },
+            updateCircle(percent) {
+                const circle = document.getElementById('progress-ring');
+                const radius = circle.r.baseVal.value;
+                const circumference = radius * 2 * Math.PI;
+                circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
+            }
+        };
+
         const Core = {
             async init() {
                 try {
-                    // 1. Fetch App Settings (Timer & Ad ID)
                     const { data: settings } = await supabase.from('app_settings').select('*').single();
-                    
                     if(settings) {
-                        if(settings.is_maintenance) {
-                            document.getElementById('splash-screen').classList.add('hidden');
-                            document.getElementById('maintenance-screen').classList.remove('hidden');
-                            return; // Stop execution
-                        }
-                        
+                        if(settings.is_maintenance) { document.getElementById('splash-screen').classList.add('hidden'); document.getElementById('maintenance-screen').classList.remove('hidden'); return; }
                         AppState.config.cycleTime = settings.ad_interval;
                         AppState.config.adId = settings.gigapub_id;
-                        
-                        // Inject Script Dynamically
-                        this.loadAdScript(settings.gigapub_id);
-                        document.getElementById('config-time').innerText = settings.ad_interval;
+                        document.getElementById('config-time').innerText = AppState.config.cycleTime;
+                        this.injectAd(AppState.config.adId);
                     }
-
-                    // 2. User Login
                     await this.authUser();
-
-                    // 3. UI Ready
-                    setTimeout(() => {
-                        document.getElementById('splash-screen').classList.add('hidden');
-                        document.getElementById('app-container').classList.remove('hidden');
-                    }, 1000);
-
-                } catch (e) {
-                    console.log("Init Error", e);
-                }
+                    setTimeout(() => { document.getElementById('splash-screen').classList.add('hidden'); document.getElementById('app-container').classList.remove('hidden'); }, 800);
+                } catch (e) { console.error(e); UI.log("Init Error"); }
             },
-
-            loadAdScript(id) {
-                const s = document.createElement('script');
-                s.src = `https://ad.gigapub.tech/script?id=${id}`;
-                s.onerror = () => UI.log("AdBlock Detected!");
-                document.head.appendChild(s);
-            },
-
+            injectAd(id) { const s = document.createElement('script'); s.src = `https://ad.gigapub.tech/script?id=${id}`; document.body.appendChild(s); },
             async authUser() {
-                const tg = window.Telegram.WebApp;
-                tg.expand();
+                const tg = window.Telegram.WebApp; tg.expand();
+                let tgId = tg.initDataUnsafe?.user?.id.toString() || localStorage.getItem('debug_uid') || 'u'+Math.floor(Math.random()*999);
+                let tgName = tg.initDataUnsafe?.user?.first_name || 'Guest User';
+                if(!tg.initDataUnsafe?.user) localStorage.setItem('debug_uid', tgId);
                 
-                const tgUser = tg.initDataUnsafe?.user || { id: 'demo_user', first_name: 'Demo' };
-                AppState.user.tgId = tgUser.id.toString();
-                document.getElementById('username').innerText = tgUser.first_name;
-
-                // Sync DB
-                let { data } = await supabase.from('users').select('*').eq('telegram_id', AppState.user.tgId).single();
+                AppState.user.tgId = tgId; document.getElementById('username').innerText = tgName;
                 
-                if(!data) {
-                    await supabase.from('users').insert([{ telegram_id: AppState.user.tgId, username: tgUser.first_name }]);
-                } else {
-                    AppState.user.points = data.points;
-                    UI.updateStats();
-                }
+                let { data } = await supabase.from('users').select('*').eq('telegram_id', tgId).single();
+                if(!data) await supabase.from('users').insert([{ telegram_id: tgId, username: tgName, points: 0 }]);
+                else { AppState.user.points = data.points; UI.updateStats(); }
             }
         };
 
         window.onload = () => Core.init();
-
     </script>
 </body>
 </html>
