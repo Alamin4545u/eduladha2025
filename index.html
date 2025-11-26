@@ -3,229 +3,548 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GigaEarn Pro</title>
-    
+    <title>Giga Rewards - Premium Mini App</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+    
     <style>
-        :root { --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.7); --primary: #8b5cf6; --secondary: #3b82f6; --text-main: #f8fafc; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-dark); color: var(--text-main); font-family: 'Outfit', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 70%); }
-        .hidden { display: none !important; }
+        :root {
+            --primary: #00ffa3;
+            --primary-glow: rgba(0, 255, 163, 0.4);
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --danger: #ff4757;
+        }
 
-        /* Components */
-        #splash-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader { width: 40px; height: 40px; border: 4px solid #fff; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        #maintenance-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        
-        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .balance-badge { background: rgba(255, 215, 0, 0.15); color: #fbbf24; padding: 6px 15px; border-radius: 20px; font-weight: bold; border: 1px solid rgba(251, 191, 36, 0.3); }
-        
-        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
-        section { display: none; animation: slideUp 0.3s ease; }
-        section.active-view { display: block; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevent text selection for app-like feel */
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        .glass-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 163, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 20%);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Header Section --- */
+        .app-header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 10;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-status {
+            font-size: 11px;
+            color: var(--primary);
+        }
+
+        /* --- Main Content --- */
+        .main-container {
+            flex: 1;
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Balance Display */
+        .balance-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-shadow: 0 0 20px var(--primary-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .coin-icon {
+            color: #ffd700;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Action Button */
+        .click-btn-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            opacity: 0;
+            animation: pulse-ring 2s infinite;
+        }
+
+        .action-btn {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            box-shadow: 
+                5px 5px 15px #0a0f1c, 
+                -5px -5px 15px #2d3d52,
+                inset 0 0 20px rgba(0, 255, 163, 0.1);
+            color: var(--primary);
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            /* Default state when script is loading */
+            opacity: 0.6; 
+            pointer-events: none;
+        }
         
-        /* Engine Timer */
-        .timer-wrapper { position: relative; width: 150px; height: 150px; margin: 20px auto; }
-        .timer-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-        .circle-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 8; }
-        .circle-progress { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear; }
-        .timer-val { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .timer-val h1 { font-size: 3rem; line-height: 1; }
+        .action-btn.ready {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-        button { width: 100%; padding: 15px; border: none; border-radius: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4); }
-        .btn-danger { background: #ef4444; color: white; }
-        button:active { transform: scale(0.96); }
+        .action-btn:active {
+            transform: scale(0.95);
+            box-shadow: inset 5px 5px 10px #0a0f1c, inset -5px -5px 10px #2d3d52;
+        }
 
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
-        .nav-item { font-size: 1.6rem; color: #64748b; padding: 10px; transition: 0.3s; cursor: pointer; }
-        .nav-item.active { color: white; transform: translateY(-5px); }
+        .action-btn i {
+            font-size: 32px;
+        }
+
+        .action-btn span {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .action-btn.loading-state {
+            pointer-events: none;
+        }
+
+        .loader-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 255, 163, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Footer Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success { border-left: 3px solid var(--primary); }
+        .toast.error { border-left: 3px solid var(--danger); }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <span class="loader"></span>
-        <p style="margin-top: 15px; color: #94a3b8;">Connecting...</p>
-    </div>
-
-    <div id="maintenance-screen" class="hidden">
-        <i class="ti ti-tools" style="font-size: 4rem; color: #ef4444;"></i>
-        <h2 style="margin-top: 20px;">Maintenance Break</h2>
-        <p style="color: #94a3b8;">Server is updating. Try again later.</p>
-    </div>
-
-    <div id="app-container" class="hidden">
-        <header>
-            <div class="user-info">
-                <small style="color: #94a3b8;">Hello,</small>
-                <h3 id="username">User</h3>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="user-info">
+            <div class="user-avatar">
+                <i class="fa-solid fa-user"></i>
             </div>
-            <div class="balance-badge">
-                <i class="ti ti-coin"></i> <span id="balance">0</span>
+            <div>
+                <div class="user-name">Giga User</div>
+                <div class="user-status">Online</div>
             </div>
-        </header>
+        </div>
+        <div class="menu-icon">
+            <i class="fa-solid fa-bars" style="color: var(--text-muted); cursor: pointer;"></i>
+        </div>
+    </header>
 
-        <main>
-            <section id="view-home" class="active-view">
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <i class="ti ti-eye" style="color: #60a5fa; font-size: 1.5rem;"></i>
-                        <h2 id="impressions">0</h2>
-                        <small>Impressions</small>
-                    </div>
-                    <div class="stat-box">
-                        <i class="ti ti-wallet" style="color: #fbbf24; font-size: 1.5rem;"></i>
-                        <h2 id="points-display">0</h2>
-                        <small>Points</small>
-                    </div>
-                </div>
+    <!-- Main Content -->
+    <div class="main-container">
+        
+        <!-- Balance -->
+        <div class="balance-card">
+            <div class="balance-label">Current Balance</div>
+            <div class="balance-amount">
+                <i class="fa-solid fa-coins coin-icon"></i>
+                <span id="score">0.00</span>
+            </div>
+        </div>
 
-                <div class="glass-card" style="margin-top: 20px;">
-                    <h3><i class="ti ti-server"></i> System Status</h3>
-                    <div style="margin-top: 15px; font-size: 0.9rem; display: flex; justify-content: space-between;">
-                        <span style="color: #94a3b8;">Auto Timer</span>
-                        <span style="color: var(--primary);"><span id="config-time">--</span> Seconds</span>
-                    </div>
-                </div>
+        <!-- Big Action Button -->
+        <div class="click-btn-container">
+            <div class="pulse-ring"></div>
+            <!-- Initial state: Button is disabled until ad script loads -->
+            <button class="action-btn" id="adButton" onclick="handleAdClick()" disabled>
+                <i class="fa-solid fa-play" id="btnIcon"></i>
+                <div class="loader-spinner" id="btnLoader"></div>
+                <span id="btnText">Loading Ad...</span>
+            </button>
+        </div>
 
-                <button class="btn-primary" onclick="UI.nav('earn')">Go to Earning Panel <i class="ti ti-arrow-right"></i></button>
-            </section>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="adsWatched">0</div>
+                <div class="stat-label">Ads Watched</div>
+            </div>
+            <div class="stat-card">
+                <!-- Using total balance as mock "Earned Today" -->
+                <div class="stat-value" id="earnedToday">$0.00</div>
+                <div class="stat-label">Earned Today</div>
+            </div>
+        </div>
 
-            <section id="view-earn">
-                <div class="glass-card" style="text-align: center;">
-                    <div id="engine-status" style="margin-bottom: 15px; font-weight: bold; color: #94a3b8;">Engine Ready</div>
-                    <div class="timer-wrapper">
-                        <svg class="timer-svg" viewBox="0 0 160 160">
-                            <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
-                            <circle id="progress-ring" class="circle-progress" cx="80" cy="80" r="70"></circle>
-                        </svg>
-                        <div class="timer-val">
-                            <h1 id="countdown">0</h1>
-                            <small>SEC</small>
-                        </div>
-                    </div>
-                    <button id="btn-start" class="btn-primary" onclick="Engine.start()"><i class="ti ti-player-play"></i> Start Auto Ads</button>
-                    <button id="btn-stop" class="btn-danger hidden" onclick="Engine.stop()"><i class="ti ti-player-pause"></i> Stop Engine</button>
-                    <div id="console" style="margin-top: 20px; font-family: monospace; font-size: 0.8rem; color: #64748b; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">> Ready...</div>
-                </div>
-            </section>
-        </main>
-
-        <nav class="bottom-nav">
-            <i class="ti ti-home nav-item active" onclick="UI.nav('home', this)"></i>
-            <i class="ti ti-bolt nav-item" onclick="UI.nav('earn', this)"></i>
-            <i class="ti ti-user nav-item"></i>
-        </nav>
     </div>
+
+    <!-- Toast Notification Area -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- EXTERNAL AD SCRIPT -->
+    <script src="https://ad.gigapub.tech/script?id=4413" defer></script>
 
     <script>
-        // 🔴🔴 নিচে আপনার SUPABASE URL এবং KEY বসান 🔴🔴
-        const SUPABASE_URL = 'https://uqyhgzhesvlvclszkkkm.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWhnemhlc3ZsdmNsc3pra2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMTIxNzYsImV4cCI6MjA3OTY4ODE3Nn0.X9sZ8V6fOcMbXWnbkMonT-gE1xH-TEDur3Aa7aEGjDc';
-        // 🔴🔴 -------------------------------------- 🔴🔴
+        // --- State Management ---
+        let balance = parseFloat(localStorage.getItem('giga_balance')) || 0.00;
+        let watchedCount = parseInt(localStorage.getItem('giga_watched')) || 0;
+        let isProcessing = false;
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // --- DOM Elements ---
+        const scoreEl = document.getElementById('score');
+        const adsWatchedEl = document.getElementById('adsWatched');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const btnLoader = document.getElementById('btnLoader');
+        const adButton = document.getElementById('adButton');
+        const earnedTodayEl = document.getElementById('earnedToday');
 
-        const AppState = { config: { cycleTime: 10, adId: '4413' }, user: { tgId: null, username: 'Guest', points: 0, impressions: 0 } };
+        // --- Init ---
+        updateUI();
 
-        const UI = {
-            nav(view, el) {
-                document.querySelectorAll('section').forEach(s => s.classList.remove('active-view'));
-                document.getElementById('view-'+view).classList.add('active-view');
-                if(el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
-            },
-            toggleEngine(on) {
-                document.getElementById('btn-start').classList.toggle('hidden', on);
-                document.getElementById('btn-stop').classList.toggle('hidden', !on);
-                const st = document.getElementById('engine-status');
-                st.innerText = on ? "⚡ Engine Running..." : "Engine Stopped"; st.style.color = on ? "#4ade80" : "#94a3b8";
-            },
-            log(msg) { document.getElementById('console').innerText = "> " + msg; },
-            updateStats() {
-                document.getElementById('balance').innerText = AppState.user.points;
-                document.getElementById('points-display').innerText = AppState.user.points;
-                document.getElementById('impressions').innerText = AppState.user.impressions;
-            }
+        // 1. Check for Telegram and Ad function readiness on window load
+        window.onload = function() {
+            // Start the readiness check
+            waitForAppReady();
         };
+        
+        /**
+         * Checks repeatedly until the Telegram WebApp is ready and the external Ad script is loaded.
+         */
+        function waitForAppReady() {
+            let isTelegramReady = false;
+            let isAdScriptReady = false;
 
-        const Engine = {
-            running: false, timer: null, timeLeft: 0,
-            start() { if(this.running) return; this.running = true; UI.toggleEngine(true); UI.log("Started..."); this.runLoop(); },
-            stop() { this.running = false; clearInterval(this.timer); UI.toggleEngine(false); this.updateCircle(0); document.getElementById('countdown').innerText = AppState.config.cycleTime; UI.log("Stopped."); },
-            runLoop() {
-                this.timeLeft = AppState.config.cycleTime;
-                this.timer = setInterval(() => {
-                    if(!this.running) return;
-                    this.timeLeft--;
-                    const percent = ((AppState.config.cycleTime - this.timeLeft) / AppState.config.cycleTime) * 100;
-                    this.updateCircle(percent);
-                    document.getElementById('countdown').innerText = this.timeLeft;
-                    if(this.timeLeft <= 0) { this.triggerAd(); this.timeLeft = AppState.config.cycleTime; }
-                }, 1000);
-            },
-            async triggerAd() {
-                UI.log("Loading Ad...");
-                try {
-                    if(typeof window.showGiga === 'function') { await window.showGiga(); this.reward(); }
-                    else { UI.log("Ad script loading..."); setTimeout(() => this.reward(), 2000); /* Demo Fallback */ }
-                } catch(e) { UI.log("Network busy. Retrying..."); }
-            },
-            reward() {
-                AppState.user.points += 100; AppState.user.impressions++;
-                UI.updateStats(); UI.log("✅ Points Added!");
-                supabase.from('users').update({ points: AppState.user.points }).eq('telegram_id', AppState.user.tgId).then();
-            },
-            updateCircle(percent) {
-                const circle = document.getElementById('progress-ring');
-                const radius = circle.r.baseVal.value;
-                const circumference = radius * 2 * Math.PI;
-                circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
-            }
-        };
-
-        const Core = {
-            async init() {
-                try {
-                    const { data: settings } = await supabase.from('app_settings').select('*').single();
-                    if(settings) {
-                        if(settings.is_maintenance) { document.getElementById('splash-screen').classList.add('hidden'); document.getElementById('maintenance-screen').classList.remove('hidden'); return; }
-                        AppState.config.cycleTime = settings.ad_interval;
-                        AppState.config.adId = settings.gigapub_id;
-                        document.getElementById('config-time').innerText = AppState.config.cycleTime;
-                        this.injectAd(AppState.config.adId);
-                    }
-                    await this.authUser();
-                    setTimeout(() => { document.getElementById('splash-screen').classList.add('hidden'); document.getElementById('app-container').classList.remove('hidden'); }, 800);
-                } catch (e) { console.error(e); UI.log("Init Error"); }
-            },
-            injectAd(id) { const s = document.createElement('script'); s.src = `https://ad.gigapub.tech/script?id=${id}`; document.body.appendChild(s); },
-            async authUser() {
-                const tg = window.Telegram.WebApp; tg.expand();
-                let tgId = tg.initDataUnsafe?.user?.id.toString() || localStorage.getItem('debug_uid') || 'u'+Math.floor(Math.random()*999);
-                let tgName = tg.initDataUnsafe?.user?.first_name || 'Guest User';
-                if(!tg.initDataUnsafe?.user) localStorage.setItem('debug_uid', tgId);
+            // Step 1: Check and initialize Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                // Initialize Telegram WebApp features
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                // Set header color
+                if (window.Telegram.WebApp.setHeaderColor) {
+                    window.Telegram.WebApp.setHeaderColor('#0f172a');
+                }
                 
-                AppState.user.tgId = tgId; document.getElementById('username').innerText = tgName;
-                
-                let { data } = await supabase.from('users').select('*').eq('telegram_id', tgId).single();
-                if(!data) await supabase.from('users').insert([{ telegram_id: tgId, username: tgName, points: 0 }]);
-                else { AppState.user.points = data.points; UI.updateStats(); }
+                // Update User Name if available
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                if(user) {
+                    document.querySelector('.user-name').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                }
+                isTelegramReady = true;
             }
-        };
 
-        window.onload = () => Core.init();
+            // Step 2: Check for Ad Script readiness
+            if (typeof window.showGiga === 'function') {
+                isAdScriptReady = true;
+            }
+
+            // Step 3: Enable button if both are ready (or if running outside of Telegram, just check for ad script)
+            const isOutsideTelegram = typeof window.Telegram === 'undefined';
+            
+            if (isAdScriptReady && (isTelegramReady || isOutsideTelegram)) {
+                adButton.classList.add('ready');
+                adButton.removeAttribute('disabled');
+                btnText.textContent = "WATCH AD";
+                showToast("App ready! Click to earn.", 'success'); 
+                console.log("App ready: Environment and Ad service initialized.");
+                return; // Stop checking
+            } else {
+                // If not ready, retry check after a delay
+                console.warn(`App not ready. TG ready: ${isTelegramReady}, Ad script loaded: ${isAdScriptReady}. Retrying...`);
+                btnText.textContent = "Loading Ad...";
+                setTimeout(waitForAppReady, 500); 
+            }
+        }
+        
+        // --- Logic ---
+
+        function updateUI() {
+            scoreEl.textContent = balance.toFixed(2);
+            adsWatchedEl.textContent = watchedCount;
+            earnedTodayEl.textContent = `$${balance.toFixed(2)}`;
+        }
+
+        // --- Fixed Function ---
+        function handleAdClick() {
+            // 1. CRITICAL CALL: Initiate the ad script promise immediately as the absolute first step.
+            // This maximizes the chance of the browser recognizing it as a direct user action.
+            const adFunction = window.showGiga;
+
+            // 2. Pre-checks and immediate return if necessary
+            if (isProcessing || typeof adFunction !== 'function') {
+                showToast('Ad service is busy or not ready.', 'error');
+                return;
+            }
+
+            // 3. Execute the function synchronously under the click context
+            const adPromise = adFunction();
+
+            // 4. Update internal state and visual loading state
+            isProcessing = true; 
+            setLoading(true);
+
+            adPromise
+                .then(() => {
+                    // SUCCESS: User watched the ad
+                    const reward = 0.15; // Define your reward amount
+                    
+                    balance = parseFloat((balance + reward).toFixed(2));
+                    watchedCount++;
+                    
+                    // Save to storage
+                    localStorage.setItem('giga_balance', balance.toFixed(2));
+                    localStorage.setItem('giga_watched', watchedCount);
+                    
+                    updateUI();
+                    showToast('Success! Reward added +$' + reward.toFixed(2), 'success');
+                })
+                .catch(e => {
+                    // ERROR: Script failed or user closed early/browser blocked
+                    console.error("Ad closed or failed:", e); 
+                    
+                    // Provide a user-friendly message for the common blocking error
+                    const message = e.message && e.message.includes('show ad') 
+                        ? 'Ad service blocked by browser or closed. Try again later.' 
+                        : 'Ad closed or failed to load. Try again.';
+                        
+                    showToast(message, 'error');
+                })
+                .finally(() => {
+                    // Stop Loading Visuals and reset guard flag
+                    setLoading(false);
+                });
+        }
+
+        function setLoading(loading) {
+            isProcessing = loading;
+            
+            // Explicitly set disabled attribute for robustness
+            adButton.disabled = loading;
+            
+            // Original neumorphic shadow for the button
+            const originalShadow = '5px 5px 15px #0a0f1c, -5px -5px 15px #2d3d52, inset 0 0 20px rgba(0, 255, 163, 0.1)';
+            // Pressed/Loading inset shadow
+            const pressedShadow = 'inset 5px 5px 10px #0a0f1c, inset -5px -5px 10px #2d3d52';
+
+            if (loading) {
+                adButton.classList.add('loading-state');
+                adButton.classList.remove('ready'); // Temporarily remove 'ready' to stop pulse animation
+                btnText.style.display = 'none';
+                btnIcon.style.display = 'none';
+                btnLoader.style.display = 'block';
+                adButton.style.transform = 'scale(0.95)';
+                adButton.style.boxShadow = pressedShadow; // Apply inset shadow
+            } else {
+                adButton.classList.remove('loading-state');
+                // Only add 'ready' if the ad service is actually loaded (checked in waitForAppReady)
+                if (typeof window.showGiga === 'function') {
+                    adButton.classList.add('ready');
+                }
+                btnText.style.display = 'block';
+                btnIcon.style.display = 'block';
+                btnLoader.style.display = 'none';
+                adButton.style.transform = 'scale(1)';
+                adButton.style.boxShadow = originalShadow; // Restore original shadow
+            }
+        }
+
+        // --- Toast Notification System ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let icon = type === 'success' ? '<i class="fa-solid fa-check-circle" style="color:var(--primary)"></i>' : '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger)"></i>';
+            
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            // Animate In
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
     </script>
 </body>
 </html>
