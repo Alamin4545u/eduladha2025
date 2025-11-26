@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GigaEarn Premium</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Gigapub Script -->
+    <script src="https://ad.gigapub.tech/script?id=4413"></script>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="logo-pulse">
+            <i class="ti ti-bolt"></i>
+        </div>
+        <h2>GigaEarn</h2>
+        <p>Initializing Ad Engine...</p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="auth-screen" class="hidden">
+        <div class="glass-card login-card">
+            <h1>Welcome Back</h1>
+            <p>Enter your alias to start earning.</p>
+            <input type="text" id="username-input" placeholder="Username" autocomplete="off">
+            <button class="btn-primary" onclick="app.login()">
+                <i class="ti ti-login"></i> Enter Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="hidden">
+        
+        <!-- Header -->
+        <header>
+            <div class="user-info">
+                <div class="avatar"><i class="ti ti-user"></i></div>
+                <div>
+                    <span class="greeting">Hello,</span>
+                    <h3 id="display-username">User</h3>
+                </div>
+            </div>
+            <div class="balance-badge">
+                <i class="ti ti-coin"></i> <span id="header-balance">0.00</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main>
+            
+            <!-- HOME DASHBOARD -->
+            <section id="view-home" class="active-view">
+                <div class="stats-grid">
+                    <div class="glass-card stat-card">
+                        <div class="icon-box blue"><i class="ti ti-eye"></i></div>
+                        <div class="stat-text">
+                            <p>Impressions</p>
+                            <h2 id="total-impressions">0</h2>
+                        </div>
+                    </div>
+                    <div class="glass-card stat-card">
+                        <div class="icon-box purple"><i class="ti ti-wallet"></i></div>
+                        <div class="stat-text">
+                            <p>Earnings</p>
+                            <h2 id="total-earnings">$0.0000</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card chart-card">
+                    <div class="card-header">
+                        <h3>Activity</h3>
+                        <span class="badge">Live</span>
+                    </div>
+                    <!-- CSS Only Simple Bar Chart -->
+                    <div class="simple-chart">
+                        <div class="bar" style="height: 30%"></div>
+                        <div class="bar" style="height: 50%"></div>
+                        <div class="bar" style="height: 70%"></div>
+                        <div class="bar" style="height: 40%"></div>
+                        <div class="bar" style="height: 90%"></div>
+                        <div class="bar active" style="height: 60%"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card action-card">
+                    <h3>Quick Start</h3>
+                    <p>Start the auto-impression engine now.</p>
+                    <button class="btn-primary" onclick="app.navTo('earn')">Go to Panel</button>
+                </div>
+            </section>
+
+            <!-- EARNING PANEL (Auto Engine) -->
+            <section id="view-earn">
+                <div class="glass-card engine-card">
+                    <div class="engine-status">
+                        <div class="status-indicator" id="engine-indicator"></div>
+                        <span id="engine-text">Engine Stopped</span>
+                    </div>
+                    
+                    <div class="timer-circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" class="bg"></circle>
+                            <circle cx="50" cy="50" r="45" class="progress" id="timer-progress"></circle>
+                        </svg>
+                        <div class="timer-text">
+                            <span id="countdown">10</span>
+                            <small>sec</small>
+                        </div>
+                    </div>
+
+                    <div class="engine-controls">
+                        <button id="btn-start" class="btn-primary" onclick="engine.start()">
+                            <i class="ti ti-player-play"></i> Start Auto
+                        </button>
+                        <button id="btn-stop" class="btn-danger hidden" onclick="engine.stop()">
+                            <i class="ti ti-player-stop"></i> Stop
+                        </button>
+                    </div>
+
+                    <div class="log-console" id="log-console">
+                        <p class="log-entry system">> Ready to initialize...</p>
+                    </div>
+                </div>
+
+                <!-- Ad Placeholder (Banner) -->
+                <div class="ad-container">
+                    <p>Ad Space</p>
+                    <!-- Actual Gigapub integration handles fullscreen, but this is for banner fallback -->
+                    <div id="banner-slot"></div>
+                </div>
+            </section>
+
+            <!-- PROFILE -->
+            <section id="view-profile">
+                <div class="glass-card profile-card">
+                    <div class="big-avatar"><i class="ti ti-user-circle"></i></div>
+                    <h2 id="profile-name">User</h2>
+                    <p class="uid">ID: <span id="user-id">...</span></p>
+                    
+                    <div class="profile-stats">
+                        <div>
+                            <strong>Level 1</strong>
+                            <span>Account</span>
+                        </div>
+                        <div>
+                            <strong>Active</strong>
+                            <span>Status</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-secondary" onclick="app.logout()">
+                        <i class="ti ti-logout"></i> Logout
+                    </button>
+                    <br><br>
+                    <button class="btn-danger-outline" onclick="app.resetData()">
+                        <i class="ti ti-trash"></i> Reset All Data
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" onclick="app.navTo('home', this)">
+                <i class="ti ti-home"></i>
+            </a>
+            <a href="#" class="nav-item center-btn" onclick="app.navTo('earn', this)">
+                <div class="nav-circle"><i class="ti ti-bolt"></i></div>
+            </a>
+            <a href="#" class="nav-item" onclick="app.navTo('profile', this)">
+                <i class="ti ti-user"></i>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- Main Logic -->
+    <script src="script.js"></script>
+</body>
+</html>
