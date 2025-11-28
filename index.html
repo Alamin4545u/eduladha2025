@@ -12,10 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- ২. Monetag SDK -->
+    <!-- ২. Monetag SDK (আপনার আইডি) -->
     <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154'></script>
 
-    <!-- ৩. স্টাইল -->
+    <!-- ৩. স্টাইল এবং ডিজাইন -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
@@ -23,13 +23,14 @@
             font-family: 'Poppins', sans-serif;
             background-color: #0f0f0f;
             color: #ffffff;
-            overflow: hidden;
+            overflow: hidden; /* অ্যাপের মতো স্ক্রল ফিক্স */
             height: 100vh;
             display: flex;
             flex-direction: column;
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* গোল্ডেন কালার গ্রেডিয়েন্ট */
         .gold-gradient {
             background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%);
         }
@@ -40,6 +41,7 @@
             -webkit-text-fill-color: transparent;
         }
         
+        /* গ্লাস ইফেক্ট */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -48,13 +50,15 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
+        /* বটম নেভিগেশন স্টাইল */
         .nav-item {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 4px;
-            color: #6b7280; /* gray-500 */
+            color: #6b7280; /* inactive color */
             transition: all 0.3s ease;
         }
 
@@ -67,6 +71,7 @@
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
+        /* কাস্টম লোডার */
         .loader {
             border: 4px solid #333;
             border-top: 4px solid #FFD700;
@@ -81,14 +86,14 @@
             100% { transform: rotate(360deg); } 
         }
 
-        /* Sweet Alert Dark Customization */
+        /* Sweet Alert ডার্ক মোড */
         div:where(.swal2-container) div:where(.swal2-popup) {
             background: #1a1a1a !important;
             border: 1px solid #FFD700;
             color: white;
         }
 
-        /* Scrollbar Hide */
+        /* কনটেন্ট এরিয়ার স্ক্রলবার হাইড করা */
         #main-app::-webkit-scrollbar {
             display: none;
         }
@@ -104,8 +109,8 @@
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0f0f0f]">
         <div class="loader mb-4"></div>
         <h2 class="text-xl font-bold gold-text tracking-widest">PREMIUM REWARDS</h2>
-        <!-- Error message fallback -->
-        <p id="error-msg" class="text-red-500 text-xs mt-4 hidden"></p>
+        <!-- এরর মেসেজ যদি ডাটাবেস ডাউন থাকে -->
+        <p id="error-msg" class="text-red-500 text-xs mt-4 hidden text-center px-4"></p>
     </div>
 
     <!-- ৫. হেডার (ফিক্সড) -->
@@ -128,12 +133,12 @@
         </div>
     </header>
 
-    <!-- ৬. মেইন কন্টেন্ট (স্ক্রল হবে) -->
+    <!-- ৬. মেইন কন্টেন্ট এরিয়া (স্ক্রল হবে) -->
     <div id="main-app" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24">
-        <!-- Dynamic Content loads here -->
+        <!-- এখানে জাভাস্ক্রিপ্ট দিয়ে পেজ লোড হবে -->
     </div>
 
-    <!-- ৭. বটম নেভিগেশন (ফিক্সড) -->
+    <!-- ৭. বটম নেভিগেশন বার (ফিক্সড) -->
     <nav class="glass-panel rounded-t-3xl pb-2 pt-2 z-50 shrink-0">
         <div class="flex justify-around items-center h-14">
             <button onclick="router('home')" class="nav-item active" id="btn-home">
@@ -163,7 +168,7 @@
     <script>
         // --- কনফিগারেশন ---
         const SUPABASE_URL = 'https://wnmwvbeydsrehtsnkfoc.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubXd2YmV5ZHNyZWh0c25rZm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDg4MzIsImV4cCI6MjA3OTg4NDgzMn0.4vSObxBEr8r11-dqkp9y6bVroMVoSTEnIOTF8Vo8sxk';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubXd2YmV5ZHNyZWh0c25rZm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQzMDg4MzIsImV4cCI6MjA3OTg4NDgzMn0.4vSObxBEr8r11-dqkp9y6bVroMVoSTEnIOTF8Vo8sxk';
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const tg = window.Telegram.WebApp;
@@ -171,7 +176,7 @@
         // গ্লোবাল ভেরিয়েবল
         let currentUser = null;
         
-        // ডিফল্ট সেটিংস (যদি ডাটাবেস এরর দেয়)
+        // ডিফল্ট সেটিংস (যদি ডাটাবেস লোড না হয় তবে অ্যাপ ক্র্যাশ করবে না)
         let appSettings = {
             conversion_rate: 0.05,
             min_withdraw_amount: 50,
@@ -183,15 +188,16 @@
             home_banner_url: ''
         };
 
-        const MIN_AD_DURATION = 10000; // ১০ সেকেন্ড টাইমার
+        const MIN_AD_DURATION = 10000; // ১০ সেকেন্ড অ্যাড দেখার নিয়ম
 
         // --- অ্যাপ ইনিশিয়ালাইজেশন ---
         async function initApp() {
             tg.expand();
             
-            // টেলিগ্রাম ইউজার ডাটা নেওয়া
+            // টেলিগ্রাম থেকে ইউজার ডাটা নেওয়া
             const tgUser = tg.initDataUnsafe?.user;
 
+            // টেলিগ্রাম ছাড়া ব্রাউজারে ওপেন করলে ওয়ার্নিং
             if (!tgUser) {
                 document.getElementById('loading-screen').innerHTML = "<p class='text-red-500 font-bold'>Please open in Telegram</p>";
                 return;
@@ -206,48 +212,48 @@
                 console.log("Settings load failed, using default values.");
             }
 
-            // ২. ইউজার চেক বা রেজিস্ট্রেশন
+            // ২. ইউজার চেক করা (লগিন বা সাইন আপ)
             let { data: user, error: userError } = await supabase.from('users').select('*').eq('id', tgUser.id).single();
 
             if (!user) {
-                // নতুন ইউজার লজিক
+                // নতুন ইউজার রেজিস্ট্রেশন
                 const startParam = tg.initDataUnsafe?.start_param; 
                 let referrerId = null;
 
-                // প্যারামিটার চেক (নিজের আইডি না হলে)
+                // যদি লিংকে রেফার আইডি থাকে
                 if (startParam && startParam != tgUser.id) {
                     referrerId = parseInt(startParam);
                 }
 
-                // Anti-Cheat (অ্যাডমিন চাইলে)
+                // Anti-Cheat (অটোমেটিক রেফার লিংকের জন্য)
                 if (appSettings.anti_cheat_enabled && referrerId) {
-                    const deviceKey = 'ref_' + referrerId;
+                    const deviceKey = 'device_ref_used';
                     if (localStorage.getItem(deviceKey)) {
-                        referrerId = null; // আগে রেফার হয়েছে এই ডিভাইসে
+                        referrerId = null; // এই ডিভাইসে আগে রেফার হয়েছে, তাই বাতিল
                     } else {
-                        localStorage.setItem(deviceKey, 'true'); // মার্ক করে রাখা
+                        localStorage.setItem(deviceKey, 'true'); // মার্ক করে রাখা হলো
                     }
                 }
 
-                // ডাটাবেসে নতুন ইউজার ইনসার্ট
+                // ডাটাবেসে ইউজার তৈরি
                 const { data: newUser, error: createError } = await supabase.from('users').insert([{
                     id: tgUser.id,
                     first_name: tgUser.first_name || 'User',
                     username: tgUser.username,
                     photo_url: tgUser.photo_url,
                     referred_by: referrerId,
-                    balance: referrerId ? 50 : 0 // বোনাস লজিক
+                    balance: 0 // বোনাস পরে ফাংশন দিয়ে যোগ হবে
                 }]).select().single();
 
                 if (createError) {
-                    document.getElementById('error-msg').innerText = "Database Error. Please Restart.";
+                    document.getElementById('error-msg').innerText = "Database Connection Error. Please Restart App.";
                     document.getElementById('error-msg').classList.remove('hidden');
                     return; 
                 }
                 
                 user = newUser;
 
-                // রেফার বোনাস দেওয়া
+                // যদি ভ্যালিড রেফারার থাকে, বোনাস দাও
                 if (referrerId) {
                     await supabase.rpc('increment_referral', { referrer_id: referrerId });
                 }
@@ -256,13 +262,13 @@
             currentUser = user;
             updateHeaderUI();
             
-            // লোডিং শেষ
+            // লোডিং শেষ, মেইন অ্যাপ শো
             document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             router('home');
         }
 
-        // --- UI আপডেট ---
+        // --- UI আপডেট ফাংশন ---
         function updateHeaderUI() {
             if(!currentUser) return;
             document.getElementById('user-name').innerText = currentUser.first_name;
@@ -270,22 +276,25 @@
             if(currentUser.photo_url) document.getElementById('user-photo').src = currentUser.photo_url;
         }
 
-        // --- রাউটিং ---
+        // --- রাউটিং সিস্টেম ---
         function router(page) {
             const content = document.getElementById('main-app');
             const buttons = document.querySelectorAll('.nav-item');
             
+            // সব বাটন ইনঅ্যাক্টিভ করা
             buttons.forEach(btn => {
                 btn.classList.remove('active', 'text-[#FFD700]');
                 btn.classList.add('text-gray-500');
             });
             
+            // বর্তমান বাটন অ্যাক্টিভ করা
             const activeBtn = document.getElementById(`btn-${page}`);
             if(activeBtn) {
                 activeBtn.classList.add('active', 'text-[#FFD700]');
                 activeBtn.classList.remove('text-gray-500');
             }
 
+            // পেজ অনুযায়ী কন্টেন্ট লোড
             if (page === 'home') renderHome(content);
             else if (page === 'tasks') renderTasks(content);
             else if (page === 'wallet') renderWallet(content);
@@ -297,11 +306,12 @@
         function renderHome(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             
-            // Monetag In-App Logic
+            // Monetag In-App Ad Logic (Background)
             if(window.show_10197154) {
                 window.show_10197154({ type: 'inApp', inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false } });
             }
 
+            // ব্যানার ইমেজ
             let bannerHtml = '';
             if (appSettings.home_banner_url) {
                 bannerHtml = `
@@ -337,13 +347,13 @@
             `;
         }
 
-        // --- ২. টাস্ক পেজ ---
+        // --- ২. টাস্ক পেজ (Ad Timer + Limits) ---
         async function renderTasks(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
             const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
             
-            // আজকের লগ চেক
+            // আজকের লগ চেক করা (লিমিটের জন্য)
             const todayDate = new Date().toISOString().split('T')[0];
             const { data: logs } = await supabase.from('task_logs')
                 .select('task_id')
@@ -400,7 +410,7 @@
                     `;
                 });
             } else {
-                html += `<div class="text-center text-gray-500 text-xs">No tasks available</div>`;
+                html += `<div class="text-center text-gray-500 text-xs">No tasks available right now.</div>`;
             }
             
             html += `</div>`;
@@ -415,6 +425,7 @@
                 const endTime = Date.now();
                 const duration = endTime - startTime;
 
+                // ১০ সেকেন্ড টাইমার চেক
                 if (duration < MIN_AD_DURATION) {
                     Swal.fire({
                         icon: 'warning',
@@ -427,19 +438,19 @@
                 }
             };
 
-            // 1. Video Task
+            // 1. Video Task (Interstitial)
             if (type === 'video') {
                 if(window.show_10197154) {
                     window.show_10197154().then(() => checkTimeAndReward()).catch(() => checkTimeAndReward());
                 } else {
-                    checkTimeAndReward(); // Dev mode
+                    checkTimeAndReward(); // Dev mode bypass
                 }
             } 
-            // 2. Telegram/Web Task
+            // 2. Telegram (Popup) or Web (Interstitial)
             else {
                 if(link) window.open(link, '_blank');
                 
-                const adFormat = (type === 'telegram') ? 'pop' : null; // Telegram হলে পপআপ, না হলে ইন্টারস্টিশিয়াল
+                const adFormat = (type === 'telegram') ? 'pop' : null;
                 
                 if(window.show_10197154) {
                     window.show_10197154(adFormat).then(() => checkTimeAndReward()).catch(() => checkTimeAndReward());
@@ -449,7 +460,7 @@
             }
         };
 
-        // --- রিওয়ার্ড ক্লেইম ফাংশন ---
+        // --- রিওয়ার্ড ক্লেইম (RPC Call) ---
         async function claimReward(taskId, reward) {
             const { data: result } = await supabase.rpc('claim_task', { 
                 user_id_input: currentUser.id, task_id_input: taskId, reward_amount: reward, daily_limit_input: appSettings.daily_task_limit
@@ -461,11 +472,11 @@
                 Swal.fire({ icon: 'success', title: `+${reward} Points`, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
                 router('tasks');
             } else {
-                Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Limit Reached" });
+                Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Task Limit Reached" });
             }
         }
 
-        // --- ৩. ওয়ালেট পেজ ---
+        // --- ৩. ওয়ালেট পেজ (শুধুমাত্র বিকাশ) ---
         function renderWallet(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             container.innerHTML = `
@@ -523,13 +534,13 @@
                 currentUser.balance -= pointsNeeded;
                 updateHeaderUI();
                 Swal.fire('Success', 'Request Sent!', 'success');
-                router('history');
+                router('history'); // সাকসেস হলে হিস্ট্রিতে যাবে
             } else {
                 Swal.fire('Error', 'Failed to submit', 'error');
             }
         };
 
-        // --- ৪. হিস্ট্রি পেজ ---
+        // --- ৪. হিস্ট্রি পেজ (Payment History) ---
         async function renderHistory(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
@@ -581,23 +592,63 @@
             container.innerHTML = html;
         }
 
-        // --- ৫. রেফার পেজ ---
+        // --- ৫. রেফার পেজ (Manual Input + Anti Cheat) ---
         function renderRefer(container) {
             const link = `https://t.me/${appSettings.bot_username || 'MyBot_bot'}?start=${currentUser.id}`;
+            const showInput = currentUser.referred_by === null; // রেফার না থাকলে ইনপুট দেখাবে
+
             container.innerHTML = `
                 <div class="glass-panel p-6 rounded-2xl text-center mt-4">
                     <h2 class="text-2xl font-bold text-white">Invite & Earn</h2>
                     <p class="text-xs text-gray-400 mt-2">Get 50 points bonus per referral!</p>
                 </div>
+                
                 <div class="glass-panel p-3 rounded-xl mt-4 flex items-center gap-2 bg-black/30">
                     <input type="text" value="${link}" readonly class="bg-transparent text-xs w-full text-gray-300 outline-none" id="ref-link">
                     <button onclick="copyLink()" class="p-2 bg-[#FFD700] rounded text-black font-bold text-xs"><i class="fas fa-copy"></i></button>
                 </div>
+
+                ${showInput ? `
+                <div class="glass-panel p-4 rounded-xl mt-4 border border-[#FFD700]/30">
+                    <p class="text-xs text-gray-400 mb-2">Have a Referral Code?</p>
+                    <div class="flex gap-2">
+                        <input type="number" id="ref-code-input" placeholder="Enter Referrer ID" class="bg-white/5 border border-white/10 rounded-lg p-2 text-xs w-full outline-none focus:border-[#FFD700]">
+                        <button onclick="submitReferralCode()" class="bg-[#FFD700] text-black text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90">Apply</button>
+                    </div>
+                </div>` : ''}
+
                 <div class="mt-4 glass-panel p-4 rounded-xl flex justify-between">
                     <div><p class="text-[10px] text-gray-400">Total Referrals</p><h4 class="text-xl font-bold text-[#FFD700]">${currentUser.referral_count}</h4></div>
                     <div class="text-right"><p class="text-[10px] text-gray-400">Bonus Earned</p><h4 class="text-xl font-bold text-[#FFD700]">${currentUser.referral_count * 50}</h4></div>
                 </div>
             `;
+        }
+
+        // --- রেফার সাবমিট ফাংশন ---
+        async function submitReferralCode() {
+            const code = document.getElementById('ref-code-input').value;
+            if(!code) return Swal.fire('Error', 'Enter a code', 'warning');
+
+            // Anti-Cheat Check (Manual Input)
+            if(appSettings.anti_cheat_enabled && localStorage.getItem('device_ref_used')) {
+                return Swal.fire('Fake Refer', 'You cannot use referral on this device again!', 'error');
+            }
+
+            // RPC কল করে ডাটাবেসে চেক করা
+            const { data: res } = await supabase.rpc('submit_referral_code', { 
+                user_id_input: currentUser.id, 
+                referrer_id_input: parseInt(code) 
+            });
+
+            if(res && res.success) {
+                // সফল হলে লোকাল স্টোরেজে মার্ক করা
+                if(appSettings.anti_cheat_enabled) localStorage.setItem('device_ref_used', 'true');
+                currentUser.referred_by = parseInt(code); // আপডেট স্টেট
+                Swal.fire('Success', 'Referral Code Applied!', 'success');
+                router('refer'); // পেজ রিফ্রেশ করে ইনপুট হাইড করা
+            } else {
+                Swal.fire('Error', res?.message || 'Invalid Code', 'error');
+            }
         }
 
         window.copyLink = () => {
