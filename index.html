@@ -2,477 +2,553 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EarnApp User</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Premium Rewards</title>
 
-    <!-- 1. Essential CDNs -->
+    <!-- ১. প্রয়োজনীয় লাইব্রেরি (CDN) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Icons (FontAwesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- 2. GigaPub Ad Script -->
-    <script src="https://ad.gigapub.tech/script?id=4413"></script>
+    <!-- ২. আপনার Monetag Ads স্ক্রিপ্ট -->
+    <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154'></script>
 
-    <!-- 3. Styles -->
+    <!-- ৩. কাস্টম ডিজাইন (CSS) -->
     <style>
-        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
-        .loader { width: 40px; height: 40px; border: 4px solid #1e293b; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* প্রিমিয়াম গোল্ড এফেক্ট */
+        .gold-gradient {
+            background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%);
+        }
+        .gold-text {
+            background: linear-gradient(to right, #FFD700, #FDB931);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* গ্লাস ইফেক্ট (Glassmorphism) */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* নেভিগেশন বার */
+        .nav-item.active {
+            color: #FFD700;
+        }
+        .nav-item.active i {
+            transform: translateY(-5px);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* লোডিং স্পিনার */
+        .loader {
+            border: 4px solid #333;
+            border-top: 4px solid #FFD700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .btn-press:active { transform: scale(0.96); }
+
+        /* লক আইকন */
+        .locked-overlay {
+            background: rgba(0,0,0,0.7);
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.75rem;
+        }
     </style>
 </head>
-<body>
+<body class="flex flex-col h-screen justify-between">
 
-    <div id="root"></div>
+    <!-- ৪. লোডিং স্ক্রিন -->
+    <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0f0f0f]">
+        <div class="loader mb-4"></div>
+        <h2 class="text-xl font-bold gold-text tracking-widest">PREMIUM REWARDS</h2>
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    <!-- ৫. মেইন অ্যাপ কন্টেইনার -->
+    <div id="main-app" class="hidden flex-1 overflow-y-auto pb-24">
+        
+        <!-- টপ হেডার -->
+        <header class="sticky top-0 z-40 glass-panel border-b-0 rounded-b-3xl p-5 mb-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img id="user-photo" src="https://ui-avatars.com/api/?name=U&background=random" class="w-12 h-12 rounded-full border-2 border-[#FFD700] object-cover">
+                    <div>
+                        <h3 id="user-name" class="font-bold text-lg leading-tight">Loading...</h3>
+                        <span class="text-xs text-gray-400">Level 1 Member</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-400">Balance</p>
+                    <div class="flex items-center gap-1">
+                        <i class="fas fa-coins text-[#FFD700]"></i>
+                        <span id="user-balance" class="text-2xl font-bold">0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-        // --- CONFIGURATION ---
-        const SUPABASE_URL = "https://uqyhgzhesvlvclszkkkm.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWhnemhlc3ZsdmNsc3pra2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMTIxNzYsImV4cCI6MjA3OTY4ODE3Nn0.X9sZ8V6fOcMbXWnbkMonT-gE1xH-TEDur3Aa7aEGjDc";
-        const IPINFO_TOKEN = "1151161c93b97a"; 
+        <!-- ডাইনামিক পেজ কন্টেন্ট -->
+        <div id="content-area" class="px-4 space-y-4">
+            <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে পেজ লোড হবে -->
+        </div>
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </div>
 
-        // --- MAIN USER APP COMPONENT ---
-        const UserApp = () => {
-            // States
-            const [loading, setLoading] = useState(true);
-            const [view, setView] = useState('auth'); // auth, home, withdraw
-            const [user, setUser] = useState(null);
-            const [tasks, setTasks] = useState([]);
-            const [settings, setSettings] = useState({});
+    <!-- ৬. বটম নেভিগেশন বার -->
+    <nav class="fixed bottom-0 w-full glass-panel rounded-t-3xl pb-2 pt-1 z-50">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="router('home')" class="nav-item flex flex-col items-center gap-1 w-1/4 text-gray-500 transition-all duration-300 active" id="btn-home">
+                <i class="fas fa-home text-xl transition-transform"></i>
+                <span class="text-[10px] font-medium">Home</span>
+            </button>
+            <button onclick="router('tasks')" class="nav-item flex flex-col items-center gap-1 w-1/4 text-gray-500 transition-all duration-300" id="btn-tasks">
+                <i class="fas fa-list-check text-xl transition-transform"></i>
+                <span class="text-[10px] font-medium">Tasks</span>
+            </button>
+            <button onclick="router('wallet')" class="nav-item flex flex-col items-center gap-1 w-1/4 text-gray-500 transition-all duration-300" id="btn-wallet">
+                <i class="fas fa-wallet text-xl transition-transform"></i>
+                <span class="text-[10px] font-medium">Wallet</span>
+            </button>
+            <button onclick="router('refer')" class="nav-item flex flex-col items-center gap-1 w-1/4 text-gray-500 transition-all duration-300" id="btn-refer">
+                <i class="fas fa-users text-xl transition-transform"></i>
+                <span class="text-[10px] font-medium">Refer</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ৭. জাভাস্ক্রিপ্ট লজিক -->
+    <script>
+        // --- কনফিগারেশন ---
+        const SUPABASE_URL = 'https://wnmwvbeydsrehtsnkfoc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubXd2YmV5ZHNyZWh0c25rZm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDg4MzIsImV4cCI6MjA3OTg4NDgzMn0.4vSObxBEr8r11-dqkp9y6bVroMVoSTEnIOTF8Vo8sxk';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const tg = window.Telegram.WebApp;
+        
+        // --- গ্লোবাল ভেরিয়েবল ---
+        let currentUser = null;
+        let appSettings = {};
+        
+        // --- অ্যাপ ইনিশিয়ালাইজেশন ---
+        async function initApp() {
+            tg.expand(); // টেলিগ্রাম ফুল স্ক্রিন করা
             
-            // VPN & Error States
-            const [vpnBlocked, setVpnBlocked] = useState(false);
-            const [detectedCountry, setDetectedCountry] = useState('Checking...');
-            const [errorMessage, setErrorMessage] = useState('');
+            // ১. ইউজার ডাটা নেওয়া (Telegram থেকে)
+            // টেস্টিংয়ের জন্য নিচের লাইনটি আনকমেন্ট করতে পারেন যদি ব্রাউজারে টেস্ট করেন
+            // const tgUser = { id: 123456, first_name: "Test User", username: "tester", photo_url: "" };
+            
+            const tgUser = tg.initDataUnsafe?.user;
 
-            // Inputs
-            const [loginId, setLoginId] = useState('');
-            const [username, setUsername] = useState('');
-            const [withdrawAmount, setWithdrawAmount] = useState('');
-            const [wallet, setWallet] = useState('');
+            if (!tgUser) {
+                // টেলিগ্রাম ছাড়া ওপেন করলে ওয়ার্নিং
+                document.getElementById('loading-screen').innerHTML = "<p class='text-red-500'>Please open in Telegram</p>";
+                return;
+            }
 
-            // --- 1. INITIALIZE APP ---
-            useEffect(() => {
-                init();
-            }, []);
+            // ২. সেটিংস লোড করা
+            const { data: settingsData } = await supabase.from('settings').select('*').single();
+            appSettings = settingsData || { conversion_rate: 0.05, min_withdraw_amount: 50, referral_lock: false, min_referrals_req: 0 };
 
-            const init = async () => {
-                setLoading(true);
-                try {
-                    // A. Fetch App Settings
-                    const { data: set, error } = await supabase.from('settings').select('*').eq('id', 1).single();
-                    if (error) throw new Error("Could not load app settings.");
-                    setSettings(set);
+            // ৩. ডাটাবেসে ইউজার চেক বা সাইন আপ
+            let { data: user, error } = await supabase.from('users').select('*').eq('id', tgUser.id).single();
 
-                    // B. Maintenance Check
-                    if (set.maintenance_mode) {
-                        setErrorMessage("Server under maintenance. Please come back later.");
-                        setLoading(false);
-                        return;
-                    }
+            if (!user) {
+                // নতুন ইউজার রেজিস্ট্রেশন
+                const startParam = tg.initDataUnsafe?.start_param; // রেফার লিংক থেকে আইডি
+                let referrerId = (startParam && startParam != tgUser.id) ? startParam : null;
 
-                    // C. VPN Check
-                    if (set.vpn_enabled) {
-                        const passed = await checkVPN(set.allowed_countries);
-                        if (!passed) {
-                            setLoading(false); 
-                            return; // Stop here if blocked
-                        }
-                    }
+                const { data: newUser } = await supabase.from('users').insert([{
+                    id: tgUser.id,
+                    first_name: tgUser.first_name,
+                    username: tgUser.username,
+                    photo_url: tgUser.photo_url,
+                    referred_by: referrerId
+                }]).select().single();
 
-                    // D. Auto Login (if ID saved)
-                    const savedId = localStorage.getItem('tg_id');
-                    if (savedId) {
-                        await handleLogin(savedId, localStorage.getItem('tg_user') || 'User');
-                    } else {
-                        setLoading(false);
-                        setView('auth');
-                    }
+                user = newUser;
 
-                } catch (err) {
-                    console.error(err);
-                    setErrorMessage("Connection Error: " + err.message);
-                    setLoading(false);
+                // যদি রেফারার থাকে, তার কাউন্ট বাড়ানো (RPC কল)
+                if (referrerId) {
+                    await supabase.rpc('increment_referral', { referrer_id: referrerId });
                 }
-            };
+            }
 
-            // --- 2. ROBUST VPN CHECKER ---
-            const checkVPN = async (allowedList) => {
-                try {
-                    const response = await fetch(`https://ipinfo.io/json?token=${IPINFO_TOKEN}`);
-                    if (!response.ok) throw new Error("IP Service Unavailable");
+            currentUser = user;
+            updateHeaderUI();
+            
+            // অ্যাপ লোড শেষ
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // হোম পেজ লোড
+            router('home');
+        }
+
+        // --- UI আপডেট ফাংশন ---
+        function updateHeaderUI() {
+            if(!currentUser) return;
+            document.getElementById('user-name').innerText = currentUser.first_name;
+            document.getElementById('user-balance').innerText = currentUser.balance;
+            if(currentUser.photo_url) document.getElementById('user-photo').src = currentUser.photo_url;
+        }
+
+        // --- রাউটিং সিস্টেম (Single Page) ---
+        function router(page) {
+            const content = document.getElementById('content-area');
+            const buttons = document.querySelectorAll('.nav-item');
+            
+            // বাটন হাইলাইট চেঞ্জ
+            buttons.forEach(btn => btn.classList.remove('active', 'text-[#FFD700]'));
+            buttons.forEach(btn => btn.classList.add('text-gray-500'));
+            const activeBtn = document.getElementById(`btn-${page}`);
+            if(activeBtn) {
+                activeBtn.classList.add('active', 'text-[#FFD700]');
+                activeBtn.classList.remove('text-gray-500');
+            }
+
+            // পেজ রেন্ডার
+            if (page === 'home') renderHome(content);
+            else if (page === 'tasks') renderTasks(content);
+            else if (page === 'wallet') renderWallet(content);
+            else if (page === 'refer') renderRefer(content);
+        }
+
+        // --- ১. হোম পেজ ---
+        function renderHome(container) {
+            const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
+            
+            container.innerHTML = `
+                <!-- ব্যালেন্স কার্ড -->
+                <div class="glass-panel p-6 rounded-2xl text-center relative overflow-hidden mt-4">
+                    <div class="absolute -top-10 -left-10 w-32 h-32 bg-[#FFD700] rounded-full blur-[80px] opacity-20"></div>
+                    <p class="text-gray-400 text-sm uppercase tracking-wider mb-2">Total Earnings</p>
+                    <h1 class="text-4xl font-bold text-white mb-1">${currentUser.balance}</h1>
+                    <p class="text-xs text-[#FFD700]">≈ ৳ ${bdtAmount} BDT</p>
                     
-                    const data = await response.json();
-                    setDetectedCountry(data.country); // e.g. 'US'
-
-                    const allowed = allowedList.split(',').map(c => c.trim().toUpperCase());
-                    
-                    if (!allowed.includes(data.country)) {
-                        setVpnBlocked(true);
-                        return false;
-                    }
-                    return true;
-                } catch (e) {
-                    console.warn("VPN Check failed, proceeding with caution:", e);
-                    // If IP check fails, we allow access but warn console (or block if you prefer strict security)
-                    return true; 
-                }
-            };
-
-            // --- 3. AUTHENTICATION ---
-            const handleLogin = async (tgId, name) => {
-                setLoading(true);
-                try {
-                    // Check if profile exists
-                    let { data: profile } = await supabase.from('profiles').select('*').eq('telegram_id', tgId).single();
-
-                    // If not, create new
-                    if (!profile) {
-                        const { data: newProfile, error } = await supabase.from('profiles').insert([
-                            { id: crypto.randomUUID(), telegram_id: tgId, username: name, balance: 0 }
-                        ]).select().single();
-                        
-                        if (error) throw error;
-                        profile = newProfile;
-                    }
-
-                    if (profile.is_banned) {
-                        setErrorMessage("Your account has been banned.");
-                        setLoading(false);
-                        return;
-                    }
-
-                    // Success
-                    setUser(profile);
-                    localStorage.setItem('tg_id', tgId);
-                    localStorage.setItem('tg_user', name);
-                    
-                    // Fetch Tasks
-                    const { data: tData } = await supabase.from('tasks').select('*').order('id', { ascending: false });
-                    setTasks(tData || []);
-                    
-                    setView('home');
-
-                } catch (e) {
-                    alert("Login failed: " + e.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            // --- 4. EARNING LOGIC ---
-            const handleTask = (task) => {
-                // GigaPub Logic
-                if (window.showGiga) {
-                    window.showGiga()
-                        .then(() => verifyAndReward(task))
-                        .catch((e) => {
-                            console.log("Ad closed or failed", e);
-                            // Verify ad fail policy. For now, we reward to keep users happy
-                            verifyAndReward(task);
-                        });
-                } else {
-                    // Fallback for testing
-                    alert("Ad Script loading... wait 2 seconds.");
-                    setTimeout(() => verifyAndReward(task), 2000);
-                }
-            };
-
-            const verifyAndReward = async (task) => {
-                // Optimistic Update (Instant UI feedback)
-                const newBalance = user.balance + task.reward;
-                setUser(prev => ({ ...prev, balance: newBalance }));
-                
-                // Database Update
-                await supabase.from('profiles').update({ balance: newBalance }).eq('id', user.id);
-                
-                // Optional: Vibrate or sound
-                if(navigator.vibrate) navigator.vibrate(50);
-            };
-
-            // --- 5. WITHDRAWAL LOGIC ---
-            const submitWithdraw = async () => {
-                if (!wallet || !withdrawAmount) return alert("Fill all fields");
-                if (parseInt(withdrawAmount) > user.balance) return alert("Insufficient Balance");
-
-                setLoading(true);
-                const { error } = await supabase.from('withdrawals').insert([
-                    { 
-                        user_id: user.id, 
-                        amount: parseInt(withdrawAmount), 
-                        method: "USDT/Crypto", 
-                        wallet: wallet 
-                    }
-                ]);
-
-                if (!error) {
-                    const newBal = user.balance - parseInt(withdrawAmount);
-                    setUser({ ...user, balance: newBal });
-                    await supabase.from('profiles').update({ balance: newBal }).eq('id', user.id);
-                    alert("Withdrawal Requested!");
-                    setView('home');
-                } else {
-                    alert("Error: " + error.message);
-                }
-                setLoading(false);
-            };
-
-            // --- RENDER HELPERS ---
-
-            if (loading) return (
-                <div className="min-h-screen flex items-center justify-center bg-slate-900">
-                    <div className="loader"></div>
-                </div>
-            );
-
-            if (errorMessage) return (
-                <div className="min-h-screen flex items-center justify-center bg-slate-900 p-6 text-center">
-                    <div className="glass p-6 rounded-xl border-red-500/50 border">
-                        <i className="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-4"></i>
-                        <h2 className="text-xl font-bold text-white mb-2">Error</h2>
-                        <p className="text-gray-400">{errorMessage}</p>
-                    </div>
-                </div>
-            );
-
-            if (vpnBlocked) return (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
-                    <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6 animate-pulse">
-                        <i className="fa-solid fa-shield-halved text-4xl text-red-500"></i>
-                    </div>
-                    <h2 className="text-3xl font-bold mb-2">Access Restricted</h2>
-                    <p className="text-gray-400 mb-6 max-w-xs mx-auto">
-                        This app is only available in: <br/>
-                        <span className="text-white font-mono font-bold">{settings.allowed_countries}</span>
-                    </p>
-                    <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 mb-8">
-                        <span className="text-xs text-gray-500 uppercase block mb-1">Your Location</span>
-                        <span className="text-xl font-bold text-yellow-400">{detectedCountry}</span>
-                    </div>
-                    <button onClick={() => window.location.reload()} className="px-8 py-3 bg-blue-600 rounded-full font-bold shadow-lg shadow-blue-600/30 btn-press">
-                        Refetch Location
+                    <button onclick="router('tasks')" class="mt-4 w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg active:scale-95 transition-transform">
+                        Start Earning
                     </button>
                 </div>
-            );
 
-            // --- VIEW: LOGIN ---
-            if (view === 'auth') return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                    {/* Background Blobs */}
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-
-                    <div className="glass w-full max-w-sm p-8 rounded-3xl relative z-10">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
-                                <i className="fa-solid fa-sack-dollar text-3xl text-white"></i>
-                            </div>
-                            <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-                            <p className="text-slate-400 text-sm">Login to start earning rewards</p>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-xs text-slate-400 ml-1">Telegram ID</label>
-                                <input 
-                                    type="number" 
-                                    value={loginId}
-                                    onChange={e => setLoginId(e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition"
-                                    placeholder="e.g. 12345678"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-400 ml-1">Username</label>
-                                <input 
-                                    type="text" 
-                                    value={username}
-                                    onChange={e => setUsername(e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition"
-                                    placeholder="Your Name"
-                                />
-                            </div>
-                            <button 
-                                onClick={() => loginId && handleLogin(loginId, username || 'Anonymous')}
-                                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 btn-press mt-2"
-                            >
-                                Continue
-                            </button>
-                        </div>
+                <!-- ইনফো গ্রিড -->
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center h-28">
+                        <i class="fas fa-users text-2xl mb-2 text-blue-400"></i>
+                        <span class="text-sm font-bold">${currentUser.referral_count}</span>
+                        <span class="text-xs text-gray-400">Referrals</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center h-28">
+                        <i class="fas fa-history text-2xl mb-2 text-green-400"></i>
+                        <span class="text-sm font-bold">24h</span>
+                        <span class="text-xs text-gray-400">Active</span>
                     </div>
                 </div>
-            );
 
-            // --- VIEW: DASHBOARD (HOME) ---
-            return (
-                <div className="min-h-screen bg-slate-900 pb-24">
-                    {/* Top Stats Card */}
-                    <div className="relative bg-gradient-to-b from-blue-900 to-slate-900 p-6 pb-12 rounded-b-[2.5rem] shadow-2xl">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold border border-white/10">
-                                    {user.username.charAt(0).toUpperCase()}
+                <!-- নোটিশ -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-yellow-500">
+                    <h4 class="font-bold text-sm text-[#FFD700] mb-1">📢 Announcement</h4>
+                    <p class="text-xs text-gray-300">Welcome to our Premium App! Complete tasks and refer friends to earn real money.</p>
+                </div>
+            `;
+            
+            // হোম পেজে এড শো করা (Interstitial)
+            showAd('interstitial');
+        }
+
+        // --- ২. টাস্ক পেজ ---
+        async function renderTasks(container) {
+            container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
+            
+            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
+            
+            // লকিং লজিক
+            const isLocked = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
+            const remaining = appSettings.min_referrals_req - currentUser.referral_count;
+
+            let html = `
+                <div class="flex justify-between items-center my-4">
+                    <h2 class="text-xl font-bold">Daily Tasks</h2>
+                    <span class="bg-[#FFD700] text-black text-xs px-2 py-1 rounded font-bold">${tasks.length} Available</span>
+                </div>
+            `;
+
+            if (isLocked) {
+                html += `
+                    <div class="bg-red-500/10 border border-red-500/50 p-4 rounded-xl mb-4 flex items-start gap-3">
+                        <i class="fas fa-lock text-red-500 mt-1"></i>
+                        <div>
+                            <h4 class="font-bold text-red-500 text-sm">Tasks Locked!</h4>
+                            <p class="text-xs text-gray-300">You need to refer <span class="text-white font-bold">${remaining}</span> more friends to unlock tasks.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `<div class="space-y-3 pb-20">`;
+            
+            tasks.forEach(task => {
+                let iconClass = 'fa-star';
+                if(task.icon === 'youtube') iconClass = 'fa-youtube text-red-500';
+                if(task.icon === 'telegram') iconClass = 'fa-telegram text-blue-400';
+
+                html += `
+                    <div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
+                        ${isLocked ? `<div class="locked-overlay"><i class="fas fa-lock text-2xl text-white/50"></i></div>` : ''}
+                        
+                        <div class="flex justify-between items-center ${isLocked ? 'blur-sm' : ''}">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                                    <i class="fab ${iconClass} text-lg"></i>
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white leading-tight">{user.username}</h3>
-                                    <span className="text-xs text-green-400 flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Online
-                                    </span>
+                                    <h4 class="font-bold text-sm line-clamp-1">${task.title}</h4>
+                                    <div class="flex items-center gap-1 mt-1">
+                                        <i class="fas fa-coins text-[10px] text-[#FFD700]"></i>
+                                        <span class="text-xs text-[#FFD700] font-bold">+${task.reward}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-white/10 px-3 py-1 rounded-full border border-white/10 text-xs text-white">
-                                <i className="fa-solid fa-earth-americas mr-1"></i> {detectedCountry}
-                            </div>
-                        </div>
-                        
-                        <div className="text-center">
-                            <span className="text-slate-400 text-sm font-medium uppercase tracking-wider">Total Balance</span>
-                            <div className="text-5xl font-black text-white mt-2 drop-shadow-lg">
-                                {user.balance.toLocaleString()}
-                            </div>
-                            <div className="text-yellow-400 font-bold mt-1 text-sm">GOLD COINS</div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="absolute -bottom-6 left-6 right-6 flex gap-4">
-                            <button 
-                                onClick={() => setView('withdraw')}
-                                className="flex-1 bg-slate-800 border border-slate-700 text-white py-3 rounded-xl shadow-lg btn-press flex items-center justify-center gap-2 font-bold"
-                            >
-                                <i className="fa-solid fa-wallet text-blue-400"></i> Withdraw
-                            </button>
-                            <button 
-                                onClick={() => setView('home')}
-                                className="flex-1 bg-slate-800 border border-slate-700 text-white py-3 rounded-xl shadow-lg btn-press flex items-center justify-center gap-2 font-bold"
-                            >
-                                <i className="fa-solid fa-list text-green-400"></i> Tasks
+                            <button onclick="handleTask(${task.id}, ${task.reward}, '${task.link}')" 
+                                ${isLocked ? 'disabled' : ''}
+                                class="px-4 py-2 rounded-lg bg-white/10 text-xs font-bold hover:bg-[#FFD700] hover:text-black transition-colors">
+                                Claim
                             </button>
                         </div>
                     </div>
+                `;
+            });
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
 
-                    {/* Scrollable Content */}
-                    <div className="mt-12 px-5">
-                        {/* Announcement Banner */}
-                        {settings.announcement && (
-                            <div className="mb-6 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 border border-indigo-500/30 p-4 rounded-2xl flex gap-3 items-start">
-                                <div className="bg-indigo-500/20 p-2 rounded-lg shrink-0">
-                                    <i className="fa-solid fa-bullhorn text-indigo-400"></i>
-                                </div>
-                                <p className="text-sm text-indigo-100 leading-relaxed pt-1">{settings.announcement}</p>
-                            </div>
-                        )}
+        // টাস্ক হ্যান্ডলিং ফাংশন
+        window.handleTask = async (taskId, reward, link) => {
+            // ১. এড দেখানো (Rewarded Ad)
+            const adWatched = await showAd('rewarded');
+            
+            if (adWatched) {
+                // ২. পয়েন্ট এড করা (RPC)
+                const { error } = await supabase.rpc('increment_balance', { 
+                    user_id: currentUser.id, 
+                    amount: reward 
+                });
 
-                        {/* Home: Task List */}
-                        {view === 'home' && (
-                            <div>
-                                <h3 className="text-slate-400 font-bold mb-4 uppercase text-xs tracking-wider">Available Tasks ({tasks.length})</h3>
-                                <div className="space-y-3">
-                                    {tasks.length === 0 ? (
-                                        <div className="text-center py-10 text-gray-500">
-                                            <i className="fa-solid fa-box-open text-4xl mb-2 opacity-50"></i>
-                                            <p>No tasks right now.</p>
-                                        </div>
-                                    ) : (
-                                        tasks.map((task, i) => (
-                                            <div 
-                                                key={task.id} 
-                                                onClick={() => handleTask(task)}
-                                                className="glass p-4 rounded-2xl flex items-center justify-between group active:scale-95 transition cursor-pointer hover:bg-slate-800"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition">
-                                                        <i className="fa-solid fa-play"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-white text-sm">{task.title}</h4>
-                                                        <p className="text-xs text-slate-400 mt-1">
-                                                            <i className="fa-regular fa-clock mr-1"></i> {task.timer} seconds
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-lg font-bold text-sm border border-yellow-500/20">
-                                                    +{task.reward}
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Withdraw View */}
-                        {view === 'withdraw' && (
-                            <div className="glass p-6 rounded-3xl animate-fade-in">
-                                <h3 className="text-xl font-bold text-white mb-6">Request Payout</h3>
-                                
-                                <div className="space-y-5">
-                                    <div>
-                                        <label className="text-xs text-slate-400 ml-1 block mb-2">Wallet Address (TRC20/Binance)</label>
-                                        <div className="relative">
-                                            <i className="fa-solid fa-qrcode absolute left-4 top-3.5 text-slate-500"></i>
-                                            <input 
-                                                type="text" 
-                                                value={wallet}
-                                                onChange={e => setWallet(e.target.value)}
-                                                placeholder="Paste address here..."
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 outline-none"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs text-slate-400 ml-1 block mb-2">Amount (Coins)</label>
-                                        <div className="relative">
-                                            <i className="fa-solid fa-coins absolute left-4 top-3.5 text-slate-500"></i>
-                                            <input 
-                                                type="number" 
-                                                value={withdrawAmount}
-                                                onChange={e => setWithdrawAmount(e.target.value)}
-                                                placeholder={`Min: 1000 | Max: ${user.balance}`}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 outline-none font-mono"
-                                            />
-                                        </div>
-                                        <div className="text-right mt-2">
-                                            <button 
-                                                onClick={() => setWithdrawAmount(user.balance)}
-                                                className="text-xs text-blue-400 hover:text-blue-300 font-bold"
-                                            >
-                                                Max Amount
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <button 
-                                        onClick={submitWithdraw}
-                                        className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/20 btn-press"
-                                    >
-                                        Confirm Withdraw
-                                    </button>
-                                    
-                                    <button 
-                                        onClick={() => setView('home')}
-                                        className="w-full text-slate-500 text-sm font-bold py-2"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
+                if (!error) {
+                    // ৩. লোকাল স্টেট আপডেট ও অ্যালার্ট
+                    currentUser.balance += reward;
+                    updateHeaderUI();
+                    
+                    // সাকসেস মডাল (সিম্পল অ্যালার্টের বদলে সুন্দর সুইট অ্যালার্ট ব্যবহার করা ভালো, এখানে ডিফল্ট দিচ্ছি)
+                    // লিংক ওপেন করা
+                    if(link && link !== 'null') {
+                        window.open(link, '_blank');
+                    }
+                    
+                    alert(`Congratulations! You earned ${reward} points.`);
+                    router('tasks'); // রিফ্রেশ
+                } else {
+                    alert("Error updating balance. Check internet.");
+                }
+            } else {
+                alert("You must watch the ad to get rewards!");
+            }
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<UserApp />);
+        // --- ৩. ওয়ালেট পেজ ---
+        function renderWallet(container) {
+            const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
+            const isRestricted = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
+
+            container.innerHTML = `
+                <div class="glass-panel p-6 rounded-2xl text-center mb-6 mt-4">
+                    <p class="text-gray-400 text-xs">Available Balance</p>
+                    <h1 class="text-3xl font-bold gold-text my-2">৳ ${bdtAmount}</h1>
+                    <p class="text-xs text-gray-500">Min Withdraw: ৳ ${appSettings.min_withdraw_amount}</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-400 ml-1">Payment Method</label>
+                        <div class="grid grid-cols-3 gap-3 mt-1">
+                            <button onclick="selectMethod(this, 'Bkash')" class="pay-method active glass-panel p-3 rounded-lg flex flex-col items-center justify-center border border-[#FFD700]">
+                                <img src="https://freelogopng.com/images/all_img/1656234745bkash-app-logo-png.png" class="h-6 object-contain mb-1">
+                                <span class="text-[10px]">Bkash</span>
+                            </button>
+                            <button onclick="selectMethod(this, 'Nagad')" class="pay-method glass-panel p-3 rounded-lg flex flex-col items-center justify-center border border-transparent opacity-60">
+                                <img src="https://freelogopng.com/images/all_img/1679248787nagad-logo.png" class="h-6 object-contain mb-1">
+                                <span class="text-[10px]">Nagad</span>
+                            </button>
+                            <button onclick="selectMethod(this, 'Rocket')" class="pay-method glass-panel p-3 rounded-lg flex flex-col items-center justify-center border border-transparent opacity-60">
+                                <span class="font-bold text-purple-500 h-6 flex items-center">🚀</span>
+                                <span class="text-[10px]">Rocket</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-400 ml-1">Account Number</label>
+                        <input type="number" id="withdraw-number" placeholder="017xxxxxxxx" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700] mt-1 transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-400 ml-1">Amount (BDT)</label>
+                        <input type="number" id="withdraw-amount" placeholder="Min ${appSettings.min_withdraw_amount}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700] mt-1 transition-colors">
+                    </div>
+
+                    <button onclick="processWithdraw()" class="w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg mt-4 active:scale-95 transition-transform" ${isRestricted ? 'disabled style="opacity:0.5"' : ''}>
+                        ${isRestricted ? 'Locked (Need Referral)' : 'Withdraw Money'}
+                    </button>
+                    
+                    ${isRestricted ? `<p class="text-xs text-center text-red-400">Refer more friends to enable withdrawals.</p>` : ''}
+                </div>
+            `;
+            window.selectedMethod = 'Bkash';
+        }
+
+        window.selectMethod = (elem, method) => {
+            document.querySelectorAll('.pay-method').forEach(b => {
+                b.classList.remove('border-[#FFD700]', 'opacity-100');
+                b.classList.add('border-transparent', 'opacity-60');
+            });
+            elem.classList.remove('border-transparent', 'opacity-60');
+            elem.classList.add('border-[#FFD700]', 'opacity-100');
+            window.selectedMethod = method;
+        };
+
+        window.processWithdraw = async () => {
+            const number = document.getElementById('withdraw-number').value;
+            const amount = parseInt(document.getElementById('withdraw-amount').value);
+            
+            if (!number || !amount) return alert("Please fill all fields");
+            if (amount < appSettings.min_withdraw_amount) return alert(`Minimum withdraw is ${appSettings.min_withdraw_amount} BDT`);
+            
+            const pointsNeeded = amount / appSettings.conversion_rate;
+            
+            if (currentUser.balance < pointsNeeded) return alert("Insufficient Balance!");
+
+            // এড দেখানো
+            await showAd('interstitial');
+
+            const { error } = await supabase.from('withdrawals').insert([{
+                user_id: currentUser.id,
+                method: window.selectedMethod,
+                number: number,
+                amount_bdt: amount,
+                points_deducted: pointsNeeded
+            }]);
+
+            if (!error) {
+                // ব্যালেন্স কাটা
+                await supabase.rpc('increment_balance', { user_id: currentUser.id, amount: -pointsNeeded });
+                currentUser.balance -= pointsNeeded;
+                updateHeaderUI();
+                alert("Withdrawal Request Submitted Successfuly!");
+                router('wallet');
+            } else {
+                alert("Failed to submit request.");
+            }
+        };
+
+        // --- ৪. রেফার পেজ ---
+        function renderRefer(container) {
+            const referLink = `https://t.me/YOUR_BOT_USERNAME?start=${currentUser.id}`; // আপনার বটের ইউজারনেম বসাবেন
+            
+            container.innerHTML = `
+                <div class="glass-panel p-6 rounded-2xl text-center mt-4">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3893/3893069.png" class="w-20 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">
+                    <h2 class="text-2xl font-bold text-white">Invite Friends</h2>
+                    <p class="text-sm text-gray-400 mt-2">Earn 50 points for every friend and unlock exclusive tasks!</p>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl mt-4">
+                    <label class="text-xs text-gray-400">Your Referral Link</label>
+                    <div class="flex items-center gap-2 mt-2 bg-black/30 p-2 rounded-lg border border-white/10">
+                        <input type="text" value="${referLink}" readonly class="bg-transparent text-sm w-full text-gray-300 outline-none" id="ref-link">
+                        <button onclick="copyLink()" class="p-2 bg-[#FFD700] rounded text-black font-bold">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-bold mb-3">Your Statistics</h3>
+                    <div class="flex justify-between glass-panel p-4 rounded-xl">
+                        <div>
+                            <p class="text-xs text-gray-400">Total Referred</p>
+                            <h4 class="text-xl font-bold text-[#FFD700]">${currentUser.referral_count}</h4>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-400">Total Earned</p>
+                            <h4 class="text-xl font-bold text-[#FFD700]">${currentUser.referral_count * 50}</h4>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.copyLink = () => {
+            const copyText = document.getElementById("ref-link");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Link Copied!");
+        };
+
+        // --- Monetag Ad ইন্টিগ্রেশন ---
+        function showAd(type) {
+            return new Promise((resolve) => {
+                if (typeof window.show_10197154 === 'undefined') {
+                    console.log("Ad SDK not loaded (Dev Mode)");
+                    resolve(true); // ডেভলপমেন্ট বা এডব্লকারের জন্য বাইপাস
+                    return;
+                }
+
+                if (type === 'rewarded') {
+                    // রিওয়ার্ডেড পপআপ
+                    window.show_10197154('pop').then(() => {
+                        resolve(true);
+                    }).catch(() => {
+                        console.error("Ad failed");
+                        resolve(false);
+                    });
+                } else {
+                    // ইন্টারস্টিশিয়াল
+                    window.show_10197154().then(() => {
+                        console.log("Interstitial shown");
+                        resolve(true);
+                    });
+                }
+            });
+        }
+
+        // --- স্টার্ট ---
+        initApp();
+
     </script>
 </body>
 </html>
