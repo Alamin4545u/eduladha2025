@@ -23,14 +23,13 @@
             font-family: 'Poppins', sans-serif;
             background-color: #0f0f0f;
             color: #ffffff;
-            overflow: hidden; /* পুরো পেজ স্ক্রল বন্ধ */
+            overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* গোল্ড এফেক্ট */
         .gold-gradient { background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%); }
         .gold-text {
             background: linear-gradient(to right, #FFD700, #FDB931);
@@ -38,7 +37,6 @@
             -webkit-text-fill-color: transparent;
         }
         
-        /* গ্লাস প্যানেল */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -47,15 +45,13 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* নেভিগেশন */
-        .nav-item { flex: 1; } /* সমান স্পেস */
+        .nav-item { flex: 1; }
         .nav-item.active { color: #FFD700; }
         .nav-item.active i {
             transform: translateY(-5px);
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
-        /* লোডার */
         .loader {
             border: 4px solid #333;
             border-top: 4px solid #FFD700;
@@ -66,14 +62,12 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Sweet Alert কাস্টমাইজেশন */
         div:where(.swal2-container) div:where(.swal2-popup) {
             background: #1a1a1a !important;
             border: 1px solid #FFD700;
             color: white;
         }
 
-        /* স্ক্রলবার লুকানো (কন্টেন্ট এরিয়ার জন্য) */
         #main-app::-webkit-scrollbar { display: none; }
         #main-app { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -86,7 +80,7 @@
         <h2 class="text-xl font-bold gold-text tracking-widest">PREMIUM REWARDS</h2>
     </div>
 
-    <!-- ৫. হেডার (ফিক্সড) -->
+    <!-- ৫. হেডার -->
     <header class="glass-panel border-b-0 rounded-b-3xl p-4 z-40 shrink-0">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -106,12 +100,10 @@
         </div>
     </header>
 
-    <!-- ৬. মেইন কন্টেন্ট (স্ক্রল হবে) -->
-    <div id="main-app" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24">
-        <!-- ডাইনামিক কন্টেন্ট এখানে লোড হবে -->
-    </div>
+    <!-- ৬. মেইন কন্টেন্ট -->
+    <div id="main-app" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24"></div>
 
-    <!-- ৭. বটম নেভিগেশন (ফিক্সড - ৫টি বাটন) -->
+    <!-- ৭. বটম নেভিগেশন -->
     <nav class="glass-panel rounded-t-3xl pb-2 pt-2 z-50 shrink-0">
         <div class="flex justify-around items-center h-14">
             <button onclick="router('home')" class="nav-item flex flex-col items-center gap-1 text-gray-500 transition-all duration-300 active" id="btn-home">
@@ -126,7 +118,6 @@
                 <i class="fas fa-wallet text-lg transition-transform"></i>
                 <span class="text-[9px] font-medium">Wallet</span>
             </button>
-            <!-- নতুন History বাটন -->
             <button onclick="router('history')" class="nav-item flex flex-col items-center gap-1 text-gray-500 transition-all duration-300" id="btn-history">
                 <i class="fas fa-history text-lg transition-transform"></i>
                 <span class="text-[9px] font-medium">History</span>
@@ -140,7 +131,6 @@
 
     <!-- ৮. জাভাস্ক্রিপ্ট লজিক -->
     <script>
-        // --- কনফিগারেশন ---
         const SUPABASE_URL = 'https://wnmwvbeydsrehtsnkfoc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubXd2YmV5ZHNyZWh0c25rZm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDg4MzIsImV4cCI6MjA3OTg4NDgzMn0.4vSObxBEr8r11-dqkp9y6bVroMVoSTEnIOTF8Vo8sxk';
         
@@ -149,33 +139,33 @@
         
         let currentUser = null;
         let appSettings = {};
+        // মিনিমাম কতক্ষণ অ্যাড দেখতে হবে (১০ সেকেন্ড)
+        const MIN_AD_DURATION = 10000; 
         
         // --- অ্যাপ স্টার্ট ---
         async function initApp() {
             tg.expand();
             const tgUser = tg.initDataUnsafe?.user;
 
-            // টেস্টিংয়ের জন্য (যদি ব্রাউজারে রান করেন)
-            // const tgUser = { id: 123456, first_name: "Test User", username: "tester", photo_url: "" };
-
             if (!tgUser) {
                 document.getElementById('loading-screen').innerHTML = "<p class='text-red-500 font-bold'>Please open in Telegram</p>";
                 return;
             }
 
-            // সেটিংস লোড
             const { data: settingsData } = await supabase.from('settings').select('*').single();
             appSettings = settingsData || {};
 
-            // ইউজার চেক/রেজিস্ট্রেশন
             let { data: user } = await supabase.from('users').select('*').eq('id', tgUser.id).single();
 
             if (!user) {
                 const startParam = tg.initDataUnsafe?.start_param; 
                 let referrerId = (startParam && startParam != tgUser.id) ? startParam : null;
 
-                if (appSettings.anti_cheat_enabled && localStorage.getItem('has_referred_someone')) {
-                    referrerId = null; 
+                // Anti-Cheat Logic Fix: সেটিংস অন থাকলেই কেবল চেক করবে
+                if (appSettings.anti_cheat_enabled === true) {
+                    if (localStorage.getItem('has_referred_someone')) {
+                        referrerId = null; // একই ডিভাইসে বারবার রেফার হবে না
+                    }
                 }
 
                 const { data: newUser } = await supabase.from('users').insert([{
@@ -222,7 +212,7 @@
             if (page === 'home') renderHome(content);
             else if (page === 'tasks') renderTasks(content);
             else if (page === 'wallet') renderWallet(content);
-            else if (page === 'history') renderHistory(content); // নতুন পেজ
+            else if (page === 'history') renderHistory(content);
             else if (page === 'refer') renderRefer(content);
         }
 
@@ -230,12 +220,11 @@
         function renderHome(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             
-            // Monetag In-App Ad
+            // Monetag In-App
             if(typeof window.show_10197154 !== 'undefined') {
                 window.show_10197154({ type: 'inApp', inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false } });
             }
 
-            // ব্যানার লজিক
             let bannerHtml = '';
             if (appSettings.home_banner_url) {
                 bannerHtml = `
@@ -268,14 +257,10 @@
                 </div>
 
                 ${bannerHtml}
-
-                <div class="text-center text-[10px] text-gray-600 mt-4">
-                    <p>Protected by Anti-Cheat System</p>
-                </div>
             `;
         }
 
-        // --- ২. টাস্ক পেজ ---
+        // --- ২. টাস্ক পেজ (টাইমার ফিক্স সহ) ---
         async function renderTasks(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
@@ -336,18 +321,52 @@
             container.innerHTML = html;
         }
 
+        // --- টাস্ক হ্যান্ডলিং (টাইমার লজিক) ---
         window.handleTask = async (taskId, reward, type, link) => {
+            const startTime = Date.now(); // টাইমার শুরু
+
+            const checkTimeAndReward = async () => {
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                if (duration < MIN_AD_DURATION) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Too Fast!',
+                        text: 'You must watch the ad for at least 10 seconds.',
+                        confirmButtonColor: '#FFD700',
+                        confirmButtonText: 'Try Again'
+                    });
+                } else {
+                    await claimReward(taskId, reward);
+                }
+            };
+
             if (type === 'video') {
-                if(window.show_10197154) window.show_10197154().then(() => claimReward(taskId, reward)).catch(() => claimReward(taskId, reward));
-                else claimReward(taskId, reward);
-            } else if (type === 'telegram') {
+                if(window.show_10197154) {
+                    window.show_10197154().then(() => {
+                        checkTimeAndReward();
+                    }).catch(() => {
+                        // যদি অ্যাড লোড না হয় বা এরর দেয়
+                        Swal.fire('Error', 'Ad failed to load. Check internet.', 'error');
+                    });
+                } else {
+                    checkTimeAndReward(); // Dev mode or Adblock
+                }
+            } 
+            else if (type === 'telegram' || type === 'web') {
                 if(link) window.open(link, '_blank');
-                if(window.show_10197154) window.show_10197154('pop').then(() => claimReward(taskId, reward)).catch(() => claimReward(taskId, reward));
-                else claimReward(taskId, reward);
-            } else {
-                if(link) window.open(link, '_blank');
-                if(window.show_10197154) window.show_10197154().then(() => claimReward(taskId, reward)).catch(() => claimReward(taskId, reward));
-                else claimReward(taskId, reward);
+                
+                // পপআপ বা ইন্টারস্টিশিয়াল কল
+                const adPromise = (type === 'telegram') 
+                    ? (window.show_10197154 ? window.show_10197154('pop') : Promise.resolve())
+                    : (window.show_10197154 ? window.show_10197154() : Promise.resolve());
+
+                adPromise.then(() => {
+                    checkTimeAndReward();
+                }).catch(() => {
+                    checkTimeAndReward(); // পপআপ ক্লোজ করলেও চেক করবে
+                });
             }
         };
 
@@ -362,11 +381,11 @@
                 Swal.fire({ icon: 'success', title: `+${reward} Points`, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
                 router('tasks');
             } else {
-                Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Limit Reached" });
+                Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Task Limit Reached" });
             }
         }
 
-        // --- ৩. ওয়ালেট পেজ (শুধু বিকাশ) ---
+        // --- ৩. ওয়ালেট পেজ ---
         function renderWallet(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             container.innerHTML = `
@@ -424,13 +443,13 @@
                 currentUser.balance -= pointsNeeded;
                 updateHeaderUI();
                 Swal.fire('Success', 'Request Sent!', 'success');
-                router('history'); // সাকসেস হলে হিস্ট্রিতে নিয়ে যাবে
+                router('history');
             } else {
                 Swal.fire('Error', 'Failed to submit', 'error');
             }
         };
 
-        // --- ৪. হিস্ট্রি পেজ (নতুন) ---
+        // --- ৪. হিস্ট্রি পেজ ---
         async function renderHistory(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
