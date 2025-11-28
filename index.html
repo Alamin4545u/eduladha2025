@@ -5,19 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Premium Rewards</title>
 
-    <!-- ১. প্রয়োজনীয় লাইব্রেরি (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 (সুন্দর অ্যালার্টের জন্য) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- ২. Monetag Ads স্ক্রিপ্ট -->
-    <!-- আপনার দেওয়া স্ক্রিপ্টটি এখানে -->
+    <!-- Monetag Ads -->
     <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154'></script>
 
-    <!-- ৩. কাস্টম ডিজাইন (CSS) -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
@@ -60,7 +56,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* সুইট অ্যালার্ট কাস্টমাইজেশন */
+        /* Sweet Alert Dark */
         div:where(.swal2-container) div:where(.swal2-popup) {
             background: #1a1a1a !important;
             border: 1px solid #FFD700;
@@ -70,16 +66,16 @@
 </head>
 <body class="flex flex-col h-screen justify-between">
 
-    <!-- ৪. লোডিং স্ক্রিন -->
+    <!-- Loading Screen -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0f0f0f]">
         <div class="loader mb-4"></div>
         <h2 class="text-xl font-bold gold-text tracking-widest">PREMIUM REWARDS</h2>
     </div>
 
-    <!-- ৫. মেইন অ্যাপ কন্টেইনার -->
+    <!-- Main App -->
     <div id="main-app" class="hidden flex-1 overflow-y-auto pb-24">
         
-        <!-- টপ হেডার -->
+        <!-- Header -->
         <header class="sticky top-0 z-40 glass-panel border-b-0 rounded-b-3xl p-5 mb-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -88,7 +84,6 @@
                         <h3 id="user-name" class="font-bold text-lg leading-tight">Loading...</h3>
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-gray-400">Level 1</span>
-                            <span id="daily-limit-badge" class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-[#FFD700]">Tasks: 0/0</span>
                         </div>
                     </div>
                 </div>
@@ -102,12 +97,12 @@
             </div>
         </header>
 
-        <!-- ডাইনামিক পেজ কন্টেন্ট -->
+        <!-- Content Area -->
         <div id="content-area" class="px-4 space-y-4"></div>
 
     </div>
 
-    <!-- ৬. বটম নেভিগেশন বার -->
+    <!-- Navigation -->
     <nav class="fixed bottom-0 w-full glass-panel rounded-t-3xl pb-2 pt-1 z-50">
         <div class="flex justify-around items-center h-16">
             <button onclick="router('home')" class="nav-item flex flex-col items-center gap-1 w-1/4 text-gray-500 transition-all duration-300 active" id="btn-home">
@@ -129,33 +124,29 @@
         </div>
     </nav>
 
-    <!-- ৭. জাভাস্ক্রিপ্ট লজিক -->
     <script>
-        // --- কনফিগারেশন ---
         const SUPABASE_URL = 'https://wnmwvbeydsrehtsnkfoc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubXd2YmV5ZHNyZWh0c25rZm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDg4MzIsImV4cCI6MjA3OTg4NDgzMn0.4vSObxBEr8r11-dqkp9y6bVroMVoSTEnIOTF8Vo8sxk';
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const tg = window.Telegram.WebApp;
         
-        // --- গ্লোবাল ভেরিয়েবল ---
         let currentUser = null;
         let appSettings = {};
         
-        // --- অ্যাপ ইনিশিয়ালাইজেশন ---
         async function initApp() {
             tg.expand();
             
-            // টেস্টিং মোড (ব্রাউজারের জন্য)
-            // const tgUser = { id: 123456, first_name: "Test User", username: "tester", photo_url: "" };
             const tgUser = tg.initDataUnsafe?.user;
+            // Testing only:
+            // const tgUser = { id: 123456, first_name: "Test User", username: "tester", photo_url: "" };
 
             if (!tgUser) {
                 document.getElementById('loading-screen').innerHTML = "<p class='text-red-500'>Please open in Telegram</p>";
                 return;
             }
 
-            // ১. সেটিংস লোড করা (বট ইউজারনেম, ডেইলি লিমিট, অ্যান্টি-চিট)
+            // Load Settings
             const { data: settingsData } = await supabase.from('settings').select('*').single();
             appSettings = settingsData || { 
                 conversion_rate: 0.05, 
@@ -164,22 +155,20 @@
                 min_referrals_req: 0,
                 bot_username: 'MyBot_bot',
                 daily_task_limit: 10,
-                anti_cheat_enabled: true
+                anti_cheat_enabled: true,
+                home_banner_url: ''
             };
 
-            // ২. ইউজার ডাটা হ্যান্ডলিং
+            // Load/Create User
             let { data: user, error } = await supabase.from('users').select('*').eq('id', tgUser.id).single();
 
             if (!user) {
-                // নতুন ইউজার
                 const startParam = tg.initDataUnsafe?.start_param; 
                 let referrerId = (startParam && startParam != tgUser.id) ? startParam : null;
 
-                // Anti-Cheat: চেক করা এই ডিভাইসে আগে রেফার হয়েছে কিনা
+                // Anti-Cheat Check
                 const hasReferredLocally = localStorage.getItem('has_referred_someone');
-                if (appSettings.anti_cheat_enabled && hasReferredLocally) {
-                    referrerId = null; // ফেক রেফার আটকানো হলো
-                }
+                if (appSettings.anti_cheat_enabled && hasReferredLocally) referrerId = null;
 
                 const { data: newUser } = await supabase.from('users').insert([{
                     id: tgUser.id,
@@ -187,7 +176,6 @@
                     username: tgUser.username,
                     photo_url: tgUser.photo_url,
                     referred_by: referrerId,
-                    tasks_completed_today: 0,
                     last_active_date: new Date().toISOString()
                 }]).select().single();
 
@@ -195,13 +183,7 @@
 
                 if (referrerId) {
                     await supabase.rpc('increment_referral', { referrer_id: referrerId });
-                    localStorage.setItem('has_referred_someone', 'true'); // ডিভাইসে মার্ক করে রাখা
-                }
-            } else {
-                // পুরনো ইউজার: তারিখ চেক করা (ফ্রন্টএন্ড ডিসপ্লের জন্য, ব্যাকএন্ডেও চেক আছে)
-                const todayStr = new Date().toISOString().split('T')[0];
-                if (user.last_active_date !== todayStr) {
-                    user.tasks_completed_today = 0; // ডিসপ্লের জন্য রিসেট
+                    localStorage.setItem('has_referred_someone', 'true');
                 }
             }
 
@@ -213,15 +195,11 @@
             router('home');
         }
 
-        // --- UI আপডেট ---
         function updateHeaderUI() {
             if(!currentUser) return;
             document.getElementById('user-name').innerText = currentUser.first_name;
             document.getElementById('user-balance').innerText = currentUser.balance;
             if(currentUser.photo_url) document.getElementById('user-photo').src = currentUser.photo_url;
-            
-            // ডেইলি লিমিট ব্যাজ
-            document.getElementById('daily-limit-badge').innerText = `Tasks: ${currentUser.tasks_completed_today || 0}/${appSettings.daily_task_limit}`;
         }
 
         function router(page) {
@@ -242,9 +220,31 @@
             else if (page === 'refer') renderRefer(content);
         }
 
-        // --- ১. হোম পেজ ---
+        // --- 1. HOME PAGE (Banner Added) ---
         function renderHome(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
+            
+            // ব্যানার ইমেজ চেক
+            let bannerHtml = '';
+            if (appSettings.home_banner_url && appSettings.home_banner_url.startsWith('http')) {
+                bannerHtml = `
+                    <div class="mt-6 mb-4 rounded-xl overflow-hidden shadow-lg border border-[#FFD700]/30 relative group">
+                        <img src="${appSettings.home_banner_url}" class="w-full h-auto object-cover transform group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute bottom-2 left-3">
+                            <span class="text-[10px] bg-[#FFD700] text-black px-2 py-0.5 rounded font-bold">Featured</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // ডিফল্ট প্লেসহোল্ডার যদি ব্যানার সেট না থাকে
+                bannerHtml = `
+                    <div class="mt-6 mb-4 rounded-xl border border-dashed border-gray-700 p-4 text-center text-gray-500 text-xs">
+                        Admin Banner Space (350x150)
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <div class="glass-panel p-6 rounded-2xl text-center relative overflow-hidden mt-4">
                     <div class="absolute -top-10 -left-10 w-32 h-32 bg-[#FFD700] rounded-full blur-[80px] opacity-20"></div>
@@ -254,7 +254,6 @@
                     <button onclick="router('tasks')" class="mt-4 w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg active:scale-95 transition-transform">Start Earning</button>
                 </div>
                 
-                <!-- স্ট্যাটস -->
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center">
                         <i class="fas fa-users text-2xl mb-2 text-blue-400"></i>
@@ -262,49 +261,58 @@
                         <span class="text-xs text-gray-400">Referrals</span>
                     </div>
                     <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center">
-                        <i class="fas fa-list-check text-2xl mb-2 text-green-400"></i>
-                        <span class="text-sm font-bold">${currentUser.tasks_completed_today}/${appSettings.daily_task_limit}</span>
-                        <span class="text-xs text-gray-400">Daily Tasks</span>
+                        <i class="fas fa-check-circle text-2xl mb-2 text-green-400"></i>
+                        <span class="text-sm font-bold">Active</span>
+                        <span class="text-xs text-gray-400">Status</span>
                     </div>
                 </div>
+
+                <!-- Banner Section -->
+                ${bannerHtml}
             `;
-            // হোম পেজ লোড হলে ইন্টারস্টিশিয়াল অ্যাড দেখাবে
             showAd('interstitial');
         }
 
-        // --- ২. টাস্ক পেজ (আপডেট করা হয়েছে) ---
+        // --- 2. TASKS PAGE (Fixed Logic: Limit per task) ---
         async function renderTasks(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
-            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
+            // ১. সব টাস্ক আনা
+            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
             
-            const isLocked = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
+            // ২. আজকের করা সব টাস্কের লগ আনা (ইউজার স্পেসিফিক)
+            const todayDate = new Date().toISOString().split('T')[0];
+            const { data: logs } = await supabase.from('task_logs')
+                .select('task_id')
+                .eq('user_id', currentUser.id)
+                .eq('created_at', todayDate);
+
+            // ৩. লজিক: কোন টাস্ক কতবার করা হয়েছে তা গণনা করা
+            const taskCounts = {};
+            if (logs) {
+                logs.forEach(log => {
+                    taskCounts[log.task_id] = (taskCounts[log.task_id] || 0) + 1;
+                });
+            }
+
+            const isReferralLocked = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
             const remainingRef = appSettings.min_referrals_req - currentUser.referral_count;
-            const dailyLimitReached = (currentUser.tasks_completed_today || 0) >= appSettings.daily_task_limit;
+            const dailyLimit = appSettings.daily_task_limit || 10; // প্রতিটি টাস্কের জন্য লিমিট
 
             let html = `
                 <div class="flex justify-between items-center my-4">
                     <h2 class="text-xl font-bold">Task List</h2>
-                    <span class="bg-[#FFD700] text-black text-xs px-2 py-1 rounded font-bold">${tasks.length} Available</span>
+                    <span class="text-xs text-gray-400">Limit: ${dailyLimit}/task</span>
                 </div>
             `;
 
-            if (isLocked) {
+            if (isReferralLocked) {
                 html += `
                     <div class="bg-red-500/10 border border-red-500/50 p-4 rounded-xl mb-4 flex items-start gap-3">
                         <i class="fas fa-lock text-red-500 mt-1"></i>
                         <div>
                             <h4 class="font-bold text-red-500 text-sm">Tasks Locked!</h4>
                             <p class="text-xs text-gray-300">Invite ${remainingRef} more friends to unlock.</p>
-                        </div>
-                    </div>`;
-            } else if (dailyLimitReached) {
-                html += `
-                    <div class="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-4 flex items-start gap-3">
-                        <i class="fas fa-check-circle text-yellow-500 mt-1"></i>
-                        <div>
-                            <h4 class="font-bold text-yellow-500 text-sm">Daily Limit Reached!</h4>
-                            <p class="text-xs text-gray-300">Come back tomorrow for more tasks.</p>
                         </div>
                     </div>`;
             }
@@ -316,9 +324,13 @@
                 if(task.icon === 'youtube') iconClass = 'fa-youtube text-red-500';
                 if(task.icon === 'telegram') iconClass = 'fa-telegram text-blue-400';
 
-                // বাটন ডিজেবল লজিক
-                const isDisabled = isLocked || dailyLimitReached;
-                const btnOpacity = isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FFD700] hover:text-black';
+                // এই নির্দিষ্ট টাস্কটি কতবার করা হয়েছে
+                const completedCount = taskCounts[task.id] || 0;
+                const isTaskLimitReached = completedCount >= dailyLimit;
+
+                const isDisabled = isReferralLocked || isTaskLimitReached;
+                const btnOpacity = isDisabled ? 'opacity-50 cursor-not-allowed bg-white/5' : 'bg-white/10 hover:bg-[#FFD700] hover:text-black';
+                const btnText = isTaskLimitReached ? 'Done' : 'Claim';
 
                 html += `
                     <div class="glass-panel p-4 rounded-xl relative overflow-hidden">
@@ -330,15 +342,15 @@
                                 <div>
                                     <h4 class="font-bold text-sm line-clamp-1">${task.title}</h4>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-xs text-[#FFD700] font-bold">+${task.reward} Pts</span>
-                                        <span class="text-[10px] bg-white/10 px-1 rounded text-gray-400 uppercase">${task.ad_type} AD</span>
+                                        <span class="text-xs text-[#FFD700] font-bold">+${task.reward}</span>
+                                        <span class="text-[10px] bg-white/10 px-1 rounded text-gray-400">${completedCount}/${dailyLimit}</span>
                                     </div>
                                 </div>
                             </div>
                             <button onclick="handleTask(${task.id}, ${task.reward}, '${task.link}', '${task.ad_type}')" 
                                 ${isDisabled ? 'disabled' : ''}
-                                class="px-4 py-2 rounded-lg bg-white/10 text-xs font-bold transition-colors ${btnOpacity}">
-                                ${dailyLimitReached ? 'Done' : 'Claim'}
+                                class="px-4 py-2 rounded-lg text-xs font-bold transition-colors ${btnOpacity}">
+                                ${btnText}
                             </button>
                         </div>
                     </div>
@@ -349,50 +361,35 @@
         }
 
         window.handleTask = async (taskId, reward, link, adType) => {
-            // ১. ডেইলি লিমিট ক্লায়েন্ট সাইড চেক
-            if((currentUser.tasks_completed_today || 0) >= appSettings.daily_task_limit) {
-                return Swal.fire({ icon: 'warning', title: 'Limit Reached', text: 'You completed all tasks for today!' });
-            }
-
-            // ২. অ্যাড দেখানো (Monetag)
-            const adWatched = await showAd(adType);
+            await showAd(adType);
             
-            if (adWatched) {
-                // ৩. সার্ভারে রিকোয়েস্ট পাঠানো (RPC)
-                // সার্ভার চেক করবে লিমিট ঠিক আছে কিনা এবং ব্যালেন্স অ্যাড করবে
-                const { data: result, error } = await supabase.rpc('claim_task', { 
-                    user_id_input: currentUser.id, 
-                    reward_amount: reward,
-                    daily_limit_input: appSettings.daily_task_limit
-                });
+            // RPC কল (এখন task_id পাঠানো হচ্ছে)
+            const { data: result, error } = await supabase.rpc('claim_task', { 
+                user_id_input: currentUser.id, 
+                task_id_input: taskId, // টাস্ক আইডি পাঠানো হচ্ছে
+                reward_amount: reward,
+                daily_limit_input: appSettings.daily_task_limit
+            });
 
-                if (result && result.success) {
-                    currentUser.balance += reward;
-                    currentUser.tasks_completed_today += 1;
-                    updateHeaderUI();
-                    
-                    if(link && link !== 'null' && link !== '') {
-                        window.open(link, '_blank');
-                    }
-                    
-                    Swal.fire({ 
-                        icon: 'success', 
-                        title: `+${reward} Points`, 
-                        text: 'Task Completed Successfully!',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    
-                    router('tasks'); // রিফ্রেশ
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Something went wrong" });
-                }
+            if (result && result.success) {
+                currentUser.balance += reward;
+                updateHeaderUI();
+                
+                if(link && link !== 'null' && link !== '') window.open(link, '_blank');
+                
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: `+${reward} Points`, 
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 1500
+                });
+                
+                router('tasks'); // রিফ্রেশ করলে শুধু ওই টাস্কের কাউন্ট বাড়বে
             } else {
-                Swal.fire({ icon: 'info', title: 'Ad Skipped', text: 'You must watch the ad to get rewards!' });
+                Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Error occurred" });
             }
         };
 
-        // --- ৩. ওয়ালেট পেজ ---
+        // --- 3. WALLET & REFER (Same as before) ---
         function renderWallet(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             container.innerHTML = `
@@ -401,7 +398,6 @@
                     <h1 class="text-3xl font-bold gold-text my-2">৳ ${bdtAmount}</h1>
                     <p class="text-xs text-gray-500">Min Withdraw: ৳ ${appSettings.min_withdraw_amount}</p>
                 </div>
-
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs text-gray-400 ml-1">Select Method</label>
@@ -420,10 +416,8 @@
                             </button>
                         </div>
                     </div>
-
                     <input type="number" id="withdraw-number" placeholder="Mobile Number" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700]">
                     <input type="number" id="withdraw-amount" placeholder="Amount (BDT)" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700]">
-
                     <button onclick="processWithdraw()" class="w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg mt-2 active:scale-95 transition-transform">Withdraw Money</button>
                 </div>
             `;
@@ -443,22 +437,17 @@
         window.processWithdraw = async () => {
             const number = document.getElementById('withdraw-number').value;
             const amount = parseInt(document.getElementById('withdraw-amount').value);
-            
             if (!number || !amount) return Swal.fire('Error', 'Fill all fields', 'error');
             if (amount < appSettings.min_withdraw_amount) return Swal.fire('Error', `Minimum withdraw is ${appSettings.min_withdraw_amount} BDT`, 'error');
-            
             const pointsNeeded = amount / appSettings.conversion_rate;
             if (currentUser.balance < pointsNeeded) return Swal.fire('Error', 'Insufficient Balance!', 'error');
 
-            await showAd('interstitial'); // উইথড্র করার সময়ও অ্যাড দেখানো
-
+            await showAd('interstitial');
             const { error } = await supabase.from('withdrawals').insert([{
                 user_id: currentUser.id, method: window.selectedMethod, number: number, amount_bdt: amount, points_deducted: pointsNeeded
             }]);
 
             if (!error) {
-                // ব্যালেন্স ম্যানুয়ালি কমানো (RPC ইউজ করাই বেটার, তবে এখানে সরাসরি আপডেট দিচ্ছি সিম্পলিসিটির জন্য)
-                // প্রোডাকশনে RPC ব্যবহার করবেন
                 await supabase.rpc('increment_balance', { user_id: currentUser.id, amount: -pointsNeeded });
                 currentUser.balance -= pointsNeeded;
                 updateHeaderUI();
@@ -469,19 +458,15 @@
             }
         };
 
-        // --- ৪. রেফার পেজ (ডাইনামিক বটের নাম) ---
         function renderRefer(container) {
-            // বটের ইউজারনেম সেটিংস থেকে আসবে
             const botUser = appSettings.bot_username || 'MyBot_bot';
             const referLink = `https://t.me/${botUser}?start=${currentUser.id}`;
-            
             container.innerHTML = `
                 <div class="glass-panel p-6 rounded-2xl text-center mt-4">
                     <img src="https://cdn-icons-png.flaticon.com/512/3893/3893069.png" class="w-20 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">
                     <h2 class="text-2xl font-bold text-white">Invite Friends</h2>
                     <p class="text-sm text-gray-400 mt-2">Earn 50 points per refer!</p>
                 </div>
-
                 <div class="glass-panel p-4 rounded-xl mt-4">
                     <label class="text-xs text-gray-400">Your Referral Link</label>
                     <div class="flex items-center gap-2 mt-2 bg-black/30 p-2 rounded-lg border border-white/10">
@@ -489,7 +474,6 @@
                         <button onclick="copyLink()" class="p-2 bg-[#FFD700] rounded text-black font-bold"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
-
                 <div class="mt-6">
                     <h3 class="font-bold mb-3">Your Statistics</h3>
                     <div class="flex justify-between glass-panel p-4 rounded-xl">
@@ -513,30 +497,17 @@
             Swal.fire({ icon: 'success', title: 'Copied!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
         };
 
-        // --- Monetag Ad ইন্টিগ্রেশন (আপডেটেড) ---
         function showAd(type) {
             return new Promise((resolve) => {
                 if (typeof window.show_10197154 === 'undefined') {
                     console.log("AdBlocker detected or SDK failed (Dev Mode)");
-                    resolve(true); // ডেভলপমেন্টের সময় অ্যাড ছাড়াই কাজ করবে
+                    resolve(true);
                     return;
                 }
-
-                // টাইপ অনুযায়ী অ্যাড দেখানো
                 if (type === 'rewarded') {
-                    // Rewarded Tag (পপআপ)
-                    window.show_10197154('pop').then(() => {
-                        resolve(true);
-                    }).catch(() => {
-                        resolve(false);
-                    });
+                    window.show_10197154('pop').then(() => resolve(true)).catch(() => resolve(false));
                 } else {
-                    // Interstitial (Vignette)
-                    window.show_10197154().then(() => {
-                        resolve(true);
-                    }).catch(() => {
-                        resolve(true); // ইন্টারস্টিশিয়াল ফেইল করলেও টাস্ক কমপ্লিট ধরা হয় সাধারণত
-                    });
+                    window.show_10197154().then(() => resolve(true)).catch(() => resolve(true));
                 }
             });
         }
