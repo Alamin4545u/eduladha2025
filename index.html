@@ -6,16 +6,15 @@
     <title>Premium Rewards</title>
 
     <!-- ১. প্রয়োজনীয় লাইব্রেরি (CDN) -->
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Icons (FontAwesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 (সুন্দর অ্যালার্টের জন্য) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- ২. আপনার Monetag Ads স্ক্রিপ্ট -->
+    <!-- ২. Monetag Ads স্ক্রিপ্ট -->
+    <!-- আপনার দেওয়া স্ক্রিপ্টটি এখানে -->
     <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154'></script>
 
     <!-- ৩. কাস্টম ডিজাইন (CSS) -->
@@ -30,17 +29,13 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* প্রিমিয়াম গোল্ড এফেক্ট */
-        .gold-gradient {
-            background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%);
-        }
+        .gold-gradient { background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%); }
         .gold-text {
             background: linear-gradient(to right, #FFD700, #FDB931);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        /* গ্লাস ইফেক্ট (Glassmorphism) */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -49,16 +44,12 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* নেভিগেশন বার */
-        .nav-item.active {
-            color: #FFD700;
-        }
+        .nav-item.active { color: #FFD700; }
         .nav-item.active i {
             transform: translateY(-5px);
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
-        /* লোডিং স্পিনার */
         .loader {
             border: 4px solid #333;
             border-top: 4px solid #FFD700;
@@ -69,15 +60,11 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* লক আইকন */
-        .locked-overlay {
-            background: rgba(0,0,0,0.7);
-            position: absolute;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 0.75rem;
+        /* সুইট অ্যালার্ট কাস্টমাইজেশন */
+        div:where(.swal2-container) div:where(.swal2-popup) {
+            background: #1a1a1a !important;
+            border: 1px solid #FFD700;
+            color: white;
         }
     </style>
 </head>
@@ -99,7 +86,10 @@
                     <img id="user-photo" src="https://ui-avatars.com/api/?name=U&background=random" class="w-12 h-12 rounded-full border-2 border-[#FFD700] object-cover">
                     <div>
                         <h3 id="user-name" class="font-bold text-lg leading-tight">Loading...</h3>
-                        <span class="text-xs text-gray-400">Level 1 Member</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">Level 1</span>
+                            <span id="daily-limit-badge" class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-[#FFD700]">Tasks: 0/0</span>
+                        </div>
                     </div>
                 </div>
                 <div class="text-right">
@@ -113,9 +103,7 @@
         </header>
 
         <!-- ডাইনামিক পেজ কন্টেন্ট -->
-        <div id="content-area" class="px-4 space-y-4">
-            <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে পেজ লোড হবে -->
-        </div>
+        <div id="content-area" class="px-4 space-y-4"></div>
 
     </div>
 
@@ -156,73 +144,90 @@
         
         // --- অ্যাপ ইনিশিয়ালাইজেশন ---
         async function initApp() {
-            tg.expand(); // টেলিগ্রাম ফুল স্ক্রিন করা
+            tg.expand();
             
-            // ১. ইউজার ডাটা নেওয়া (Telegram থেকে)
-            // টেস্টিংয়ের জন্য নিচের লাইনটি আনকমেন্ট করতে পারেন যদি ব্রাউজারে টেস্ট করেন
+            // টেস্টিং মোড (ব্রাউজারের জন্য)
             // const tgUser = { id: 123456, first_name: "Test User", username: "tester", photo_url: "" };
-            
             const tgUser = tg.initDataUnsafe?.user;
 
             if (!tgUser) {
-                // টেলিগ্রাম ছাড়া ওপেন করলে ওয়ার্নিং
                 document.getElementById('loading-screen').innerHTML = "<p class='text-red-500'>Please open in Telegram</p>";
                 return;
             }
 
-            // ২. সেটিংস লোড করা
+            // ১. সেটিংস লোড করা (বট ইউজারনেম, ডেইলি লিমিট, অ্যান্টি-চিট)
             const { data: settingsData } = await supabase.from('settings').select('*').single();
-            appSettings = settingsData || { conversion_rate: 0.05, min_withdraw_amount: 50, referral_lock: false, min_referrals_req: 0 };
+            appSettings = settingsData || { 
+                conversion_rate: 0.05, 
+                min_withdraw_amount: 50, 
+                referral_lock: false, 
+                min_referrals_req: 0,
+                bot_username: 'MyBot_bot',
+                daily_task_limit: 10,
+                anti_cheat_enabled: true
+            };
 
-            // ৩. ডাটাবেসে ইউজার চেক বা সাইন আপ
+            // ২. ইউজার ডাটা হ্যান্ডলিং
             let { data: user, error } = await supabase.from('users').select('*').eq('id', tgUser.id).single();
 
             if (!user) {
-                // নতুন ইউজার রেজিস্ট্রেশন
-                const startParam = tg.initDataUnsafe?.start_param; // রেফার লিংক থেকে আইডি
+                // নতুন ইউজার
+                const startParam = tg.initDataUnsafe?.start_param; 
                 let referrerId = (startParam && startParam != tgUser.id) ? startParam : null;
+
+                // Anti-Cheat: চেক করা এই ডিভাইসে আগে রেফার হয়েছে কিনা
+                const hasReferredLocally = localStorage.getItem('has_referred_someone');
+                if (appSettings.anti_cheat_enabled && hasReferredLocally) {
+                    referrerId = null; // ফেক রেফার আটকানো হলো
+                }
 
                 const { data: newUser } = await supabase.from('users').insert([{
                     id: tgUser.id,
                     first_name: tgUser.first_name,
                     username: tgUser.username,
                     photo_url: tgUser.photo_url,
-                    referred_by: referrerId
+                    referred_by: referrerId,
+                    tasks_completed_today: 0,
+                    last_active_date: new Date().toISOString()
                 }]).select().single();
 
                 user = newUser;
 
-                // যদি রেফারার থাকে, তার কাউন্ট বাড়ানো (RPC কল)
                 if (referrerId) {
                     await supabase.rpc('increment_referral', { referrer_id: referrerId });
+                    localStorage.setItem('has_referred_someone', 'true'); // ডিভাইসে মার্ক করে রাখা
+                }
+            } else {
+                // পুরনো ইউজার: তারিখ চেক করা (ফ্রন্টএন্ড ডিসপ্লের জন্য, ব্যাকএন্ডেও চেক আছে)
+                const todayStr = new Date().toISOString().split('T')[0];
+                if (user.last_active_date !== todayStr) {
+                    user.tasks_completed_today = 0; // ডিসপ্লের জন্য রিসেট
                 }
             }
 
             currentUser = user;
             updateHeaderUI();
             
-            // অ্যাপ লোড শেষ
             document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
-            
-            // হোম পেজ লোড
             router('home');
         }
 
-        // --- UI আপডেট ফাংশন ---
+        // --- UI আপডেট ---
         function updateHeaderUI() {
             if(!currentUser) return;
             document.getElementById('user-name').innerText = currentUser.first_name;
             document.getElementById('user-balance').innerText = currentUser.balance;
             if(currentUser.photo_url) document.getElementById('user-photo').src = currentUser.photo_url;
+            
+            // ডেইলি লিমিট ব্যাজ
+            document.getElementById('daily-limit-badge').innerText = `Tasks: ${currentUser.tasks_completed_today || 0}/${appSettings.daily_task_limit}`;
         }
 
-        // --- রাউটিং সিস্টেম (Single Page) ---
         function router(page) {
             const content = document.getElementById('content-area');
             const buttons = document.querySelectorAll('.nav-item');
             
-            // বাটন হাইলাইট চেঞ্জ
             buttons.forEach(btn => btn.classList.remove('active', 'text-[#FFD700]'));
             buttons.forEach(btn => btn.classList.add('text-gray-500'));
             const activeBtn = document.getElementById(`btn-${page}`);
@@ -231,7 +236,6 @@
                 activeBtn.classList.remove('text-gray-500');
             }
 
-            // পেজ রেন্ডার
             if (page === 'home') renderHome(content);
             else if (page === 'tasks') renderTasks(content);
             else if (page === 'wallet') renderWallet(content);
@@ -241,58 +245,46 @@
         // --- ১. হোম পেজ ---
         function renderHome(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
-            
             container.innerHTML = `
-                <!-- ব্যালেন্স কার্ড -->
                 <div class="glass-panel p-6 rounded-2xl text-center relative overflow-hidden mt-4">
                     <div class="absolute -top-10 -left-10 w-32 h-32 bg-[#FFD700] rounded-full blur-[80px] opacity-20"></div>
                     <p class="text-gray-400 text-sm uppercase tracking-wider mb-2">Total Earnings</p>
                     <h1 class="text-4xl font-bold text-white mb-1">${currentUser.balance}</h1>
                     <p class="text-xs text-[#FFD700]">≈ ৳ ${bdtAmount} BDT</p>
-                    
-                    <button onclick="router('tasks')" class="mt-4 w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg active:scale-95 transition-transform">
-                        Start Earning
-                    </button>
+                    <button onclick="router('tasks')" class="mt-4 w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg active:scale-95 transition-transform">Start Earning</button>
                 </div>
-
-                <!-- ইনফো গ্রিড -->
+                
+                <!-- স্ট্যাটস -->
                 <div class="grid grid-cols-2 gap-4 mt-2">
-                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center h-28">
+                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center">
                         <i class="fas fa-users text-2xl mb-2 text-blue-400"></i>
                         <span class="text-sm font-bold">${currentUser.referral_count}</span>
                         <span class="text-xs text-gray-400">Referrals</span>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center h-28">
-                        <i class="fas fa-history text-2xl mb-2 text-green-400"></i>
-                        <span class="text-sm font-bold">24h</span>
-                        <span class="text-xs text-gray-400">Active</span>
+                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center">
+                        <i class="fas fa-list-check text-2xl mb-2 text-green-400"></i>
+                        <span class="text-sm font-bold">${currentUser.tasks_completed_today}/${appSettings.daily_task_limit}</span>
+                        <span class="text-xs text-gray-400">Daily Tasks</span>
                     </div>
                 </div>
-
-                <!-- নোটিশ -->
-                <div class="glass-panel p-4 rounded-xl border-l-4 border-yellow-500">
-                    <h4 class="font-bold text-sm text-[#FFD700] mb-1">📢 Announcement</h4>
-                    <p class="text-xs text-gray-300">Welcome to our Premium App! Complete tasks and refer friends to earn real money.</p>
-                </div>
             `;
-            
-            // হোম পেজে এড শো করা (Interstitial)
+            // হোম পেজ লোড হলে ইন্টারস্টিশিয়াল অ্যাড দেখাবে
             showAd('interstitial');
         }
 
-        // --- ২. টাস্ক পেজ ---
+        // --- ২. টাস্ক পেজ (আপডেট করা হয়েছে) ---
         async function renderTasks(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
             const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
             
-            // লকিং লজিক
             const isLocked = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
-            const remaining = appSettings.min_referrals_req - currentUser.referral_count;
+            const remainingRef = appSettings.min_referrals_req - currentUser.referral_count;
+            const dailyLimitReached = (currentUser.tasks_completed_today || 0) >= appSettings.daily_task_limit;
 
             let html = `
                 <div class="flex justify-between items-center my-4">
-                    <h2 class="text-xl font-bold">Daily Tasks</h2>
+                    <h2 class="text-xl font-bold">Task List</h2>
                     <span class="bg-[#FFD700] text-black text-xs px-2 py-1 rounded font-bold">${tasks.length} Available</span>
                 </div>
             `;
@@ -303,10 +295,18 @@
                         <i class="fas fa-lock text-red-500 mt-1"></i>
                         <div>
                             <h4 class="font-bold text-red-500 text-sm">Tasks Locked!</h4>
-                            <p class="text-xs text-gray-300">You need to refer <span class="text-white font-bold">${remaining}</span> more friends to unlock tasks.</p>
+                            <p class="text-xs text-gray-300">Invite ${remainingRef} more friends to unlock.</p>
                         </div>
-                    </div>
-                `;
+                    </div>`;
+            } else if (dailyLimitReached) {
+                html += `
+                    <div class="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-4 flex items-start gap-3">
+                        <i class="fas fa-check-circle text-yellow-500 mt-1"></i>
+                        <div>
+                            <h4 class="font-bold text-yellow-500 text-sm">Daily Limit Reached!</h4>
+                            <p class="text-xs text-gray-300">Come back tomorrow for more tasks.</p>
+                        </div>
+                    </div>`;
             }
 
             html += `<div class="space-y-3 pb-20">`;
@@ -316,75 +316,85 @@
                 if(task.icon === 'youtube') iconClass = 'fa-youtube text-red-500';
                 if(task.icon === 'telegram') iconClass = 'fa-telegram text-blue-400';
 
+                // বাটন ডিজেবল লজিক
+                const isDisabled = isLocked || dailyLimitReached;
+                const btnOpacity = isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FFD700] hover:text-black';
+
                 html += `
-                    <div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-                        ${isLocked ? `<div class="locked-overlay"><i class="fas fa-lock text-2xl text-white/50"></i></div>` : ''}
-                        
-                        <div class="flex justify-between items-center ${isLocked ? 'blur-sm' : ''}">
+                    <div class="glass-panel p-4 rounded-xl relative overflow-hidden">
+                        <div class="flex justify-between items-center">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
                                     <i class="fab ${iconClass} text-lg"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-sm line-clamp-1">${task.title}</h4>
-                                    <div class="flex items-center gap-1 mt-1">
-                                        <i class="fas fa-coins text-[10px] text-[#FFD700]"></i>
-                                        <span class="text-xs text-[#FFD700] font-bold">+${task.reward}</span>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs text-[#FFD700] font-bold">+${task.reward} Pts</span>
+                                        <span class="text-[10px] bg-white/10 px-1 rounded text-gray-400 uppercase">${task.ad_type} AD</span>
                                     </div>
                                 </div>
                             </div>
-                            <button onclick="handleTask(${task.id}, ${task.reward}, '${task.link}')" 
-                                ${isLocked ? 'disabled' : ''}
-                                class="px-4 py-2 rounded-lg bg-white/10 text-xs font-bold hover:bg-[#FFD700] hover:text-black transition-colors">
-                                Claim
+                            <button onclick="handleTask(${task.id}, ${task.reward}, '${task.link}', '${task.ad_type}')" 
+                                ${isDisabled ? 'disabled' : ''}
+                                class="px-4 py-2 rounded-lg bg-white/10 text-xs font-bold transition-colors ${btnOpacity}">
+                                ${dailyLimitReached ? 'Done' : 'Claim'}
                             </button>
                         </div>
                     </div>
                 `;
             });
-            
             html += `</div>`;
             container.innerHTML = html;
         }
 
-        // টাস্ক হ্যান্ডলিং ফাংশন
-        window.handleTask = async (taskId, reward, link) => {
-            // ১. এড দেখানো (Rewarded Ad)
-            const adWatched = await showAd('rewarded');
+        window.handleTask = async (taskId, reward, link, adType) => {
+            // ১. ডেইলি লিমিট ক্লায়েন্ট সাইড চেক
+            if((currentUser.tasks_completed_today || 0) >= appSettings.daily_task_limit) {
+                return Swal.fire({ icon: 'warning', title: 'Limit Reached', text: 'You completed all tasks for today!' });
+            }
+
+            // ২. অ্যাড দেখানো (Monetag)
+            const adWatched = await showAd(adType);
             
             if (adWatched) {
-                // ২. পয়েন্ট এড করা (RPC)
-                const { error } = await supabase.rpc('increment_balance', { 
-                    user_id: currentUser.id, 
-                    amount: reward 
+                // ৩. সার্ভারে রিকোয়েস্ট পাঠানো (RPC)
+                // সার্ভার চেক করবে লিমিট ঠিক আছে কিনা এবং ব্যালেন্স অ্যাড করবে
+                const { data: result, error } = await supabase.rpc('claim_task', { 
+                    user_id_input: currentUser.id, 
+                    reward_amount: reward,
+                    daily_limit_input: appSettings.daily_task_limit
                 });
 
-                if (!error) {
-                    // ৩. লোকাল স্টেট আপডেট ও অ্যালার্ট
+                if (result && result.success) {
                     currentUser.balance += reward;
+                    currentUser.tasks_completed_today += 1;
                     updateHeaderUI();
                     
-                    // সাকসেস মডাল (সিম্পল অ্যালার্টের বদলে সুন্দর সুইট অ্যালার্ট ব্যবহার করা ভালো, এখানে ডিফল্ট দিচ্ছি)
-                    // লিংক ওপেন করা
-                    if(link && link !== 'null') {
+                    if(link && link !== 'null' && link !== '') {
                         window.open(link, '_blank');
                     }
                     
-                    alert(`Congratulations! You earned ${reward} points.`);
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: `+${reward} Points`, 
+                        text: 'Task Completed Successfully!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
                     router('tasks'); // রিফ্রেশ
                 } else {
-                    alert("Error updating balance. Check internet.");
+                    Swal.fire({ icon: 'error', title: 'Oops', text: result?.message || "Something went wrong" });
                 }
             } else {
-                alert("You must watch the ad to get rewards!");
+                Swal.fire({ icon: 'info', title: 'Ad Skipped', text: 'You must watch the ad to get rewards!' });
             }
         };
 
         // --- ৩. ওয়ালেট পেজ ---
         function renderWallet(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
-            const isRestricted = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
-
             container.innerHTML = `
                 <div class="glass-panel p-6 rounded-2xl text-center mb-6 mt-4">
                     <p class="text-gray-400 text-xs">Available Balance</p>
@@ -394,7 +404,7 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs text-gray-400 ml-1">Payment Method</label>
+                        <label class="text-xs text-gray-400 ml-1">Select Method</label>
                         <div class="grid grid-cols-3 gap-3 mt-1">
                             <button onclick="selectMethod(this, 'Bkash')" class="pay-method active glass-panel p-3 rounded-lg flex flex-col items-center justify-center border border-[#FFD700]">
                                 <img src="https://freelogopng.com/images/all_img/1656234745bkash-app-logo-png.png" class="h-6 object-contain mb-1">
@@ -411,21 +421,10 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="text-xs text-gray-400 ml-1">Account Number</label>
-                        <input type="number" id="withdraw-number" placeholder="017xxxxxxxx" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700] mt-1 transition-colors">
-                    </div>
+                    <input type="number" id="withdraw-number" placeholder="Mobile Number" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700]">
+                    <input type="number" id="withdraw-amount" placeholder="Amount (BDT)" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700]">
 
-                    <div>
-                        <label class="text-xs text-gray-400 ml-1">Amount (BDT)</label>
-                        <input type="number" id="withdraw-amount" placeholder="Min ${appSettings.min_withdraw_amount}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#FFD700] mt-1 transition-colors">
-                    </div>
-
-                    <button onclick="processWithdraw()" class="w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg mt-4 active:scale-95 transition-transform" ${isRestricted ? 'disabled style="opacity:0.5"' : ''}>
-                        ${isRestricted ? 'Locked (Need Referral)' : 'Withdraw Money'}
-                    </button>
-                    
-                    ${isRestricted ? `<p class="text-xs text-center text-red-400">Refer more friends to enable withdrawals.</p>` : ''}
+                    <button onclick="processWithdraw()" class="w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg mt-2 active:scale-95 transition-transform">Withdraw Money</button>
                 </div>
             `;
             window.selectedMethod = 'Bkash';
@@ -445,54 +444,49 @@
             const number = document.getElementById('withdraw-number').value;
             const amount = parseInt(document.getElementById('withdraw-amount').value);
             
-            if (!number || !amount) return alert("Please fill all fields");
-            if (amount < appSettings.min_withdraw_amount) return alert(`Minimum withdraw is ${appSettings.min_withdraw_amount} BDT`);
+            if (!number || !amount) return Swal.fire('Error', 'Fill all fields', 'error');
+            if (amount < appSettings.min_withdraw_amount) return Swal.fire('Error', `Minimum withdraw is ${appSettings.min_withdraw_amount} BDT`, 'error');
             
             const pointsNeeded = amount / appSettings.conversion_rate;
-            
-            if (currentUser.balance < pointsNeeded) return alert("Insufficient Balance!");
+            if (currentUser.balance < pointsNeeded) return Swal.fire('Error', 'Insufficient Balance!', 'error');
 
-            // এড দেখানো
-            await showAd('interstitial');
+            await showAd('interstitial'); // উইথড্র করার সময়ও অ্যাড দেখানো
 
             const { error } = await supabase.from('withdrawals').insert([{
-                user_id: currentUser.id,
-                method: window.selectedMethod,
-                number: number,
-                amount_bdt: amount,
-                points_deducted: pointsNeeded
+                user_id: currentUser.id, method: window.selectedMethod, number: number, amount_bdt: amount, points_deducted: pointsNeeded
             }]);
 
             if (!error) {
-                // ব্যালেন্স কাটা
+                // ব্যালেন্স ম্যানুয়ালি কমানো (RPC ইউজ করাই বেটার, তবে এখানে সরাসরি আপডেট দিচ্ছি সিম্পলিসিটির জন্য)
+                // প্রোডাকশনে RPC ব্যবহার করবেন
                 await supabase.rpc('increment_balance', { user_id: currentUser.id, amount: -pointsNeeded });
                 currentUser.balance -= pointsNeeded;
                 updateHeaderUI();
-                alert("Withdrawal Request Submitted Successfuly!");
+                Swal.fire('Success', 'Request Submitted!', 'success');
                 router('wallet');
             } else {
-                alert("Failed to submit request.");
+                Swal.fire('Error', 'Failed to submit', 'error');
             }
         };
 
-        // --- ৪. রেফার পেজ ---
+        // --- ৪. রেফার পেজ (ডাইনামিক বটের নাম) ---
         function renderRefer(container) {
-            const referLink = `https://t.me/YOUR_BOT_USERNAME?start=${currentUser.id}`; // আপনার বটের ইউজারনেম বসাবেন
+            // বটের ইউজারনেম সেটিংস থেকে আসবে
+            const botUser = appSettings.bot_username || 'MyBot_bot';
+            const referLink = `https://t.me/${botUser}?start=${currentUser.id}`;
             
             container.innerHTML = `
                 <div class="glass-panel p-6 rounded-2xl text-center mt-4">
                     <img src="https://cdn-icons-png.flaticon.com/512/3893/3893069.png" class="w-20 mx-auto mb-4 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">
                     <h2 class="text-2xl font-bold text-white">Invite Friends</h2>
-                    <p class="text-sm text-gray-400 mt-2">Earn 50 points for every friend and unlock exclusive tasks!</p>
+                    <p class="text-sm text-gray-400 mt-2">Earn 50 points per refer!</p>
                 </div>
 
                 <div class="glass-panel p-4 rounded-xl mt-4">
                     <label class="text-xs text-gray-400">Your Referral Link</label>
                     <div class="flex items-center gap-2 mt-2 bg-black/30 p-2 rounded-lg border border-white/10">
                         <input type="text" value="${referLink}" readonly class="bg-transparent text-sm w-full text-gray-300 outline-none" id="ref-link">
-                        <button onclick="copyLink()" class="p-2 bg-[#FFD700] rounded text-black font-bold">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                        <button onclick="copyLink()" class="p-2 bg-[#FFD700] rounded text-black font-bold"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
 
@@ -500,11 +494,11 @@
                     <h3 class="font-bold mb-3">Your Statistics</h3>
                     <div class="flex justify-between glass-panel p-4 rounded-xl">
                         <div>
-                            <p class="text-xs text-gray-400">Total Referred</p>
+                            <p class="text-xs text-gray-400">Referred</p>
                             <h4 class="text-xl font-bold text-[#FFD700]">${currentUser.referral_count}</h4>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-gray-400">Total Earned</p>
+                            <p class="text-xs text-gray-400">Earned</p>
                             <h4 class="text-xl font-bold text-[#FFD700]">${currentUser.referral_count * 50}</h4>
                         </div>
                     </div>
@@ -516,39 +510,38 @@
             const copyText = document.getElementById("ref-link");
             copyText.select();
             document.execCommand("copy");
-            alert("Link Copied!");
+            Swal.fire({ icon: 'success', title: 'Copied!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
         };
 
-        // --- Monetag Ad ইন্টিগ্রেশন ---
+        // --- Monetag Ad ইন্টিগ্রেশন (আপডেটেড) ---
         function showAd(type) {
             return new Promise((resolve) => {
                 if (typeof window.show_10197154 === 'undefined') {
-                    console.log("Ad SDK not loaded (Dev Mode)");
-                    resolve(true); // ডেভলপমেন্ট বা এডব্লকারের জন্য বাইপাস
+                    console.log("AdBlocker detected or SDK failed (Dev Mode)");
+                    resolve(true); // ডেভলপমেন্টের সময় অ্যাড ছাড়াই কাজ করবে
                     return;
                 }
 
+                // টাইপ অনুযায়ী অ্যাড দেখানো
                 if (type === 'rewarded') {
-                    // রিওয়ার্ডেড পপআপ
+                    // Rewarded Tag (পপআপ)
                     window.show_10197154('pop').then(() => {
                         resolve(true);
                     }).catch(() => {
-                        console.error("Ad failed");
                         resolve(false);
                     });
                 } else {
-                    // ইন্টারস্টিশিয়াল
+                    // Interstitial (Vignette)
                     window.show_10197154().then(() => {
-                        console.log("Interstitial shown");
                         resolve(true);
+                    }).catch(() => {
+                        resolve(true); // ইন্টারস্টিশিয়াল ফেইল করলেও টাস্ক কমপ্লিট ধরা হয় সাধারণত
                     });
                 }
             });
         }
 
-        // --- স্টার্ট ---
         initApp();
-
     </script>
 </body>
 </html>
