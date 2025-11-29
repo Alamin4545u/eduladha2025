@@ -2,55 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Premium Rewards</title>
 
-    <!-- =========================================
-         ১. প্রয়োজনীয় লাইব্রেরি এবং রিসোর্স
-    ========================================== -->
+    <!-- =======================================================
+         ১. প্রয়োজনীয় লাইব্রেরি এবং এক্সটার্নাল রিসোর্স
+    ======================================================== -->
     
-    <!-- Tailwind CSS (ডিজাইন ফ্রেমওয়ার্ক) -->
+    <!-- Tailwind CSS (ইউআই ডিজাইনের জন্য) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Supabase Client (ডাটাবেস কানেকশন) -->
+    <!-- Supabase JS Client (ডাটাবেস কানেকশনের জন্য) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Telegram Web App SDK (টেলিগ্রাম ইন্টিগ্রেশন) -->
+    <!-- Telegram Web App SDK (টেলিগ্রাম অ্যাপের ফিচার ব্যবহারের জন্য) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- FontAwesome Icons (আইকন প্যাক) -->
+    <!-- FontAwesome Icons (আইকনের জন্য) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- SweetAlert2 (পপআপ অ্যালার্ট) -->
+    <!-- SweetAlert2 (সুন্দর পপআপ অ্যালার্টের জন্য) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- 
-       নোট: Monetag SDK এখন আর এখানে হার্ডকোড করা নেই। 
-       এটি জাভাস্ক্রিপ্ট দিয়ে ডাইনামিকলি লোড হবে অ্যাডমিন প্যানেলের সেটিংস অনুযায়ী।
+       NOTE: Monetag SDK এখানে হার্ডকোড করা নেই। 
+       এটি জাভাস্ক্রিপ্ট দিয়ে ডাইনামিকলি লোড হবে (অ্যাডমিন প্যানেলের সেটিংস অনুযায়ী)।
     -->
 
-    <!-- =========================================
+    <!-- =======================================================
          ২. কাস্টম সিএসএস (ডিজাইন এবং এনিমেশন)
-    ========================================== -->
+    ======================================================== -->
     <style>
-        /* ফন্ট ইমপোর্ট */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        /* গুগল ফন্ট ইমপোর্ট */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
-        /* বডি স্টাইল */
+        /* গ্লোবাল স্টাইল */
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #0f0f0f;
+            background-color: #0f0f0f; /* ডিপ ব্ল্যাক ব্যাকগ্রাউন্ড */
             color: #ffffff;
-            overflow: hidden; /* পুরো পেজ স্ক্রল বন্ধ */
+            overflow: hidden; /* পুরো পেজ স্ক্রল বন্ধ, শুধু কন্টেন্ট স্ক্রল হবে */
             height: 100vh;
             display: flex;
             flex-direction: column;
             -webkit-tap-highlight-color: transparent;
+            user-select: none; /* টেক্সট কপি করা বন্ধ */
         }
 
-        /* গোল্ডেন গ্রেডিয়েন্ট বাটন */
+        /* প্রিমিয়াম গোল্ডেন বাটন গ্রেডিয়েন্ট */
         .gold-gradient {
             background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
         }
         
         /* গোল্ডেন টেক্সট ইফেক্ট */
@@ -58,28 +60,30 @@
             background: linear-gradient(to right, #FFD700, #FDB931);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-weight: 700;
         }
         
-        /* গ্লাস প্যানেল (Glassmorphism) */
+        /* গ্লাস প্যানেল (Glassmorphism Effect) */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 215, 0, 0.1);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
-        /* নেভিগেশন বার আইটেম */
+        /* বটম নেভিগেশন বার আইটেম */
         .nav-item {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            color: #6b7280; /* সাধারণ অবস্থায় ধূসর */
+            gap: 5px;
+            color: #6b7280; /* ডিফল্ট ধূসর কালার */
             transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
         }
 
         /* নেভিগেশন অ্যাক্টিভ অবস্থা */
@@ -89,16 +93,27 @@
 
         .nav-item.active i {
             transform: translateY(-5px);
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+        
+        /* অ্যাক্টিভ ডট ইন্ডিকেটর */
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 5px;
+            height: 5px;
+            background: #FFD700;
+            border-radius: 50%;
         }
 
-        /* লোডিং এনিমেশন */
+        /* কাস্টম লোডিং স্পিনার */
         .loader {
             border: 4px solid #333;
             border-top: 4px solid #FFD700;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             animation: spin 1s linear infinite;
         }
 
@@ -107,14 +122,20 @@
             100% { transform: rotate(360deg); } 
         }
 
-        /* সুইট অ্যালার্ট কাস্টমাইজেশন (ডার্ক থিম) */
+        /* সুইট অ্যালার্ট ডার্ক থিম কাস্টমাইজেশন */
         div:where(.swal2-container) div:where(.swal2-popup) {
             background: #1a1a1a !important;
             border: 1px solid #FFD700;
             color: white;
+            border-radius: 15px;
+        }
+        
+        div:where(.swal2-icon) {
+            border-color: #FFD700 !important;
+            color: #FFD700 !important;
         }
 
-        /* মেইন কন্টেন্ট এরিয়ার স্ক্রলবার লুকানো */
+        /* মেইন কন্টেন্ট এরিয়ার ডিফল্ট স্ক্রলবার লুকানো */
         #main-app::-webkit-scrollbar {
             display: none;
         }
@@ -134,101 +155,105 @@
         .custom-input:focus {
             border-color: #FFD700;
             background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
         }
     </style>
 </head>
 <body>
 
-    <!-- =========================================
-         ৩. লোডিং স্ক্রিন এবং এরর হ্যান্ডলিং
-    ========================================== -->
+    <!-- =======================================================
+         ৩. লোডিং স্ক্রিন এবং এরর হ্যান্ডলিং এরিয়া
+    ======================================================== -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0f0f0f]">
-        <div class="loader mb-4"></div>
-        <h2 class="text-xl font-bold gold-text tracking-widest">PREMIUM REWARDS</h2>
+        <div class="loader mb-6"></div>
+        <h2 class="text-2xl font-bold gold-text tracking-[3px]">PREMIUM REWARDS</h2>
+        <p class="text-xs text-gray-500 mt-2 tracking-widest">CONNECTING TO SERVER...</p>
         
-        <!-- এরর বক্স -->
-        <div id="error-box" class="hidden mt-6 text-center px-6 max-w-sm">
-            <div class="bg-red-500/10 border border-red-500/50 rounded-lg p-4">
-                <i class="fas fa-wifi text-red-500 text-2xl mb-2"></i>
-                <p id="error-msg" class="text-red-400 text-xs mb-3">Connection Error</p>
-                <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg hover:bg-red-600 transition">
-                    Retry Connection
+        <!-- এরর বক্স (যদি ইন্টারনেট বা ডাটাবেস এরর হয়) -->
+        <div id="error-box" class="hidden mt-8 text-center px-6 max-w-sm w-full">
+            <div class="bg-red-500/10 border border-red-500/50 rounded-xl p-5 backdrop-blur-md">
+                <i class="fas fa-wifi text-red-500 text-3xl mb-3"></i>
+                <h4 class="text-red-500 font-bold mb-1">Connection Failed</h4>
+                <p id="error-msg" class="text-gray-400 text-xs mb-4">Unable to connect to the server.</p>
+                <button onclick="location.reload()" class="w-full bg-red-500 text-white py-2.5 rounded-lg text-sm font-bold shadow-lg hover:bg-red-600 transition">
+                    RETRY NOW
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- =========================================
-         ৪. টপ হেডার (User Profile & Balance)
-    ========================================== -->
-    <header class="glass-panel border-b-0 rounded-b-3xl p-4 z-40 shrink-0">
+    <!-- =======================================================
+         ৪. টপ হেডার (User Profile & Balance Section)
+    ======================================================== -->
+    <header class="glass-panel border-b-0 rounded-b-3xl p-5 z-40 shrink-0 relative">
         <div class="flex justify-between items-center">
             <!-- বাম পাশে ইউজার ইনফো -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 <div class="relative">
-                    <img id="user-photo" src="https://ui-avatars.com/api/?name=U&background=random" class="w-11 h-11 rounded-full border-2 border-[#FFD700] object-cover p-0.5">
-                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full"></div>
+                    <img id="user-photo" src="https://ui-avatars.com/api/?name=U&background=random" class="w-12 h-12 rounded-full border-2 border-[#FFD700] object-cover p-0.5 shadow-[0_0_10px_#FFD700]">
+                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full animate-pulse"></div>
                 </div>
                 <div>
-                    <h3 id="user-name" class="font-bold text-md leading-tight text-white">Loading...</h3>
-                    <span class="text-[10px] text-gray-400 flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full mt-1 w-fit">
-                        <i class="fas fa-crown text-[#FFD700] text-[8px]"></i> Premium Member
+                    <h3 id="user-name" class="font-bold text-lg leading-tight text-white tracking-wide">Loading...</h3>
+                    <span class="text-[10px] text-gray-300 flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full mt-1 w-fit border border-white/5">
+                        <i class="fas fa-crown text-[#FFD700] text-[9px]"></i> Premium Member
                     </span>
                 </div>
             </div>
             
             <!-- ডান পাশে ব্যালেন্স -->
             <div class="text-right">
-                <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Balance</p>
-                <div class="flex items-center justify-end gap-1 bg-[#FFD700]/10 px-3 py-1 rounded-lg border border-[#FFD700]/20">
-                    <i class="fas fa-coins text-[#FFD700] text-sm"></i>
-                    <span id="user-balance" class="text-xl font-bold text-white">0</span>
+                <p class="text-[10px] text-gray-400 uppercase tracking-[2px] mb-1">Total Points</p>
+                <div class="flex items-center justify-end gap-1.5 bg-[#FFD700]/10 px-3 py-1.5 rounded-xl border border-[#FFD700]/30 shadow-inner">
+                    <i class="fas fa-coins text-[#FFD700] text-sm drop-shadow"></i>
+                    <span id="user-balance" class="text-xl font-bold text-white tracking-wide">0</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- =========================================
+    <!-- =======================================================
          ৫. মেইন অ্যাপ কন্টেন্ট (Scrollable Area)
-    ========================================== -->
-    <div id="main-app" class="hidden flex-1 overflow-y-auto p-4 space-y-4 pb-24">
-        <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে পেজ লোড হবে -->
+    ======================================================== -->
+    <div id="main-app" class="hidden flex-1 overflow-y-auto p-5 space-y-5 pb-24">
+        <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে ডাইনামিক পেজগুলো লোড হবে -->
     </div>
 
-    <!-- =========================================
-         ৬. বটম নেভিগেশন বার (Bottom Tab)
-    ========================================== -->
-    <nav class="glass-panel rounded-t-3xl pb-2 pt-2 z-50 shrink-0">
+    <!-- =======================================================
+         ৬. বটম নেভিগেশন বার (Fixed Footer)
+    ======================================================== -->
+    <nav class="glass-panel rounded-t-3xl pb-3 pt-2 z-50 shrink-0">
         <div class="flex justify-around items-center h-16">
             <button onclick="router('home')" class="nav-item active" id="btn-home">
                 <i class="fas fa-home text-xl"></i>
-                <span class="text-[10px] font-medium">Home</span>
+                <span class="text-[10px] font-medium tracking-wide">Home</span>
             </button>
             <button onclick="router('tasks')" class="nav-item" id="btn-tasks">
                 <i class="fas fa-list-check text-xl"></i>
-                <span class="text-[10px] font-medium">Tasks</span>
+                <span class="text-[10px] font-medium tracking-wide">Tasks</span>
             </button>
             <button onclick="router('wallet')" class="nav-item" id="btn-wallet">
                 <i class="fas fa-wallet text-xl"></i>
-                <span class="text-[10px] font-medium">Wallet</span>
+                <span class="text-[10px] font-medium tracking-wide">Wallet</span>
             </button>
             <button onclick="router('history')" class="nav-item" id="btn-history">
                 <i class="fas fa-history text-xl"></i>
-                <span class="text-[10px] font-medium">History</span>
+                <span class="text-[10px] font-medium tracking-wide">History</span>
             </button>
             <button onclick="router('refer')" class="nav-item" id="btn-refer">
                 <i class="fas fa-users text-xl"></i>
-                <span class="text-[10px] font-medium">Refer</span>
+                <span class="text-[10px] font-medium tracking-wide">Refer</span>
             </button>
         </div>
     </nav>
 
-    <!-- =========================================
-         ৭. মেইন জাভাস্ক্রিপ্ট লজিক
-    ========================================== -->
+    <!-- =======================================================
+         ৭. মেইন জাভাস্ক্রিপ্ট লজিক (Core Logic)
+    ======================================================== -->
     <script>
-        // --- Supabase কনফিগারেশন ---
+        // --- কনফিগারেশন ---
         const SUPABASE_URL = 'https://wnmwvbeydsrehtsnkfoc.supabase.co';
+        // Supabase API Key (Anon Key)
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubXd2YmV5ZHNyZWh0c25rZm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDg4MzIsImV4cCI6MjA3OTg4NDgzMn0.4vSObxBEr8r11-dqkp9y6bVroMVoSTEnIOTF8Vo8sxk';
         
         // ক্লায়েন্ট তৈরি
@@ -248,24 +273,25 @@
             document.querySelector('.loader').classList.add('hidden');
         }
 
-        // ============================================
-        // অ্যাপ স্টার্টআপ ফাংশন (Initialization)
-        // ============================================
+        // ===========================================================
+        // অ্যাপ স্টার্টআপ ফাংশন (Initialization & Authentication)
+        // ===========================================================
         async function initApp() {
-            tg.expand(); // টেলিগ্রাম ফুল স্ক্রিন
+            tg.expand(); // টেলিগ্রাম ফুল স্ক্রিন মোড
+            tg.setHeaderColor('#0f0f0f'); // টেলিগ্রাম হেডার কালার
             
             // ১. টেলিগ্রাম ইউজার ডাটা চেক
             const tgUser = tg.initDataUnsafe?.user;
 
-            // ব্রাউজারে টেস্টিংয়ের জন্য এই নিচের লাইনটি আনকমেন্ট করতে পারেন
-            // const tgUser = { id: 1234567, first_name: "Test User", username: "tester", photo_url: "" };
+            // যদি টেলিগ্রাম ছাড়া ওপেন করে (ব্রাউজারে টেস্টিংয়ের জন্য আনকমেন্ট করতে পারেন)
+            // const tgUser = { id: 1234567, first_name: "Developer", username: "tester", photo_url: "" };
 
             if (!tgUser) {
                 document.getElementById('loading-screen').innerHTML = `
                     <div class="text-center p-6">
-                        <i class="fab fa-telegram text-5xl text-blue-500 mb-4"></i>
-                        <h3 class="text-xl font-bold">Telegram Required</h3>
-                        <p class="text-sm text-gray-400 mt-2">Please open this app inside Telegram.</p>
+                        <i class="fab fa-telegram text-6xl text-blue-500 mb-6 drop-shadow-lg"></i>
+                        <h3 class="text-2xl font-bold text-white">Telegram Required</h3>
+                        <p class="text-sm text-gray-400 mt-3 px-4">This application is designed to run exclusively inside the Telegram App.</p>
                     </div>`;
                 return;
             }
@@ -276,14 +302,15 @@
                 
                 if (sError) {
                     console.warn("Settings fetch error:", sError);
-                    // ডিফল্ট সেটিংস (যদি ডাটাবেস ডাউন থাকে)
+                    // ডিফল্ট সেটিংস (যদি ডাটাবেস ডাউন থাকে বা এরর দেয়)
                     appSettings = {
                         conversion_rate: 0.05,
                         min_withdraw_amount: 50,
                         bot_username: 'MyBot_bot',
                         daily_task_limit: 10,
                         referral_lock: false,
-                        min_referrals_req: 1,
+                        min_referrals_req: 5,
+                        referral_bonus: 50,
                         anti_cheat_enabled: true,
                         home_banner_url: '',
                         monetag_app_id: '',
@@ -293,7 +320,7 @@
                     appSettings = sData;
                 }
 
-                // ৩. Monetag SDK ডাইনামিকলি লোড করা (যদি আইডি থাকে)
+                // ৩. Monetag SDK ডাইনামিকলি লোড করা (অ্যাডমিন আইডি দিয়ে)
                 if (appSettings.monetag_app_id) {
                     const script = document.createElement('script');
                     script.src = '//libtl.com/sdk.js';
@@ -302,14 +329,10 @@
                     script.setAttribute('data-sdk', 'show_' + appSettings.monetag_app_id);
                     
                     script.onload = () => {
-                        console.log("Monetag SDK initialized successfully.");
+                        console.log("Monetag SDK initialized.");
                         monetagFunction = 'show_' + appSettings.monetag_app_id;
                     };
                     
-                    script.onerror = () => {
-                        console.error("Failed to load Monetag SDK");
-                    };
-
                     document.head.appendChild(script);
                 }
 
@@ -321,19 +344,20 @@
                     const startParam = tg.initDataUnsafe?.start_param; 
                     let referrerId = null;
 
-                    // লিংক থেকে রেফার আইডি চেক
+                    // লিংক থেকে রেফার আইডি চেক এবং ভ্যালিডেশন
                     if (startParam && startParam != tgUser.id) {
                         referrerId = parseInt(startParam);
                         if (isNaN(referrerId)) referrerId = null;
                     }
 
-                    // Anti-Cheat (ডিভাইস চেক)
+                    // Anti-Cheat (একই ডিভাইসে মাল্টিপল রেফার বন্ধ করা)
                     if (appSettings.anti_cheat_enabled && referrerId) {
                         const deviceKey = 'device_ref_used';
                         if (localStorage.getItem(deviceKey)) {
-                            console.log("Anti-Cheat: Duplicate referral detected.");
+                            console.log("Anti-Cheat: Duplicate referral detected on this device.");
                             referrerId = null; 
                         } else {
+                            // সফল রেফার মার্ক করা
                             localStorage.setItem(deviceKey, 'true');
                         }
                     }
@@ -345,7 +369,7 @@
                         username: tgUser.username,
                         photo_url: tgUser.photo_url,
                         referred_by: referrerId,
-                        balance: 0
+                        balance: 0 // বোনাস RPC ফাংশন দিয়ে যোগ হবে
                     }]).select().single();
 
                     if (cError) throw new Error("Registration Failed: " + cError.message);
@@ -362,9 +386,11 @@
                 updateHeaderUI();
                 
                 // সবকিছু ঠিক থাকলে অ্যাপ শো করা
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                router('home');
+                setTimeout(() => {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    router('home');
+                }, 500); // স্মুথ ট্রানজিশনের জন্য হাফ সেকেন্ড ডিলে
 
             } catch (err) {
                 console.error(err);
@@ -372,7 +398,7 @@
             }
         }
 
-        // --- UI আপডেট ফাংশন ---
+        // --- UI আপডেট ফাংশন (Header Update) ---
         function updateHeaderUI() {
             if(!currentUser) return;
             document.getElementById('user-name').innerText = currentUser.first_name;
@@ -380,14 +406,14 @@
             if(currentUser.photo_url) document.getElementById('user-photo').src = currentUser.photo_url;
         }
 
-        // ============================================
-        // রাউটিং সিস্টেম (Single Page Application)
-        // ============================================
+        // ===========================================================
+        // রাউটিং সিস্টেম (Single Page Application Logic)
+        // ===========================================================
         function router(page) {
             const content = document.getElementById('main-app');
             const buttons = document.querySelectorAll('.nav-item');
             
-            // বাটন রিসেট
+            // সব বাটন রিসেট
             buttons.forEach(btn => {
                 btn.classList.remove('active', 'text-[#FFD700]');
                 btn.classList.add('text-gray-500');
@@ -400,7 +426,7 @@
                 activeBtn.classList.remove('text-gray-500');
             }
 
-            // পেজ রেন্ডার
+            // পেজ অনুযায়ী কন্টেন্ট রেন্ডার
             if (page === 'home') renderHome(content);
             else if (page === 'tasks') renderTasks(content);
             else if (page === 'wallet') renderWallet(content);
@@ -408,14 +434,14 @@
             else if (page === 'refer') renderRefer(content);
         }
 
-        // ============================================
-        // ১. হোম পেজ (Home Page)
-        // ============================================
+        // ===========================================================
+        // ১. হোম পেজ (Home Page Renderer)
+        // ===========================================================
         function renderHome(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             
             // Monetag In-App Interstitial (Background Auto Show)
-            // এটি অ্যাপের মধ্যে নেভিগেট করার সময় মাঝে মাঝে অ্যাড দেখাবে
+            // এটি অ্যাপের মধ্যে নেভিগেট করার সময় মাঝে মাঝে অ্যাড দেখাবে (Frequency Capping সহ)
             if(monetagFunction && window[monetagFunction]) {
                 window[monetagFunction]({ 
                     type: 'inApp', 
@@ -423,52 +449,56 @@
                 });
             }
 
-            // ডাইনামিক ব্যানার
+            // ডাইনামিক ব্যানার ডিসপ্লে
             let bannerHtml = '';
             if (appSettings.home_banner_url) {
                 bannerHtml = `
-                    <div class="mt-6 mb-4 rounded-xl overflow-hidden shadow-lg border border-[#FFD700]/30 w-full h-40 relative group">
-                        <img src="${appSettings.home_banner_url}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div class="mt-6 mb-4 rounded-xl overflow-hidden shadow-2xl border border-[#FFD700]/30 w-full h-40 relative group">
+                        <img src="${appSettings.home_banner_url}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700 ease-in-out">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute bottom-3 left-3 bg-[#FFD700] text-black text-[10px] font-bold px-2 py-0.5 rounded">FEATURED</div>
                     </div>
                 `;
             }
 
             container.innerHTML = `
-                <!-- ব্যালেন্স কার্ড -->
-                <div class="glass-panel p-6 rounded-2xl text-center relative overflow-hidden mt-2">
+                <!-- ব্যালেন্স এবং আর্নিং কার্ড -->
+                <div class="glass-panel p-6 rounded-2xl text-center relative overflow-hidden mt-2 border-t border-white/10">
                     <div class="absolute -top-10 -left-10 w-32 h-32 bg-[#FFD700] rounded-full blur-[80px] opacity-20"></div>
-                    <p class="text-gray-400 text-xs uppercase tracking-wider mb-2 font-bold">Total Earnings</p>
-                    <h1 class="text-5xl font-bold text-white mb-1">${currentUser.balance}</h1>
-                    <p class="text-sm text-[#FFD700] font-bold">≈ ৳ ${bdtAmount} BDT</p>
                     
-                    <button onclick="router('tasks')" class="mt-5 w-full py-3 rounded-xl gold-gradient text-black font-bold shadow-lg active:scale-95 transition-transform text-sm flex items-center justify-center gap-2">
-                        <i class="fas fa-play-circle"></i> Start Earning
+                    <p class="text-gray-400 text-xs uppercase tracking-wider mb-2 font-bold">Total Earnings</p>
+                    <h1 class="text-5xl font-bold text-white mb-1 drop-shadow-lg">${currentUser.balance}</h1>
+                    <div class="inline-block bg-white/5 border border-white/10 rounded-full px-4 py-1 mt-1">
+                        <p class="text-xs text-[#FFD700] font-bold">≈ ৳ ${bdtAmount} BDT</p>
+                    </div>
+                    
+                    <button onclick="router('tasks')" class="mt-6 w-full py-3.5 rounded-xl gold-gradient text-black font-bold shadow-[0_4px_20px_rgba(255,215,0,0.3)] active:scale-95 transition-transform text-sm flex items-center justify-center gap-2 uppercase tracking-wide">
+                        <i class="fas fa-play"></i> Start Earning
                     </button>
                 </div>
                 
                 <!-- স্ট্যাটাস গ্রিড -->
                 <div class="grid grid-cols-2 gap-4 mt-4">
-                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center border border-white/5">
-                        <i class="fas fa-users text-2xl mb-2 text-blue-400"></i>
+                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center border border-white/5 hover:border-[#FFD700]/30 transition">
+                        <i class="fas fa-users text-2xl mb-2 text-blue-400 drop-shadow"></i>
                         <span class="text-xl font-bold text-white">${currentUser.referral_count}</span>
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wide">Total Refers</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wide mt-1">Total Refers</span>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center border border-white/5">
-                        <i class="fas fa-check-circle text-2xl mb-2 text-green-400"></i>
+                    <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center border border-white/5 hover:border-[#FFD700]/30 transition">
+                        <i class="fas fa-check-circle text-2xl mb-2 text-green-400 drop-shadow"></i>
                         <span class="text-xl font-bold text-white">Active</span>
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wide">Account Status</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wide mt-1">Account Status</span>
                     </div>
                 </div>
 
-                <!-- অ্যাডমিন ব্যানার -->
+                <!-- অ্যাডমিন আপলোডেড ব্যানার -->
                 ${bannerHtml}
             `;
         }
 
-        // ============================================
-        // ২. টাস্ক পেজ (Tasks) - Advanced Ad Logic
-        // ============================================
+        // ===========================================================
+        // ২. টাস্ক পেজ (Tasks) - Advanced Ad Logic & Limits
+        // ===========================================================
         async function renderTasks(container) {
             container.innerHTML = `<div class="flex justify-center mt-20"><div class="loader"></div></div>`;
             
@@ -480,34 +510,35 @@
                 .eq('user_id', currentUser.id)
                 .eq('created_at', todayDate);
 
-            // টাস্ক লিমিট কাউন্ট করা
+            // প্রতিটি টাস্কের লিমিট কাউন্ট করা
             const taskCounts = {};
             if (logs) logs.forEach(l => taskCounts[l.task_id] = (taskCounts[l.task_id] || 0) + 1);
 
+            // লকিং লজিক
             const isLocked = appSettings.referral_lock && (currentUser.referral_count < appSettings.min_referrals_req);
             const dailyLimit = appSettings.daily_task_limit || 10;
 
             let html = `
                 <div class="flex justify-between items-center mb-4 mt-2">
                     <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-list-ul text-[#FFD700]"></i> Task List
+                        <i class="fas fa-list-ul text-[#FFD700]"></i> Available Tasks
                     </h2>
-                    <span class="text-[10px] bg-white/10 px-3 py-1 rounded-full text-gray-300 border border-white/10">
-                        Limit: ${dailyLimit} / Task
+                    <span class="text-[10px] bg-white/10 px-3 py-1 rounded-full text-gray-300 border border-white/10 shadow-sm">
+                        Daily Limit: ${dailyLimit}
                     </span>
                 </div>
             `;
 
-            // রেফার লক মেসেজ
+            // রেফার লক নোটিফিকেশন
             if (isLocked) {
                 html += `
-                    <div class="bg-red-500/10 border border-red-500/50 p-4 rounded-xl mb-4 text-center text-xs text-red-400 flex flex-col items-center gap-2">
+                    <div class="bg-red-500/10 border border-red-500/50 p-4 rounded-xl mb-4 text-center text-xs text-red-400 flex flex-col items-center gap-2 animate-pulse">
                         <i class="fas fa-lock text-2xl mb-1"></i>
-                        <span>You need to refer <b>${appSettings.min_referrals_req - currentUser.referral_count}</b> more friends to unlock tasks.</span>
+                        <span>Invite <b>${appSettings.min_referrals_req - currentUser.referral_count}</b> more friends to unlock premium tasks.</span>
                     </div>`;
             }
 
-            html += `<div class="space-y-3 pb-20">`;
+            html += `<div class="space-y-3 pb-24">`;
             
             if (tasks && tasks.length > 0) {
                 tasks.forEach(task => {
@@ -515,34 +546,43 @@
                     let icon = 'star';
                     let btnLabel = 'Claim';
                     let typeBadge = 'AD';
+                    let badgeColor = 'bg-gray-500/20 text-gray-400';
                     
-                    if (task.task_type === 'direct_ad') { icon = 'globe'; btnLabel = 'Visit'; typeBadge = 'WEB'; }
-                    else if (task.task_type === 'telegram') { icon = 'paper-plane'; btnLabel = 'Join'; typeBadge = 'TG'; }
-                    else if (task.task_type === 'video') { icon = 'play-circle'; btnLabel = 'Watch'; typeBadge = 'VID'; }
+                    if (task.task_type === 'direct_ad') { icon = 'globe'; btnLabel = 'Visit'; typeBadge = 'WEB'; badgeColor = 'bg-blue-500/20 text-blue-400'; }
+                    else if (task.task_type === 'telegram') { icon = 'paper-plane'; btnLabel = 'Join'; typeBadge = 'TG'; badgeColor = 'bg-blue-400/20 text-blue-300'; }
+                    else if (task.task_type === 'video') { icon = 'play-circle'; btnLabel = 'Watch'; typeBadge = 'VID'; badgeColor = 'bg-purple-500/20 text-purple-400'; }
 
                     const count = taskCounts[task.id] || 0;
-                    const isDisabled = isLocked || count >= dailyLimit;
-                    const btnClass = isDisabled ? 'bg-white/5 opacity-50 cursor-not-allowed border border-white/5' : 'gold-gradient text-black hover:opacity-90 active:scale-95 shadow-[0_0_10px_#FFD700]';
+                    const isLimitReached = count >= dailyLimit;
+                    const isDisabled = isLocked || isLimitReached;
+                    
+                    // বাটন স্টাইল
+                    const btnClass = isDisabled 
+                        ? 'bg-white/5 opacity-50 cursor-not-allowed border border-white/5 text-gray-500' 
+                        : 'gold-gradient text-black hover:opacity-90 active:scale-95 shadow-[0_0_10px_#FFD700]';
+
+                    // কার্ড স্টাইল
+                    const cardOpacity = isLimitReached ? 'opacity-60 grayscale' : 'opacity-100';
 
                     html += `
-                        <div class="glass-panel p-4 rounded-xl flex justify-between items-center group relative overflow-hidden">
+                        <div class="glass-panel p-4 rounded-xl flex justify-between items-center group relative overflow-hidden transition-all ${cardOpacity}">
                             <div class="flex items-center gap-4 relative z-10">
-                                <div class="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center text-[#FFD700] border border-white/10 group-hover:border-[#FFD700]/50 transition">
+                                <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-[#FFD700] border border-white/10 group-hover:border-[#FFD700]/50 transition shadow-lg">
                                     <i class="fas fa-${icon} text-lg"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-sm text-white line-clamp-1">${task.title}</h4>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] bg-[#FFD700]/20 text-[#FFD700] px-1.5 py-0.5 rounded font-bold">${typeBadge}</span>
-                                        <span class="text-[10px] text-gray-400 font-bold">+${task.reward} Pts</span>
-                                        <span class="text-[10px] text-gray-500 border-l border-white/10 pl-2">${count}/${dailyLimit}</span>
+                                    <div class="flex items-center gap-2 mt-1.5">
+                                        <span class="text-[9px] ${badgeColor} px-1.5 py-0.5 rounded font-bold tracking-wider border border-white/5">${typeBadge}</span>
+                                        <span class="text-[10px] text-[#FFD700] font-bold border border-[#FFD700]/20 px-1.5 py-0.5 rounded bg-[#FFD700]/5">+${task.reward}</span>
+                                        <span class="text-[10px] text-gray-500 font-mono">${count}/${dailyLimit}</span>
                                     </div>
                                 </div>
                             </div>
                             <button onclick="handleTask(${task.id}, ${task.reward}, '${task.task_type}', '${task.link || ''}')" 
                                 ${isDisabled ? 'disabled' : ''}
-                                class="px-5 py-2 rounded-lg text-xs font-bold transition-all relative z-10 ${btnClass}">
-                                ${count >= dailyLimit ? 'Done' : btnLabel}
+                                class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all relative z-10 ${btnClass}">
+                                ${isLimitReached ? 'Done' : btnLabel}
                             </button>
                         </div>
                     `;
@@ -550,7 +590,7 @@
             } else {
                 html += `
                     <div class="text-center text-gray-500 text-sm mt-10 flex flex-col items-center">
-                        <i class="fas fa-box-open text-4xl mb-2 opacity-50"></i>
+                        <i class="fas fa-box-open text-4xl mb-3 opacity-30"></i>
                         No tasks available at the moment.
                     </div>`;
             }
@@ -559,9 +599,9 @@
             container.innerHTML = html;
         }
 
-        // ============================================
-        // 🔥 টাস্ক হ্যান্ডলিং (AD & TIMER LOGIC)
-        // ============================================
+        // ===========================================================
+        // 🔥 টাস্ক হ্যান্ডলিং (ADVANCED AD & TIMER LOGIC)
+        // ===========================================================
         window.handleTask = async (taskId, reward, type, link) => {
             const startTime = Date.now();
 
@@ -574,34 +614,35 @@
                     Swal.fire({
                         icon: 'warning',
                         title: 'Too Fast!',
-                        text: `Please view the ad/content for at least 10 seconds to get the reward.`,
+                        text: `You must engage with the ad for at least 10 seconds to receive the reward.`,
                         confirmButtonColor: '#FFD700',
-                        confirmButtonText: 'OK, I Will Wait'
+                        confirmButtonText: 'I Understand',
+                        background: '#1a1a1a', color: '#fff'
                     });
                 } else {
                     await claimReward(taskId, reward);
                 }
             };
 
-            // ২. ইন্টারস্টিশিয়াল অ্যাড দেখানোর ফাংশন
+            // ২. ইন্টারস্টিশিয়াল অ্যাড দেখানোর ফাংশন (কমন লজিক)
             const showInterstitial = () => {
                 if(monetagFunction && window[monetagFunction]) {
                     window[monetagFunction]().then(() => {
-                        // অ্যাড ক্লোজ করার পর টাইমার চেক এবং রিওয়ার্ড
+                        // অ্যাড দেখা শেষ হলে টাইমার চেক এবং রিওয়ার্ড
                         checkTimeAndReward(); 
                     }).catch(() => {
                         // যদি অ্যাড ফেইল করে, তবুও টাইমার চেক করে রিওয়ার্ড দেওয়া (যাতে ইউজার আটকে না যায়)
                         checkTimeAndReward();
                     });
                 } else {
-                    // ডেভেলপমেন্ট মোড বা অ্যাড লোড না হলে টাইমার চেক
+                    // ডেভেলপমেন্ট মোড বা অ্যাড লোড না হলে শুধু টাইমার চেক
                     checkTimeAndReward(); 
                 }
             };
 
-            // ৩. টাস্ক টাইপ অনুযায়ী লজিক
+            // ৩. টাস্ক টাইপ অনুযায়ী স্পেসিফিক লজিক
             
-            // --- ক) Direct Ad (Visit Website) ---
+            // --- ক) Direct Ad (Visit Website Logic) ---
             if (type === 'direct_ad') {
                 // টাস্কের লিংক অথবা সেটিংসের ডিরেক্ট লিংক ব্যবহার
                 const targetLink = (link && link !== 'null') ? link : appSettings.monetag_direct_link;
@@ -610,19 +651,21 @@
                     window.open(targetLink, '_blank');
                     
                     // ইউজার যখন ওয়েবসাইট থেকে ব্যাক করবে, তখন ইন্টারস্টিশিয়াল অ্যাড দেখাবে
-                    // যেহেতু আমরা ব্যাক ডিটেক্ট করতে পারি না, তাই ১ সেকেন্ড পর অ্যাড লোড করে রাখব
+                    // যেহেতু আমরা ব্যাক বাটন ডিটেক্ট করতে পারি না, তাই ১.৫ সেকেন্ড পর অ্যাড লোড করে রাখব
+                    // যাতে ইউজার ফিরে আসলেই অ্যাড দেখতে পায়।
                     setTimeout(() => {
                         showInterstitial();
-                    }, 1000);
+                    }, 1500);
                 } else {
-                    Swal.fire('Error', 'Invalid Link', 'error');
+                    Swal.fire({icon: 'error', title: 'Link Missing', text: 'Admin has not set a link.', background:'#222', color:'#fff'});
                 }
             } 
             
-            // --- খ) Telegram Task (Link + Popup) ---
+            // --- খ) Telegram Task (Link + Popup Logic) ---
             else if (type === 'telegram') {
                 if(link) window.open(link, '_blank');
                 
+                // টেলিগ্রামের জন্য পপআপ অ্যাড বেটার
                 if(monetagFunction && window[monetagFunction]) {
                     window[monetagFunction]('pop').then(() => {
                         checkTimeAndReward();
@@ -634,22 +677,27 @@
                 }
             }
             
-            // --- গ) Video / Other (Interstitial) ---
+            // --- গ) Video / Other (Standard Interstitial) ---
             else {
-                if(link && link !== 'null') window.open(link, '_blank');
+                // ভিডিও হলে ডিরেক্ট অ্যাড শো করবে, কোনো লিংক ওপেন হবে না
+                if (type !== 'video' && link && link !== 'null') {
+                    window.open(link, '_blank');
+                }
                 showInterstitial();
             }
         };
 
         // --- রিওয়ার্ড ক্লেইম (Server Side Verification) ---
         async function claimReward(taskId, reward) {
+            // লোডিং পপআপ
             Swal.fire({
-                title: 'Checking...',
+                title: 'Verifying...',
+                allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#1a1a1a', color: '#fff', showConfirmButton: false
             });
 
-            // ডাটাবেস RPC কল
+            // ডাটাবেস RPC কল (নিরাপদ ট্রানজেকশন)
             const { data: result } = await supabase.rpc('claim_task', { 
                 user_id_input: currentUser.id, 
                 task_id_input: taskId, 
@@ -657,7 +705,7 @@
                 daily_limit_input: appSettings.daily_task_limit
             });
 
-            Swal.close();
+            Swal.close(); // লোডিং বন্ধ
 
             if (result && result.success) {
                 currentUser.balance += reward;
@@ -665,7 +713,7 @@
                 Swal.fire({ 
                     icon: 'success', 
                     title: `+${reward} Points`, 
-                    text: 'Reward added successfully!',
+                    text: 'Task completed successfully!',
                     toast: true, position: 'top-end', showConfirmButton: false, timer: 1500,
                     background: '#1a1a1a', color: '#fff'
                 });
@@ -674,52 +722,64 @@
                 Swal.fire({ 
                     icon: 'error', 
                     title: 'Oops!', 
-                    text: result?.message || "Task Limit Reached or Error Occurred" 
+                    text: result?.message || "Task Limit Reached or Error Occurred",
+                    background: '#1a1a1a', color: '#fff'
                 });
             }
         }
 
-        // ============================================
-        // ৩. ওয়ালেট পেজ (Only Bkash Payment)
-        // ============================================
+        // ===========================================================
+        // ৩. ওয়ালেট পেজ (Wallet - Only Bkash Payment)
+        // ===========================================================
         function renderWallet(container) {
             const bdtAmount = (currentUser.balance * appSettings.conversion_rate).toFixed(2);
             container.innerHTML = `
-                <div class="glass-panel p-6 rounded-2xl text-center mb-6 mt-4 relative overflow-hidden">
-                    <div class="absolute -right-5 -top-5 w-24 h-24 bg-green-500/20 rounded-full blur-[50px]"></div>
-                    <p class="text-gray-400 text-xs font-bold uppercase">Available Funds</p>
-                    <h1 class="text-4xl font-bold gold-text my-2">৳ ${bdtAmount}</h1>
-                    <div class="inline-block bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                        <p class="text-[10px] text-gray-400">Min Withdraw: ৳ ${appSettings.min_withdraw_amount}</p>
+                <div class="glass-panel p-6 rounded-2xl text-center mb-6 mt-4 relative overflow-hidden shadow-2xl">
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-green-500/20 rounded-full blur-[60px]"></div>
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Withdrawable Funds</p>
+                    <h1 class="text-5xl font-bold gold-text my-3">৳ ${bdtAmount}</h1>
+                    <div class="inline-block bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+                        <p class="text-[10px] text-gray-400">Minimum Withdraw: <span class="text-[#FFD700]">৳ ${appSettings.min_withdraw_amount}</span></p>
                     </div>
                 </div>
                 
-                <div class="space-y-5">
-                    <!-- পেমেন্ট মেথড -->
+                <div class="space-y-6">
+                    <!-- পেমেন্ট মেথড সিলেকশন -->
                     <div>
-                        <label class="text-xs text-gray-400 ml-1 font-bold">Payment Method</label>
-                        <div class="mt-2 glass-panel p-3 rounded-xl border border-[#FFD700] flex items-center justify-between bg-[#FFD700]/5">
+                        <label class="text-xs text-gray-400 ml-1 font-bold uppercase tracking-wide">Payment Method</label>
+                        <div class="mt-2 glass-panel p-4 rounded-xl border border-[#FFD700] flex items-center justify-between bg-[#FFD700]/5 shadow-[0_0_15px_rgba(255,215,0,0.1)]">
                             <div class="flex items-center gap-3">
-                                <img src="https://freelogopng.com/images/all_img/1656234745bkash-app-logo-png.png" class="h-8 object-contain">
-                                <span class="font-bold text-sm text-white">Bkash Personal</span>
+                                <img src="https://freelogopng.com/images/all_img/1656234745bkash-app-logo-png.png" class="h-8 object-contain drop-shadow">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-sm text-white">Bkash Personal</span>
+                                    <span class="text-[9px] text-gray-400">Instant Payment</span>
+                                </div>
                             </div>
-                            <i class="fas fa-check-circle text-[#FFD700]"></i>
+                            <i class="fas fa-check-circle text-[#FFD700] text-xl"></i>
                         </div>
                     </div>
 
-                    <!-- ইনপুট ফিল্ড -->
-                    <div>
-                        <label class="text-xs text-gray-400 ml-1 font-bold">Bkash Number</label>
-                        <input type="number" id="withdraw-number" placeholder="017xxxxxxxx" class="custom-input w-full rounded-xl p-3.5 mt-1 text-sm">
+                    <!-- ইনপুট ফিল্ডস -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-gray-400 ml-1 font-bold">Bkash Number</label>
+                            <div class="relative">
+                                <i class="fas fa-phone absolute left-4 top-4 text-gray-500 text-xs"></i>
+                                <input type="number" id="withdraw-number" placeholder="017xxxxxxxx" class="custom-input w-full rounded-xl p-3.5 pl-10 mt-1 text-sm placeholder-gray-600">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-gray-400 ml-1 font-bold">Withdraw Amount (BDT)</label>
+                            <div class="relative">
+                                <i class="fas fa-money-bill absolute left-4 top-4 text-gray-500 text-xs"></i>
+                                <input type="number" id="withdraw-amount" placeholder="Min ${appSettings.min_withdraw_amount}" class="custom-input w-full rounded-xl p-3.5 pl-10 mt-1 text-sm placeholder-gray-600">
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="text-xs text-gray-400 ml-1 font-bold">Amount (BDT)</label>
-                        <input type="number" id="withdraw-amount" placeholder="Min ${appSettings.min_withdraw_amount}" class="custom-input w-full rounded-xl p-3.5 mt-1 text-sm">
-                    </div>
-
-                    <button onclick="processWithdraw()" class="w-full py-3.5 rounded-xl gold-gradient text-black font-bold mt-4 shadow-lg active:scale-95 transition-transform text-sm uppercase tracking-wide">
-                        Withdraw Request
+                    <button onclick="processWithdraw()" class="w-full py-4 rounded-xl gold-gradient text-black font-bold mt-4 shadow-lg active:scale-95 transition-transform text-sm uppercase tracking-wide flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane"></i> Submit Request
                     </button>
                 </div>
             `;
@@ -729,15 +789,17 @@
             const number = document.getElementById('withdraw-number').value;
             const amount = parseInt(document.getElementById('withdraw-amount').value);
             
-            if (!number || !amount) return Swal.fire('Error', 'Please fill all fields properly', 'warning');
-            if (amount < appSettings.min_withdraw_amount) return Swal.fire('Error', `Minimum withdraw is ${appSettings.min_withdraw_amount} BDT`, 'warning');
+            // ভ্যালিডেশন
+            if (!number || !amount) return Swal.fire({ icon: 'warning', title: 'Missing Info', text: 'Please fill all fields properly', background: '#1a1a1a', color: '#fff' });
+            if (amount < appSettings.min_withdraw_amount) return Swal.fire({ icon: 'warning', title: 'Invalid Amount', text: `Minimum withdraw limit is ${appSettings.min_withdraw_amount} BDT`, background: '#1a1a1a', color: '#fff' });
             
             const pointsNeeded = amount / appSettings.conversion_rate;
-            if (currentUser.balance < pointsNeeded) return Swal.fire('Error', 'Insufficient Points Balance!', 'error');
+            if (currentUser.balance < pointsNeeded) return Swal.fire({ icon: 'error', title: 'Low Balance', text: 'You do not have enough points.', background: '#1a1a1a', color: '#fff' });
 
             // উইথড্র রিকোয়েস্ট সাবমিট করার আগে একটা অ্যাড দেখানো (অপশনাল কিন্তু রেভিনিউ বাড়ায়)
             if(monetagFunction && window[monetagFunction]) await window[monetagFunction]().catch(()=>{});
 
+            // ডাটাবেসে রিকোয়েস্ট পাঠানো
             const { error } = await supabase.from('withdrawals').insert([{
                 user_id: currentUser.id, 
                 method: 'Bkash', 
@@ -747,25 +809,25 @@
             }]);
 
             if (!error) {
-                // ব্যালেন্স কাটা
+                // ব্যালেন্স কাটা (RPC)
                 await supabase.rpc('increment_balance', { user_id: currentUser.id, amount: -pointsNeeded });
                 currentUser.balance -= pointsNeeded;
                 updateHeaderUI();
                 Swal.fire({
                     icon: 'success', 
                     title: 'Request Sent!', 
-                    text: 'Your payment will be processed soon.',
+                    text: 'Your payment will be processed within 24 hours.',
                     background: '#1a1a1a', color: '#fff'
                 });
                 router('history');
             } else {
-                Swal.fire('Error', 'Failed to submit. Try again.', 'error');
+                Swal.fire({ icon: 'error', title: 'Failed', text: 'Could not submit request. Try again later.', background: '#1a1a1a', color: '#fff' });
             }
         };
 
-        // ============================================
+        // ===========================================================
         // ৪. হিস্ট্রি পেজ (Transaction History)
-        // ============================================
+        // ===========================================================
         async function renderHistory(container) {
             container.innerHTML = `<div class="loader mx-auto mt-10"></div>`;
             
@@ -777,7 +839,7 @@
 
             let html = `
                 <div class="my-4">
-                    <h2 class="text-lg font-bold mb-4 ml-1 flex items-center gap-2">
+                    <h2 class="text-lg font-bold mb-4 ml-1 flex items-center gap-2 text-white">
                         <i class="fas fa-history text-[#FFD700]"></i> Payment History
                     </h2>
             `;
@@ -785,42 +847,50 @@
             if (!withdrawals || withdrawals.length === 0) {
                 html += `
                     <div class="text-center text-gray-500 text-sm mt-20 flex flex-col items-center">
-                        <i class="fas fa-file-invoice text-4xl mb-3 opacity-30"></i>
-                        No transactions yet.
+                        <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-invoice text-3xl opacity-30"></i>
+                        </div>
+                        No transaction history found.
                     </div>`;
             } else {
-                html += `<div class="space-y-3">`;
+                html += `<div class="space-y-3 pb-20">`;
                 withdrawals.forEach(w => {
                     let statusColor = 'text-yellow-400';
                     let statusIcon = 'clock';
                     let statusText = 'Pending';
+                    let borderClass = 'border-yellow-500/50';
                     
                     if (w.status === 'paid') { 
                         statusColor = 'text-green-400'; 
                         statusIcon = 'check-circle'; 
                         statusText = 'Paid';
+                        borderClass = 'border-green-500/50';
                     }
                     if (w.status === 'rejected') { 
                         statusColor = 'text-red-400'; 
                         statusIcon = 'times-circle'; 
                         statusText = 'Rejected';
+                        borderClass = 'border-red-500/50';
                     }
 
                     const date = new Date(w.created_at).toLocaleDateString();
 
                     html += `
-                        <div class="glass-panel p-3 rounded-xl flex justify-between items-center border-l-4 ${w.status === 'paid' ? 'border-green-500' : 'border-yellow-500'}">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-xl">
+                        <div class="glass-panel p-3.5 rounded-xl flex justify-between items-center border-l-4 ${borderClass} shadow-lg hover:bg-white/5 transition">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-xl shadow-inner border border-white/5">
                                     💰
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-sm text-white">৳ ${w.amount_bdt}</h4>
-                                    <p class="text-[10px] text-gray-400 font-mono">${w.method} • ${date}</p>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-[10px] text-gray-400 font-mono bg-white/5 px-1.5 rounded">${w.method}</span>
+                                        <span class="text-[9px] text-gray-500">${date}</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <span class="text-[10px] font-bold ${statusColor} uppercase flex items-center gap-1 bg-white/5 px-2 py-1 rounded-full">
+                                <span class="text-[10px] font-bold ${statusColor} uppercase flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-full border border-white/5">
                                     <i class="fas fa-${statusIcon}"></i> ${statusText}
                                 </span>
                             </div>
@@ -833,48 +903,55 @@
             container.innerHTML = html;
         }
 
-        // ============================================
-        // ৫. রেফার পেজ (Manual Input + Anti-Cheat)
-        // ============================================
+        // ===========================================================
+        // ৫. রেফার পেজ (Refer System + Manual Input + Anti-Cheat)
+        // ===========================================================
         function renderRefer(container) {
             const link = `https://t.me/${appSettings.bot_username || 'MyBot_bot'}?start=${currentUser.id}`;
             const showInput = currentUser.referred_by === null; // যদি ইউজার কারোর রেফারে না এসে থাকে, তবে ইনপুট বক্স দেখাবে
+            const bonus = appSettings.referral_bonus || 50;
 
             container.innerHTML = `
-                <div class="glass-panel p-6 rounded-2xl text-center mt-4 border border-[#FFD700]/30 relative overflow-hidden">
-                    <div class="absolute -right-5 -bottom-5 w-20 h-20 bg-blue-500/20 rounded-full blur-[40px]"></div>
-                    <img src="https://cdn-icons-png.flaticon.com/512/3893/3893069.png" class="w-16 h-16 mx-auto mb-3 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">
+                <div class="glass-panel p-6 rounded-2xl text-center mt-4 border border-[#FFD700]/30 relative overflow-hidden shadow-2xl">
+                    <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-blue-500/20 rounded-full blur-[60px]"></div>
+                    <img src="https://cdn-icons-png.flaticon.com/512/3893/3893069.png" class="w-20 h-20 mx-auto mb-4 drop-shadow-[0_0_15px_rgba(255,215,0,0.4)] animate-bounce">
                     <h2 class="text-2xl font-bold text-white">Invite & Earn</h2>
-                    <p class="text-xs text-gray-400 mt-2">Share your link and get 50 points bonus per referral!</p>
+                    <p class="text-xs text-gray-400 mt-2 px-4 leading-relaxed">Share your unique link with friends and get <b class="text-[#FFD700]">${bonus} points</b> bonus for every successful referral!</p>
                 </div>
                 
                 <!-- রেফার লিংক বক্স -->
-                <div class="glass-panel p-3 rounded-xl mt-4 flex items-center gap-2 bg-black/30 border border-white/10">
-                    <input type="text" value="${link}" readonly class="bg-transparent text-xs w-full text-gray-300 outline-none font-mono" id="ref-link">
-                    <button onclick="copyLink()" class="p-2 bg-[#FFD700] rounded-lg text-black font-bold text-xs hover:scale-105 transition">
+                <div class="glass-panel p-3 rounded-xl mt-6 flex items-center gap-3 bg-black/30 border border-white/10 shadow-inner">
+                    <div class="bg-white/5 p-2 rounded-lg">
+                        <i class="fas fa-link text-[#FFD700] text-sm"></i>
+                    </div>
+                    <input type="text" value="${link}" readonly class="bg-transparent text-xs w-full text-gray-300 outline-none font-mono tracking-wide" id="ref-link">
+                    <button onclick="copyLink()" class="p-2.5 bg-[#FFD700] rounded-lg text-black font-bold text-xs hover:scale-105 active:scale-95 transition shadow-lg">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
 
                 <!-- ম্যানুয়াল কোড ইনপুট (যদি প্রয়োজন হয়) -->
                 ${showInput ? `
-                <div class="glass-panel p-4 rounded-xl mt-4 border border-[#FFD700]/20">
-                    <p class="text-xs text-gray-400 mb-2 font-bold flex items-center gap-1"><i class="fas fa-gift text-[#FFD700]"></i> Have a Referral Code?</p>
+                <div class="glass-panel p-5 rounded-xl mt-5 border border-[#FFD700]/20 bg-[#FFD700]/5">
+                    <p class="text-xs text-gray-300 mb-3 font-bold flex items-center gap-2">
+                        <i class="fas fa-gift text-[#FFD700]"></i> Enter Referral Code
+                    </p>
                     <div class="flex gap-2">
-                        <input type="number" id="ref-code-input" placeholder="Enter Referrer ID" class="custom-input w-full rounded-lg p-2.5 text-xs">
-                        <button onclick="submitReferralCode()" class="gold-gradient text-black text-xs font-bold px-5 py-2 rounded-lg hover:opacity-90">Apply</button>
+                        <input type="number" id="ref-code-input" placeholder="Referrer ID" class="custom-input w-full rounded-lg p-3 text-xs placeholder-gray-500">
+                        <button onclick="submitReferralCode()" class="gold-gradient text-black text-xs font-bold px-6 py-2 rounded-lg hover:opacity-90 shadow-lg active:scale-95 transition">Apply</button>
                     </div>
                 </div>` : ''}
 
                 <!-- স্ট্যাটাস -->
-                <div class="mt-4 glass-panel p-4 rounded-xl flex justify-between items-center">
+                <div class="mt-6 glass-panel p-5 rounded-xl flex justify-between items-center shadow-lg border border-white/5">
                     <div>
-                        <p class="text-[10px] text-gray-400 uppercase">Total Referrals</p>
-                        <h4 class="text-2xl font-bold text-[#FFD700]">${currentUser.referral_count}</h4>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Referrals</p>
+                        <h4 class="text-3xl font-bold text-white">${currentUser.referral_count}</h4>
                     </div>
-                    <div class="text-right border-l border-white/10 pl-4">
-                        <p class="text-[10px] text-gray-400 uppercase">Bonus Earned</p>
-                        <h4 class="text-2xl font-bold text-[#FFD700]">${currentUser.referral_count * 50}</h4>
+                    <div class="h-10 w-[1px] bg-white/10"></div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Bonus Earned</p>
+                        <h4 class="text-3xl font-bold text-[#FFD700]">${currentUser.referral_count * bonus}</h4>
                     </div>
                 </div>
             `;
@@ -883,7 +960,7 @@
         // --- ম্যানুয়াল রেফার কোড সাবমিট ---
         async function submitReferralCode() {
             const code = document.getElementById('ref-code-input').value;
-            if(!code) return Swal.fire('Error', 'Please enter a valid code', 'warning');
+            if(!code) return Swal.fire({ icon: 'warning', title: 'Missing Code', text: 'Please enter a valid referral code', background: '#1a1a1a', color: '#fff' });
 
             // Anti-Cheat Check (ম্যানুয়াল ইনপুটের জন্যও)
             if(appSettings.anti_cheat_enabled && localStorage.getItem('device_ref_used')) {
@@ -891,12 +968,14 @@
                     icon: 'error',
                     title: 'Action Blocked',
                     text: 'Referral reward already claimed on this device!',
-                    confirmButtonColor: '#d33'
+                    confirmButtonColor: '#d33',
+                    background: '#1a1a1a', color: '#fff'
                 });
             }
 
             Swal.fire({title: 'Processing...', didOpen: () => Swal.showLoading(), background: '#1a1a1a', color: '#fff', showConfirmButton: false});
 
+            // RPC কল
             const { data: res } = await supabase.rpc('submit_referral_code', { 
                 user_id_input: currentUser.id, 
                 referrer_id_input: parseInt(code) 
@@ -912,7 +991,7 @@
                 Swal.fire({ icon: 'success', title: 'Success!', text: 'Referral Code Applied Successfully!', background: '#1a1a1a', color: '#fff' });
                 router('refer'); // পেজ রিফ্রেশ
             } else {
-                Swal.fire({ icon: 'error', title: 'Failed', text: res?.message || 'Invalid Code' });
+                Swal.fire({ icon: 'error', title: 'Failed', text: res?.message || 'Invalid Code', background: '#1a1a1a', color: '#fff' });
             }
         }
 
@@ -921,7 +1000,12 @@
             const copyText = document.getElementById("ref-link");
             copyText.select();
             document.execCommand("copy");
-            Swal.fire({ icon: 'success', title: 'Link Copied!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, background: '#1a1a1a', color: '#fff' });
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Link Copied!', 
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, 
+                background: '#1a1a1a', color: '#fff' 
+            });
         };
 
         // --- অ্যাপ রান ---
